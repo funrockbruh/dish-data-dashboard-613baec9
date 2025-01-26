@@ -3,6 +3,7 @@ import { Features } from "@/components/Features";
 import { Pricing } from "@/components/Pricing";
 import { Footer } from "@/components/Footer";
 import { Navigation } from "@/components/Navigation";
+import { QRCodeCarousel } from "@/components/QRCodeCarousel";
 
 const Index = () => {
   return (
@@ -10,6 +11,7 @@ const Index = () => {
       <Navigation />
       <Hero />
       <Features />
+      <QRCodeCarousel />
       <Pricing />
       <Footer />
     </div>
