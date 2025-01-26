@@ -3,7 +3,7 @@ import { ArrowRight } from "lucide-react";
 
 export const Hero = () => {
   return (
-    <section className="relative min-h-[80vh] flex items-center justify-center px-4 hero-gradient">
+    <section className="relative pt-20 min-h-[80vh] flex items-center justify-center px-4 hero-gradient">
       <div className="absolute inset-0 bg-grid-black/[0.02] -z-10" />
       <div className="container mx-auto text-center z-10 fade-in">
         <span className="inline-block px-4 py-1.5 text-sm font-medium bg-white/50 backdrop-blur-sm rounded-full mb-6 border border-gray-200/50">
