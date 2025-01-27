@@ -38,7 +38,7 @@ const qrCodeItems = [
 
 export const QRCodeCarousel = () => {
   const plugin = useRef(
-    Autoplay({ delay: 3000, stopOnInteraction: true })
+    Autoplay({ delay: 2000, stopOnInteraction: true })
   );
 
   return (
@@ -53,27 +53,30 @@ export const QRCodeCarousel = () => {
             loop: true,
           }}
           plugins={[plugin.current]}
-          className="w-full max-w-5xl mx-auto"
+          className="w-full max-w-6xl mx-auto"
         >
-          <CarouselContent className="-ml-2 md:-ml-4 [perspective:1000px]">
+          <CarouselContent className="-ml-2 md:-ml-4 [perspective:1500px] relative" 
+            style={{
+              transform: "rotateX(10deg)",
+            }}>
             {qrCodeItems.map((item, index) => (
               <CarouselItem 
                 key={index} 
-                className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3 transition-transform duration-300"
+                className="pl-2 md:pl-4 md:basis-1/3 lg:basis-1/4 transition-all duration-500"
                 style={{
-                  transform: `rotateY(${index * 5}deg) translateZ(${index * 10}px)`,
+                  transform: `rotateY(${index * 15}deg) translateZ(100px) translateX(${index * 5}px)`,
                 }}
               >
                 <div className="p-1">
-                  <Card className="glass-card p-6 h-[300px] flex flex-col items-center justify-center hover-lift group transform transition-transform hover:scale-105">
-                    <div className={`w-40 h-40 mb-6 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center relative overflow-hidden transition-transform group-hover:scale-105`}>
+                  <Card className="glass-card p-4 h-[280px] flex flex-col items-center justify-center hover-lift group transform transition-all duration-300 hover:scale-105 hover:rotate-0">
+                    <div className={`w-36 h-36 mb-4 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center relative overflow-hidden transition-transform group-hover:scale-105`}>
                       <div className={`absolute inset-0 ${item.pattern} opacity-70`}></div>
-                      <div className="w-32 h-32 bg-white/90 rounded-lg flex items-center justify-center relative z-10">
-                        <span className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-br from-gray-700 to-gray-900">QR</span>
+                      <div className="w-28 h-28 bg-white/90 rounded-lg flex items-center justify-center relative z-10">
+                        <span className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-br from-gray-700 to-gray-900">QR</span>
                       </div>
                     </div>
-                    <h3 className="text-xl font-semibold mb-2">{item.title}</h3>
-                    <p className="text-muted-foreground text-center text-sm">{item.description}</p>
+                    <h3 className="text-lg font-semibold">{item.title}</h3>
+                    <p className="text-muted-foreground text-xs">{item.description}</p>
                   </Card>
                 </div>
               </CarouselItem>
