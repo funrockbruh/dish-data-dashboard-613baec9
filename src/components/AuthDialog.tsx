@@ -25,14 +25,29 @@ export const AuthDialog = ({ trigger }: { trigger: React.ReactNode }) => {
 
     try {
       if (isSignUp) {
-        const { error } = await supabase.auth.signUp({
+        const { error: signUpError } = await supabase.auth.signUp({
           email,
           password,
+          options: {
+            emailRedirectTo: window.location.origin,
+          },
         });
-        if (error) throw error;
+        
+        if (signUpError) throw signUpError;
+
+        // Send verification email using our custom edge function
+        const { error: emailError } = await supabase.functions.invoke('send-verification', {
+          body: {
+            email,
+            verificationLink: `${window.location.origin}/verify?email=${encodeURIComponent(email)}`,
+          },
+        });
+
+        if (emailError) throw emailError;
+
         toast({
           title: "Check your email",
-          description: "We've sent you a confirmation link.",
+          description: "We've sent you a verification link.",
         });
       } else {
         const { error } = await supabase.auth.signInWithPassword({
