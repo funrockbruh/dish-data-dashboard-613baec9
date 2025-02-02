@@ -10,20 +10,50 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/lib/supabase";
 
 export const AuthDialog = ({ trigger }: { trigger: React.ReactNode }) => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // This is a placeholder for actual authentication logic
-    toast({
-      title: isSignUp ? "Sign up successful!" : "Sign in successful!",
-      description: "Welcome to our platform.",
-    });
+    setIsLoading(true);
+
+    try {
+      if (isSignUp) {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+        });
+        if (error) throw error;
+        toast({
+          title: "Check your email",
+          description: "We've sent you a confirmation link.",
+        });
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (error) throw error;
+        toast({
+          title: "Signed in successfully",
+          description: "Welcome back!",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -65,8 +95,14 @@ export const AuthDialog = ({ trigger }: { trigger: React.ReactNode }) => {
               required
             />
           </div>
-          <Button type="submit" className="w-full">
-            {isSignUp ? "Sign up" : "Sign in"}
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? (
+              "Loading..."
+            ) : isSignUp ? (
+              "Sign up"
+            ) : (
+              "Sign in"
+            )}
           </Button>
           <p className="text-center text-sm text-muted-foreground">
             {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
