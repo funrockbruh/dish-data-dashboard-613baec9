@@ -1,5 +1,6 @@
 import { Button } from "./ui/button";
 import { ArrowRight } from "lucide-react";
+import { AuthDialog } from "./AuthDialog";
 
 export const Hero = () => {
   return (
@@ -14,13 +15,25 @@ export const Hero = () => {
           <span className="gradient-text">Simplified</span>
         </h1>
         <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-          Create, edit, and manage your restaurant's menu with ease. Update prices, add items, and organize categories in real-time.
+          Create, edit, and manage your restaurant's menu with ease. Update prices,
+          add items, and organize categories in real-time.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-          <Button size="lg" className="hover-lift bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0">
-            Start Free Trial <ArrowRight className="ml-2 h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="lg" className="hover-lift backdrop-blur-sm bg-white/50">
+          <AuthDialog
+            trigger={
+              <Button
+                size="lg"
+                className="hover-lift bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0"
+              >
+                Start Free Trial <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            }
+          />
+          <Button
+            variant="outline"
+            size="lg"
+            className="hover-lift backdrop-blur-sm bg-white/50"
+          >
             View Demo
           </Button>
         </div>
