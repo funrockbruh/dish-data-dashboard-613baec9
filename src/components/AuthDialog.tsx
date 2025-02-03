@@ -25,7 +25,7 @@ export const AuthDialog = ({ trigger }: { trigger: React.ReactNode }) => {
 
     try {
       if (isSignUp) {
-        const { error: signUpError } = await supabase.auth.signUp({
+        const { data, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -39,7 +39,7 @@ export const AuthDialog = ({ trigger }: { trigger: React.ReactNode }) => {
         const { error: emailError } = await supabase.functions.invoke('send-verification', {
           body: {
             email,
-            verificationLink: `${window.location.origin}/verify?email=${encodeURIComponent(email)}`,
+            verificationLink: `${window.location.origin}/verify?email=${encodeURIComponent(email)}&token=${data?.session?.access_token || ''}`,
           },
         });
 

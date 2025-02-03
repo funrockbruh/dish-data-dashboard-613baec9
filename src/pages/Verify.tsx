@@ -28,18 +28,27 @@ const Verify = () => {
           return;
         }
 
-        // If not verified, send another verification email
-        const { error: resendError } = await supabase.auth.resend({
-          type: 'signup',
+        // Verify the email directly
+        const { error: verificationError } = await supabase.auth.verifyOtp({
           email,
+          type: 'signup',
+          token: searchParams.get('token') || '',
         });
 
-        if (resendError) throw resendError;
-
-        toast({
-          title: "Verification email sent",
-          description: "Please check your email for the verification link.",
-        });
+        if (verificationError) {
+          console.error("Verification error:", verificationError);
+          toast({
+            title: "Verification failed",
+            description: "Unable to verify your email. Please try signing up again.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Email verified",
+            description: "Your email has been verified successfully. You can now sign in.",
+          });
+          navigate("/");
+        }
       } catch (error: any) {
         console.error("Verification error:", error);
         toast({
@@ -64,7 +73,7 @@ const Verify = () => {
         <p className="mt-2 text-sm text-gray-600">
           {verifying
             ? "Please wait while we verify your email address."
-            : "We've sent you a new verification email. Please check your inbox and click the verification link."}
+            : "Verification complete. You can now sign in to your account."}
         </p>
       </div>
     </div>
