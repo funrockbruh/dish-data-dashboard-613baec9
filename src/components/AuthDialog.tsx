@@ -30,6 +30,9 @@ export const AuthDialog = ({ trigger }: { trigger: React.ReactNode }) => {
           password,
           options: {
             emailRedirectTo: window.location.origin,
+            data: {
+              email_verified: false,
+            },
           },
         });
         
