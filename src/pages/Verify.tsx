@@ -13,6 +13,8 @@ const Verify = () => {
     const verifyEmail = async () => {
       try {
         const email = searchParams.get("email");
+        const token = searchParams.get("token");
+
         if (!email) throw new Error("No email provided");
 
         // Get the session to check if the user is already verified
@@ -28,27 +30,24 @@ const Verify = () => {
           return;
         }
 
-        // Verify the email directly
+        // Verify the email using the token
         const { error: verificationError } = await supabase.auth.verifyOtp({
           email,
+          token: token || '',
           type: 'signup',
-          token: searchParams.get('token') || '',
         });
 
         if (verificationError) {
           console.error("Verification error:", verificationError);
-          toast({
-            title: "Verification failed",
-            description: "Unable to verify your email. Please try signing up again.",
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: "Email verified",
-            description: "Your email has been verified successfully. You can now sign in.",
-          });
-          navigate("/");
+          throw new Error("Unable to verify your email. Please try signing up again.");
         }
+
+        toast({
+          title: "Email verified",
+          description: "Your email has been verified successfully. You can now sign in.",
+        });
+        navigate("/");
+
       } catch (error: any) {
         console.error("Verification error:", error);
         toast({

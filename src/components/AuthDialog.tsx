@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 
 export const AuthDialog = ({ trigger }: { trigger: React.ReactNode }) => {
@@ -25,17 +25,21 @@ export const AuthDialog = ({ trigger }: { trigger: React.ReactNode }) => {
 
     try {
       if (isSignUp) {
+        // Sign up with Supabase but disable the automatic email
         const { data, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
           options: {
             emailRedirectTo: window.location.origin,
-          },
+            data: {
+              email_verified: false
+            }
+          }
         });
         
         if (signUpError) throw signUpError;
 
-        // Send verification email using our custom edge function
+        // Send our custom verification email
         const { error: emailError } = await supabase.functions.invoke('send-verification', {
           body: {
             email,

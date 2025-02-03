@@ -33,7 +33,7 @@ const handler = async (req: Request): Promise<Response> => {
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h1 style="color: #333;">Welcome to Digital Menu!</h1>
-          <p>Thank you for signing up. Please verify your email address to get started.</p>
+          <p>Thank you for signing up. Please click the button below to verify your email address.</p>
           <a href="${verificationLink}" 
              style="display: inline-block; background-color: #4F46E5; color: white; 
                     padding: 12px 24px; text-decoration: none; border-radius: 4px; 
