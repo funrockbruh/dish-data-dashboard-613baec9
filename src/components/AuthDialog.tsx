@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
+import { User } from '@supabase/supabase-js';
 
 export const AuthDialog = ({ trigger }: { trigger: React.ReactNode }) => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -53,25 +54,34 @@ export const AuthDialog = ({ trigger }: { trigger: React.ReactNode }) => {
         });
       } else {
         // First check if the user exists and is verified
-        const { data: { users }, error: getUserError } = await supabase.auth.admin.listUsers();
-        const user = users?.find(u => u.email === email);
-        
-        if (!user) {
-          throw new Error("No account found with this email.");
-        }
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError) throw sessionError;
 
-        if (!user.email_confirmed_at) {
+        const { data: { user }, error: getUserError } = await supabase.auth.getUser();
+        if (getUserError) throw getUserError;
+
+        if (!user) {
+          // If no user is found, try to sign in to get more details
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
+
+          if (signInError) {
+            if (signInError.message.includes('Email not confirmed')) {
+              throw new Error("Please verify your email before signing in.");
+            }
+            throw signInError;
+          }
+
+          if (!signInData.user?.email_confirmed_at) {
+            throw new Error("Please verify your email before signing in.");
+          }
+        } else if (!user.email_confirmed_at) {
           throw new Error("Please verify your email before signing in.");
         }
 
-        // Proceed with sign in if email is verified
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        
-        if (error) throw error;
-
+        // If we get here, either the user is verified or we've already thrown an error
         toast({
           title: "Signed in successfully",
           description: "Welcome back!",
