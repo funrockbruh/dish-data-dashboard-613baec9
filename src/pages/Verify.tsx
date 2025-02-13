@@ -1,10 +1,10 @@
+
 import { useEffect, useState } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
 
 const Verify = () => {
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [verifying, setVerifying] = useState(true);
@@ -12,16 +12,26 @@ const Verify = () => {
   useEffect(() => {
     const verifyEmail = async () => {
       try {
-        const email = searchParams.get("email");
-        const token = searchParams.get("token");
+        // Get the hash fragment from the URL
+        const hash = window.location.hash;
+        
+        // Extract the token from the hash
+        const token = new URLSearchParams(hash.replace('#', '?')).get('access_token');
+        
+        if (!token) {
+          throw new Error("No verification token found");
+        }
 
-        if (!email) throw new Error("No email provided");
-
-        // Get the session to check if the user is already verified
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        // Get the user's session using the token
+        const { data: { user }, error: sessionError } = await supabase.auth.getUser(token);
+        
         if (sessionError) throw sessionError;
+        
+        if (!user) {
+          throw new Error("No user found");
+        }
 
-        if (session?.user?.email_confirmed_at) {
+        if (user.email_confirmed_at) {
           toast({
             title: "Email already verified",
             description: "Your email has already been verified. You can now sign in.",
@@ -30,17 +40,12 @@ const Verify = () => {
           return;
         }
 
-        // Verify the email using the token
-        const { error: verificationError } = await supabase.auth.verifyOtp({
-          email,
-          token: token || '',
-          type: 'signup',
+        // Update the user's email verification status
+        const { error: updateError } = await supabase.auth.updateUser({
+          data: { email_verified: true }
         });
 
-        if (verificationError) {
-          console.error("Verification error:", verificationError);
-          throw new Error("Unable to verify your email. Please try signing up again.");
-        }
+        if (updateError) throw updateError;
 
         toast({
           title: "Email verified",
@@ -55,13 +60,14 @@ const Verify = () => {
           description: error.message,
           variant: "destructive",
         });
+        navigate("/");
       } finally {
         setVerifying(false);
       }
     };
 
     verifyEmail();
-  }, [searchParams, navigate, toast]);
+  }, [navigate, toast]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">

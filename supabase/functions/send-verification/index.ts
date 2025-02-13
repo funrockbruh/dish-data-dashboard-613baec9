@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "npm:resend@2.0.0";
 
@@ -11,7 +12,7 @@ const corsHeaders = {
 
 interface EmailVerificationRequest {
   email: string;
-  verificationLink: string;
+  verificationToken: string | null;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -21,10 +22,9 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { email, verificationLink }: EmailVerificationRequest = await req.json();
+    const { email }: EmailVerificationRequest = await req.json();
 
     console.log("Sending verification email to:", email);
-    console.log("Verification link:", verificationLink);
 
     const emailResponse = await resend.emails.send({
       from: "Digital Menu <onboarding@resend.dev>",
@@ -33,13 +33,8 @@ const handler = async (req: Request): Promise<Response> => {
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h1 style="color: #333;">Welcome to Digital Menu!</h1>
-          <p>Thank you for signing up. Please click the button below to verify your email address.</p>
-          <a href="${verificationLink}" 
-             style="display: inline-block; background-color: #4F46E5; color: white; 
-                    padding: 12px 24px; text-decoration: none; border-radius: 4px; 
-                    margin: 20px 0;">
-            Verify Email Address
-          </a>
+          <p>Thank you for signing up. Please check your inbox for the verification email from Supabase.</p>
+          <p>Click the verification link in that email to complete your registration.</p>
           <p style="color: #666; font-size: 14px;">
             If you didn't create an account, you can safely ignore this email.
           </p>

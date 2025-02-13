@@ -1,3 +1,4 @@
+
 import {
   Dialog,
   DialogContent,
@@ -25,15 +26,12 @@ export const AuthDialog = ({ trigger }: { trigger: React.ReactNode }) => {
 
     try {
       if (isSignUp) {
-        // Sign up with Supabase but disable the automatic email
+        // Sign up with Supabase
         const { data, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
           options: {
-            emailRedirectTo: window.location.origin,
-            data: {
-              email_verified: false
-            }
+            emailRedirectTo: `${window.location.origin}/verify`,
           }
         });
         
@@ -43,7 +41,7 @@ export const AuthDialog = ({ trigger }: { trigger: React.ReactNode }) => {
         const { error: emailError } = await supabase.functions.invoke('send-verification', {
           body: {
             email,
-            verificationLink: `${window.location.origin}/verify?email=${encodeURIComponent(email)}&token=${data?.session?.access_token || ''}`,
+            verificationToken: data?.user?.confirmation_sent_at ? 'pending' : null,
           },
         });
 
@@ -54,11 +52,26 @@ export const AuthDialog = ({ trigger }: { trigger: React.ReactNode }) => {
           description: "We've sent you a verification link.",
         });
       } else {
+        // First check if the user exists and is verified
+        const { data: { users }, error: getUserError } = await supabase.auth.admin.listUsers();
+        const user = users?.find(u => u.email === email);
+        
+        if (!user) {
+          throw new Error("No account found with this email.");
+        }
+
+        if (!user.email_confirmed_at) {
+          throw new Error("Please verify your email before signing in.");
+        }
+
+        // Proceed with sign in if email is verified
         const { error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
+        
         if (error) throw error;
+
         toast({
           title: "Signed in successfully",
           description: "Welcome back!",
