@@ -1,3 +1,5 @@
+
+import React, { useEffect, useRef } from "react";
 import {
   Carousel,
   CarouselContent,
@@ -6,7 +8,6 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { Card } from "./ui/card";
-import { useEffect, useRef } from "react";
 import Autoplay from "embla-carousel-autoplay";
 
 const qrCodeItems = [
