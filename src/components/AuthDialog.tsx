@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { User } from '@supabase/supabase-js';
@@ -19,7 +19,31 @@ export const AuthDialog = ({ trigger }: { trigger: React.ReactNode }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [open, setOpen] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    // Check the current session when component mounts
+    const checkSession = async () => {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (session?.user) {
+        setOpen(false);
+      }
+    };
+
+    checkSession();
+
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        setOpen(false);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,7 +51,6 @@ export const AuthDialog = ({ trigger }: { trigger: React.ReactNode }) => {
 
     try {
       if (isSignUp) {
-        // Sign up with Supabase
         const { data, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
@@ -38,7 +61,7 @@ export const AuthDialog = ({ trigger }: { trigger: React.ReactNode }) => {
         
         if (signUpError) throw signUpError;
 
-        // Send our custom verification email
+        // Send verification email
         const { error: emailError } = await supabase.functions.invoke('send-verification', {
           body: {
             email,
@@ -52,40 +75,29 @@ export const AuthDialog = ({ trigger }: { trigger: React.ReactNode }) => {
           title: "Check your email",
           description: "We've sent you a verification link.",
         });
+        setOpen(false);
       } else {
-        // First check if the user exists and is verified
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError) throw sessionError;
+        const { data: { user }, error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
 
-        const { data: { user }, error: getUserError } = await supabase.auth.getUser();
-        if (getUserError) throw getUserError;
-
-        if (!user) {
-          // If no user is found, try to sign in to get more details
-          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-          });
-
-          if (signInError) {
-            if (signInError.message.includes('Email not confirmed')) {
-              throw new Error("Please verify your email before signing in.");
-            }
-            throw signInError;
-          }
-
-          if (!signInData.user?.email_confirmed_at) {
+        if (signInError) {
+          if (signInError.message.includes('Email not confirmed')) {
             throw new Error("Please verify your email before signing in.");
           }
-        } else if (!user.email_confirmed_at) {
+          throw signInError;
+        }
+
+        if (!user?.email_confirmed_at) {
           throw new Error("Please verify your email before signing in.");
         }
 
-        // If we get here, either the user is verified or we've already thrown an error
         toast({
           title: "Signed in successfully",
           description: "Welcome back!",
         });
+        setOpen(false);
       }
     } catch (error) {
       toast({
@@ -99,7 +111,7 @@ export const AuthDialog = ({ trigger }: { trigger: React.ReactNode }) => {
   };
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
