@@ -1,4 +1,3 @@
-
 import {
   Dialog,
   DialogContent,
@@ -13,6 +12,7 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { User } from '@supabase/supabase-js';
+import { useNavigate } from "react-router-dom";
 
 export const AuthDialog = ({ trigger }: { trigger: React.ReactNode }) => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -21,6 +21,7 @@ export const AuthDialog = ({ trigger }: { trigger: React.ReactNode }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Check the current session when component mounts
@@ -98,6 +99,7 @@ export const AuthDialog = ({ trigger }: { trigger: React.ReactNode }) => {
           description: "Welcome back!",
         });
         setOpen(false);
+        navigate('/setup');
       }
     } catch (error) {
       toast({
