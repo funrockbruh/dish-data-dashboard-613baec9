@@ -29,7 +29,7 @@ export const RestaurantSetup = () => {
           .from('restaurant_profiles')
           .select('*')
           .eq('id', session.user.id)
-          .single();
+          .maybeSingle(); // Changed from .single() to .maybeSingle()
 
         if (data && !error) {
           setFormData({
