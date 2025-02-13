@@ -39,15 +39,11 @@ export const AuthDialog = ({ trigger }: { trigger: React.ReactNode }) => {
         
         if (signUpError) throw signUpError;
 
-        // Extract the access token from the session
-        const accessToken = data?.session?.access_token;
-        if (!accessToken) throw new Error("No access token available");
-
-        // Send our custom verification email with the access token
+        // Send our custom verification email
         const { error: emailError } = await supabase.functions.invoke('send-verification', {
           body: {
             email,
-            verificationLink: `${window.location.origin}/#access_token=${accessToken}&type=signup`,
+            verificationLink: `${window.location.origin}/verify?email=${encodeURIComponent(email)}&token=${data?.session?.access_token || ''}`,
           },
         });
 
