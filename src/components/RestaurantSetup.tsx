@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ export const RestaurantSetup = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [logo, setLogo] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string>("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     owner_name: "",
     restaurant_name: "",
@@ -29,7 +30,7 @@ export const RestaurantSetup = () => {
           .from('restaurant_profiles')
           .select('*')
           .eq('id', session.user.id)
-          .maybeSingle(); // Changed from .single() to .maybeSingle()
+          .maybeSingle();
 
         if (data && !error) {
           setFormData({
@@ -58,6 +59,10 @@ export const RestaurantSetup = () => {
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -129,12 +134,16 @@ export const RestaurantSetup = () => {
             )}
           </div>
           <div>
-            <Label htmlFor="logo" className="cursor-pointer">
-              <Button type="button" variant="outline" className="mr-2">
-                Upload Logo
-              </Button>
-            </Label>
+            <Button 
+              type="button" 
+              variant="outline" 
+              className="mr-2"
+              onClick={handleUploadClick}
+            >
+              Upload Logo
+            </Button>
             <Input
+              ref={fileInputRef}
               id="logo"
               type="file"
               accept="image/*"
