@@ -7,12 +7,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
+import { useNavigate } from "react-router-dom";
 
 export const RestaurantSetup = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [logo, setLogo] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     owner_name: "",
     restaurant_name: "",
@@ -25,29 +27,43 @@ export const RestaurantSetup = () => {
   useEffect(() => {
     const loadProfile = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        const { data, error } = await supabase
-          .from('restaurant_profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .maybeSingle();
+      if (!session?.user) {
+        navigate('/');
+        return;
+      }
 
-        if (data && !error) {
-          setFormData({
-            owner_name: data.owner_name || "",
-            restaurant_name: data.restaurant_name || "",
-            owner_number: data.owner_number || "",
-            owner_email: data.owner_email || "",
-            about: data.about || "",
-          });
-          if (data.logo_url) {
-            setLogoPreview(data.logo_url);
-          }
+      const { data, error } = await supabase
+        .from('restaurant_profiles')
+        .select('*')
+        .eq('id', session.user.id)
+        .maybeSingle();
+
+      if (data && !error) {
+        setFormData({
+          owner_name: data.owner_name || "",
+          restaurant_name: data.restaurant_name || "",
+          owner_number: data.owner_number || "",
+          owner_email: data.owner_email || "",
+          about: data.about || "",
+        });
+        if (data.logo_url) {
+          setLogoPreview(data.logo_url);
         }
       }
     };
     loadProfile();
-  }, []);
+
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!session) {
+        navigate('/');
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -70,18 +86,27 @@ export const RestaurantSetup = () => {
     setIsLoading(true);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      // Get current session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) throw new Error("Authentication error");
       if (!session?.user) throw new Error("Not authenticated");
 
       let logo_url = logoPreview;
+      
+      // Handle logo upload if there's a new logo
       if (logo) {
         const fileExt = logo.name.split('.').pop();
         const filePath = `${session.user.id}/logo.${fileExt}`;
-        const { error: uploadError, data } = await supabase.storage
+        
+        const { error: uploadError } = await supabase.storage
           .from('restaurant-logos')
-          .upload(filePath, logo, { upsert: true });
+          .upload(filePath, logo, { 
+            upsert: true,
+            cacheControl: '3600'
+          });
 
-        if (uploadError) throw uploadError;
+        if (uploadError) throw new Error(`Upload failed: ${uploadError.message}`);
 
         const { data: { publicUrl } } = supabase.storage
           .from('restaurant-logos')
@@ -90,7 +115,8 @@ export const RestaurantSetup = () => {
         logo_url = publicUrl;
       }
 
-      const { error } = await supabase
+      // Update profile
+      const { error: updateError } = await supabase
         .from('restaurant_profiles')
         .upsert({
           id: session.user.id,
@@ -98,16 +124,17 @@ export const RestaurantSetup = () => {
           logo_url,
         });
 
-      if (error) throw error;
+      if (updateError) throw updateError;
 
       toast({
         title: "Success",
         description: "Restaurant profile updated successfully",
       });
     } catch (error) {
+      console.error('Profile update error:', error);
       toast({
         title: "Error",
-        description: error.message,
+        description: error.message || "Failed to update profile",
         variant: "destructive",
       });
     } finally {
