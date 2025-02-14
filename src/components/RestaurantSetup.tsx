@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
@@ -8,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
+import { Pencil } from "lucide-react";
 
 export const RestaurantSetup = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -147,37 +147,35 @@ export const RestaurantSetup = () => {
       <h2 className="text-2xl font-bold mb-6">Restaurant Profile Setup</h2>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="flex flex-col items-center mb-6">
-          <div className="w-32 h-32 rounded-full overflow-hidden border-2 border-gray-200 mb-4">
+          <div 
+            className="w-32 h-32 rounded-full overflow-hidden border-2 border-gray-200 mb-4 relative cursor-pointer group"
+            onClick={handleUploadClick}
+          >
             {logoPreview ? (
-              <img 
-                src={logoPreview} 
-                alt="Restaurant logo" 
-                className="w-full h-full object-cover"
-              />
+              <>
+                <img 
+                  src={logoPreview} 
+                  alt="Restaurant logo" 
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <Pencil className="w-6 h-6 text-white" />
+                </div>
+              </>
             ) : (
-              <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                <span className="text-gray-400">No logo</span>
+              <div className="w-full h-full bg-gray-100 flex items-center justify-center group-hover:bg-gray-200 transition-colors">
+                <span className="text-gray-400">Click to upload</span>
               </div>
             )}
           </div>
-          <div>
-            <Button 
-              type="button" 
-              variant="outline" 
-              className="mr-2"
-              onClick={handleUploadClick}
-            >
-              Upload Logo
-            </Button>
-            <Input
-              ref={fileInputRef}
-              id="logo"
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleFileChange}
-            />
-          </div>
+          <Input
+            ref={fileInputRef}
+            id="logo"
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleFileChange}
+          />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
