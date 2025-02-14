@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
@@ -86,7 +87,6 @@ export const RestaurantSetup = () => {
     setIsLoading(true);
 
     try {
-      // Get current session
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError) throw new Error("Authentication error");
@@ -94,7 +94,6 @@ export const RestaurantSetup = () => {
 
       let logo_url = logoPreview;
       
-      // Handle logo upload if there's a new logo
       if (logo) {
         const fileExt = logo.name.split('.').pop();
         const filePath = `${session.user.id}/logo.${fileExt}`;
@@ -115,7 +114,6 @@ export const RestaurantSetup = () => {
         logo_url = publicUrl;
       }
 
-      // Update profile
       const { error: updateError } = await supabase
         .from('restaurant_profiles')
         .upsert({
@@ -130,6 +128,9 @@ export const RestaurantSetup = () => {
         title: "Success",
         description: "Restaurant profile updated successfully",
       });
+
+      // Navigate to categories setup after successful save
+      navigate('/categories');
     } catch (error) {
       console.error('Profile update error:', error);
       toast({

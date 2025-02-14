@@ -8,6 +8,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Verify from "./pages/Verify";
 import { RestaurantSetup } from "./components/RestaurantSetup";
+import { CategorySetup } from "./components/CategorySetup";
 
 const queryClient = new QueryClient();
 
@@ -21,6 +22,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/verify" element={<Verify />} />
           <Route path="/setup" element={<RestaurantSetup />} />
+          <Route path="/categories" element={<CategorySetup />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
