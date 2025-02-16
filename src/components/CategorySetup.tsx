@@ -1,16 +1,11 @@
-import { useState, useRef } from "react";
+
+import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
-import { Plus, Upload, X, ArrowLeft } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Plus } from "lucide-react";
+import { Header } from "./categories/Header";
+import { CategoryCard } from "./categories/CategoryCard";
+import { AddCategoryDialog } from "./categories/AddCategoryDialog";
 
 export const CategorySetup = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -26,7 +21,6 @@ export const CategorySetup = () => {
     image?: File;
     imagePreview?: string;
   }>>([]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   const handleAddCategory = () => {
@@ -115,15 +109,7 @@ export const CategorySetup = () => {
 
   return (
     <div className="max-w-4xl mx-auto px-4">
-      <div className="flex items-center gap-4 mb-8">
-        <Button variant="ghost" size="icon" className="rounded-full">
-          <ArrowLeft className="h-6 w-6" />
-        </Button>
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold font-inter">Just Fajita</h1>
-          <p className="text-gray-500 font-inter">by Kassem Zaiter</p>
-        </div>
-      </div>
+      <Header />
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         <button
@@ -134,92 +120,23 @@ export const CategorySetup = () => {
         </button>
 
         {categories.map((category, index) => (
-          <div key={index} className="aspect-square relative rounded-2xl overflow-hidden group">
-            {category.imagePreview ? (
-              <>
-                <img 
-                  src={category.imagePreview} 
-                  alt={category.name}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-black bg-opacity-40 flex items-end p-4">
-                  <h3 className="text-white text-xl font-semibold font-inter">
-                    {category.name}
-                  </h3>
-                </div>
-              </>
-            ) : (
-              <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                <Upload className="h-8 w-8 text-gray-400" />
-              </div>
-            )}
-          </div>
+          <CategoryCard
+            key={index}
+            name={category.name}
+            imagePreview={category.imagePreview}
+          />
         ))}
       </div>
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-md rounded-3xl">
-          <DialogHeader>
-            <div className="flex items-center justify-between">
-              <DialogTitle className="text-2xl font-bold font-inter">Add category:</DialogTitle>
-              <Button 
-                variant="ghost" 
-                size="icon"
-                onClick={() => setIsDialogOpen(false)}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          </DialogHeader>
-          
-          <div className="space-y-6 py-4">
-            <div className="space-y-2">
-              <h3 className="text-xl font-bold font-inter">Add image:</h3>
-              <div 
-                className="w-full h-48 bg-gray-100 rounded-xl flex items-center justify-center cursor-pointer"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                {newCategory.imagePreview ? (
-                  <img 
-                    src={newCategory.imagePreview} 
-                    alt="Category preview" 
-                    className="w-full h-full object-cover rounded-xl"
-                  />
-                ) : (
-                  <Plus className="h-8 w-8 text-gray-400" />
-                )}
-              </div>
-              <Input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                ref={fileInputRef}
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handleNewCategoryImageChange(file);
-                }}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <h3 className="text-xl font-bold font-inter">Name:</h3>
-              <Input
-                value={newCategory.name}
-                onChange={(e) => setNewCategory(prev => ({ ...prev, name: e.target.value }))}
-                placeholder="Name category"
-                className="w-full font-inter"
-              />
-            </div>
-
-            <Button 
-              className="w-full bg-green-500 hover:bg-green-600 text-white rounded-full h-12 font-inter"
-              onClick={handleSaveNewCategory}
-            >
-              Add
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <AddCategoryDialog
+        isOpen={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        categoryName={newCategory.name}
+        onCategoryNameChange={(name) => setNewCategory(prev => ({ ...prev, name }))}
+        imagePreview={newCategory.imagePreview}
+        onImageChange={handleNewCategoryImageChange}
+        onSave={handleSaveNewCategory}
+      />
     </div>
   );
 };
