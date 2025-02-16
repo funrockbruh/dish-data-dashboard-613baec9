@@ -50,7 +50,7 @@ export const AddCategoryDialog = ({
             <Input value={categoryName} onChange={e => onCategoryNameChange(e.target.value)} placeholder="Name category" className="w-full font-inter" />
           </div>
 
-          <Button className="w-full bg-green-500 hover:bg-green-600 text-white rounded-full h-12 font-inter" onClick={onSave}>
+          <Button onClick={onSave} className="w-full bg-green-500 hover:bg-green-600 text-white h-12 font-inter rounded-xl">
             Add
           </Button>
         </div>
