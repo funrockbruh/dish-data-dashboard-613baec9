@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
@@ -45,9 +44,24 @@ export const CategorySetup = () => {
     });
   };
 
+  const handleEditCategory = (index: number) => {
+    const categoryToEdit = categories[index];
+    setNewCategory(categoryToEdit);
+    setIsDialogOpen(true);
+  };
+
   const handleSaveNewCategory = () => {
     if (newCategory.name.trim()) {
-      setCategories([...categories, newCategory]);
+      const existingIndex = categories.findIndex(cat => cat.name === newCategory.name);
+      if (existingIndex >= 0) {
+        // Update existing category
+        const updatedCategories = [...categories];
+        updatedCategories[existingIndex] = newCategory;
+        setCategories(updatedCategories);
+      } else {
+        // Add new category
+        setCategories([...categories, newCategory]);
+      }
       setNewCategory({ name: "" }); // Reset form
       setIsDialogOpen(false);
     }
@@ -124,6 +138,7 @@ export const CategorySetup = () => {
             key={index}
             name={category.name}
             imagePreview={category.imagePreview}
+            onEdit={() => handleEditCategory(index)}
           />
         ))}
       </div>
