@@ -16,7 +16,7 @@ export const CategoryCard = ({ name, imagePreview }: CategoryCardProps) => {
             alt={name}
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-black bg-opacity-40 flex items-end p-4">
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent flex items-end p-4">
             <h3 className="text-white text-xl font-semibold font-inter">
               {name}
             </h3>

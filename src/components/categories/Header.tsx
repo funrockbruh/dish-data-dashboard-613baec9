@@ -42,9 +42,9 @@ export const Header = () => {
       <Button variant="ghost" size="icon" className="rounded-full">
         <ArrowLeft className="h-6 w-6" />
       </Button>
-      <div className="flex-1">
+      <div className="flex-1 -space-y-1">
         <h1 className="text-2xl font-bold font-inter">{profile.restaurant_name || "Restaurant"}</h1>
-        <p className="text-gray-500 font-inter">by {profile.owner_name || "Owner"}</p>
+        <p className="text-gray-500 font-inter text-sm">by {profile.owner_name || "Owner"}</p>
       </div>
     </div>
   );
