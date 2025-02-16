@@ -124,7 +124,7 @@ export const CategorySetup = () => {
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
         <button onClick={handleAddCategory} className="aspect-square rounded-2xl flex items-center justify-center transition-colors bg-zinc-300 hover:bg-zinc-200">
-          <Plus className="h-10 w-10 text-gray-400" />
+          <Plus className="h-10 w-10 text-gray-500" />
         </button>
 
         {categories.map((category, index) => <CategoryCard key={index} name={category.name} imagePreview={category.imagePreview} onEdit={() => handleEditCategory(index)} />)}
