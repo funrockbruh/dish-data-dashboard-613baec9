@@ -5,6 +5,8 @@ import { Plus } from "lucide-react";
 import { Header } from "./categories/Header";
 import { CategoryCard } from "./categories/CategoryCard";
 import { AddCategoryDialog } from "./categories/AddCategoryDialog";
+import { Card } from "@/components/ui/card";
+
 export const CategorySetup = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -119,20 +121,37 @@ export const CategorySetup = () => {
       setIsLoading(false);
     }
   };
-  return <div className="max-w-4xl mx-auto px-4">
+  return <div className="max-w-4xl mx-auto p-4 space-y-6">
       <Header />
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-        <button onClick={handleAddCategory} className="aspect-square rounded-2xl flex items-center justify-center transition-colors bg-zinc-300 hover:bg-zinc-200">
-          <Plus className="h-10 w-10 text-gray-500" />
-        </button>
+      <Card className="p-6 bg-white border border-gray-200 rounded-2xl">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          <button onClick={handleAddCategory} className="aspect-square rounded-2xl flex items-center justify-center transition-colors bg-white border-2 border-dashed border-gray-300 hover:border-gray-400">
+            <Plus className="h-10 w-10 text-gray-500" />
+          </button>
 
-        {categories.map((category, index) => <CategoryCard key={index} name={category.name} imagePreview={category.imagePreview} onEdit={() => handleEditCategory(index)} />)}
-      </div>
+          {categories.map((category, index) => (
+            <CategoryCard 
+              key={index} 
+              name={category.name} 
+              imagePreview={category.imagePreview} 
+              onEdit={() => handleEditCategory(index)} 
+            />
+          ))}
+        </div>
+      </Card>
 
-      <AddCategoryDialog isOpen={isDialogOpen} onOpenChange={setIsDialogOpen} categoryName={newCategory.name} onCategoryNameChange={name => setNewCategory(prev => ({
-      ...prev,
-      name
-    }))} imagePreview={newCategory.imagePreview} onImageChange={handleNewCategoryImageChange} onSave={handleSaveNewCategory} />
+      <AddCategoryDialog 
+        isOpen={isDialogOpen} 
+        onOpenChange={setIsDialogOpen} 
+        categoryName={newCategory.name} 
+        onCategoryNameChange={name => setNewCategory(prev => ({
+          ...prev,
+          name
+        }))} 
+        imagePreview={newCategory.imagePreview} 
+        onImageChange={handleNewCategoryImageChange} 
+        onSave={handleSaveNewCategory} 
+      />
     </div>;
 };

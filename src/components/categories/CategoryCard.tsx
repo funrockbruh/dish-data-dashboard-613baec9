@@ -1,5 +1,6 @@
 
 import { Upload, Pencil } from "lucide-react";
+import { Card } from "@/components/ui/card";
 
 interface CategoryCardProps {
   name: string;
@@ -9,8 +10,8 @@ interface CategoryCardProps {
 
 export const CategoryCard = ({ name, imagePreview, onEdit }: CategoryCardProps) => {
   return (
-    <div 
-      className="aspect-square relative rounded-2xl overflow-hidden group cursor-pointer"
+    <Card 
+      className="aspect-square relative rounded-2xl overflow-hidden group cursor-pointer hover:shadow-lg transition-shadow bg-white border border-gray-200"
       onClick={onEdit}
     >
       {imagePreview ? (
@@ -27,17 +28,17 @@ export const CategoryCard = ({ name, imagePreview, onEdit }: CategoryCardProps) 
             </div>
             {/* Category Name at Bottom Center */}
             <div className="absolute bottom-4 inset-x-0 text-center">
-              <h3 className="text-white text-xl font-black font-inter px-4">
+              <h3 className="text-white text-xl font-black font-figtree px-4">
                 {name}
               </h3>
             </div>
           </div>
         </>
       ) : (
-        <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+        <div className="w-full h-full bg-white flex items-center justify-center border-2 border-dashed border-gray-300">
           <Upload className="h-8 w-8 text-gray-400" />
         </div>
       )}
-    </div>
+    </Card>
   );
 };

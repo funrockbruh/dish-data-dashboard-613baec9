@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
+import { Card } from "@/components/ui/card";
 
 export const Header = () => {
   const [profile, setProfile] = useState<{
@@ -40,7 +41,7 @@ export const Header = () => {
   }, [navigate]);
 
   return (
-    <div className="flex items-center gap-4 mb-8">
+    <Card className="flex items-center gap-4 mb-8 p-4 bg-white border border-gray-200 rounded-2xl">
       <Button variant="ghost" size="icon" className="rounded-full">
         <ArrowLeft className="h-6 w-6" />
       </Button>
@@ -49,14 +50,14 @@ export const Header = () => {
           <img 
             src={profile.logo_url} 
             alt="Restaurant logo" 
-            className="w-12 h-12 rounded-full object-cover"
+            className="w-12 h-12 rounded-full object-cover border-2 border-gray-100"
           />
         )}
         <div className="-space-y-1">
-          <h1 className="text-2xl font-bold font-inter">{profile.restaurant_name || "Restaurant"}</h1>
-          <p className="text-gray-500 text-sm font-inter">by {profile.owner_name || "Owner"}</p>
+          <h1 className="text-2xl font-bold font-figtree">{profile.restaurant_name || "Restaurant"}</h1>
+          <p className="text-gray-500 text-sm font-figtree">by {profile.owner_name || "Owner"}</p>
         </div>
       </div>
-    </div>
+    </Card>
   );
 };
