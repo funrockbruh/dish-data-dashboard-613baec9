@@ -21,11 +21,13 @@ export const CategoryCard = ({ name, imagePreview, onEdit }: CategoryCardProps) 
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent">
-            <div className="absolute top-3 right-3 bg-white/10 p-2 rounded-full backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity">
-              <Pencil className="h-4 w-4 text-white" />
+            {/* Centered Pencil Icon */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white/10 p-3 rounded-xl backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity">
+              <Pencil className="h-5 w-5 text-white" />
             </div>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <h3 className="text-white text-xl font-black font-inter">
+            {/* Category Name at Bottom Center */}
+            <div className="absolute bottom-4 inset-x-0 text-center">
+              <h3 className="text-white text-xl font-black font-figtree px-4">
                 {name}
               </h3>
             </div>
