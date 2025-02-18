@@ -2,27 +2,31 @@
 import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, X, Pencil } from "lucide-react";
+import { Plus, X, Pencil, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 interface AddCategoryDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: () => void;
+  onDelete?: () => void;
   categoryName: string;
   onCategoryNameChange: (name: string) => void;
   imagePreview?: string;
   onImageChange: (file: File) => void;
+  isEditing?: boolean;
 }
 
 export const AddCategoryDialog = ({
   isOpen,
   onOpenChange,
   onSave,
+  onDelete,
   categoryName,
   onCategoryNameChange,
   imagePreview,
-  onImageChange
+  onImageChange,
+  isEditing = false
 }: AddCategoryDialogProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -30,7 +34,9 @@ export const AddCategoryDialog = ({
       <DialogContent className="max-w-md rounded-3xl">
         <DialogHeader>
           <div className="flex items-center justify-between">
-            <DialogTitle className="text-2xl font-bold font-figtree">Add category:</DialogTitle>
+            <DialogTitle className="text-2xl font-bold font-inter">
+              {isEditing ? 'Edit category:' : 'Add category:'}
+            </DialogTitle>
             <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)}>
               <X className="h-4 w-4" />
             </Button>
@@ -39,7 +45,7 @@ export const AddCategoryDialog = ({
         
         <div className="space-y-6 py-4">
           <div className="space-y-2">
-            <h3 className="text-xl font-bold font-figtree">Add image:</h3>
+            <h3 className="text-xl font-bold font-inter">Add image:</h3>
             <div 
               onClick={() => fileInputRef.current?.click()} 
               className="relative w-full h-48 rounded-xl flex items-center justify-center cursor-pointer bg-gray-300 hover:bg-gray-200 group"
@@ -68,18 +74,31 @@ export const AddCategoryDialog = ({
           </div>
 
           <div className="space-y-2">
-            <h3 className="text-xl font-bold font-figtree">Name:</h3>
+            <h3 className="text-xl font-bold font-inter">Name:</h3>
             <Input 
               value={categoryName} 
               onChange={e => onCategoryNameChange(e.target.value)} 
               placeholder="Name category" 
-              className="w-full font-figtree" 
+              className="w-full font-inter" 
             />
           </div>
 
-          <Button onClick={onSave} className="w-full bg-green-500 hover:bg-green-600 text-white h-12 font-figtree rounded-xl">
-            Add
-          </Button>
+          <div className="space-y-3">
+            <Button onClick={onSave} className="w-full bg-green-500 hover:bg-green-600 text-white h-12 font-inter rounded-xl">
+              {isEditing ? 'Update' : 'Add'}
+            </Button>
+            
+            {isEditing && onDelete && (
+              <Button 
+                onClick={onDelete} 
+                variant="destructive" 
+                className="w-full h-12 font-inter rounded-xl"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete Category
+              </Button>
+            )}
+          </div>
         </div>
       </DialogContent>
     </Dialog>;

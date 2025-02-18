@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
@@ -6,10 +7,12 @@ import { Header } from "./categories/Header";
 import { CategoryCard } from "./categories/CategoryCard";
 import { AddCategoryDialog } from "./categories/AddCategoryDialog";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 export const CategorySetup = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [newCategory, setNewCategory] = useState<{
     name: string;
     image?: File;
@@ -23,12 +26,15 @@ export const CategorySetup = () => {
     image?: File;
     imagePreview?: string;
   }>>([]);
-  const {
-    toast
-  } = useToast();
+  
+  const { toast } = useToast();
+
   const handleAddCategory = () => {
+    setEditingIndex(null);
+    setNewCategory({ name: "" });
     setIsDialogOpen(true);
   };
+
   const handleNewCategoryImageChange = (file: File) => {
     setNewCategory(prev => {
       const updated = {
@@ -48,64 +54,87 @@ export const CategorySetup = () => {
       return updated;
     });
   };
+
   const handleEditCategory = (index: number) => {
     const categoryToEdit = categories[index];
+    setEditingIndex(index);
     setNewCategory(categoryToEdit);
     setIsDialogOpen(true);
   };
+
+  const handleDeleteCategory = () => {
+    if (editingIndex !== null) {
+      const updatedCategories = categories.filter((_, index) => index !== editingIndex);
+      setCategories(updatedCategories);
+      setIsDialogOpen(false);
+      toast({
+        title: "Success",
+        description: "Category deleted successfully"
+      });
+    }
+  };
+
   const handleSaveNewCategory = () => {
     if (newCategory.name.trim()) {
-      const existingIndex = categories.findIndex(cat => cat.name === newCategory.name);
-      if (existingIndex >= 0) {
+      if (editingIndex !== null) {
         // Update existing category
         const updatedCategories = [...categories];
-        updatedCategories[existingIndex] = newCategory;
+        updatedCategories[editingIndex] = newCategory;
         setCategories(updatedCategories);
+        toast({
+          title: "Success",
+          description: "Category updated successfully"
+        });
       } else {
         // Add new category
         setCategories([...categories, newCategory]);
+        toast({
+          title: "Success",
+          description: "Category added successfully"
+        });
       }
-      setNewCategory({
-        name: ""
-      }); // Reset form
+      setNewCategory({ name: "" }); // Reset form
       setIsDialogOpen(false);
     }
   };
+
   const handleSave = async () => {
     setIsLoading(true);
     try {
-      const {
-        data: {
-          session
-        }
-      } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) throw new Error("Not authenticated");
+
       for (const category of categories) {
         if (!category.name.trim()) continue;
+
         let image_url = null;
         if (category.image) {
           const fileExt = category.image.name.split('.').pop();
           const filePath = `${session.user.id}/${crypto.randomUUID()}.${fileExt}`;
-          const {
-            error: uploadError
-          } = await supabase.storage.from('menu-category-images').upload(filePath, category.image);
+          const { error: uploadError } = await supabase.storage
+            .from('menu-category-images')
+            .upload(filePath, category.image);
+          
           if (uploadError) throw uploadError;
-          const {
-            data: {
-              publicUrl
-            }
-          } = supabase.storage.from('menu-category-images').getPublicUrl(filePath);
+
+          const { data: { publicUrl } } = supabase.storage
+            .from('menu-category-images')
+            .getPublicUrl(filePath);
+          
           image_url = publicUrl;
         }
-        const {
-          error: insertError
-        } = await supabase.from('menu_categories').insert({
-          name: category.name,
-          image_url,
-          restaurant_id: session.user.id
-        });
+
+        const { error: insertError } = await supabase
+          .from('menu_categories')
+          .insert({
+            name: category.name,
+            image_url,
+            restaurant_id: session.user.id
+          });
+
         if (insertError) throw insertError;
       }
+
       toast({
         title: "Success",
         description: "Categories saved successfully"
@@ -121,12 +150,17 @@ export const CategorySetup = () => {
       setIsLoading(false);
     }
   };
-  return <div className="max-w-4xl mx-auto p-4 space-y-6">
+
+  return (
+    <div className="max-w-4xl mx-auto p-4 space-y-6">
       <Header />
 
       <Card className="p-6 bg-white border border-gray-200 rounded-2xl">
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          <button onClick={handleAddCategory} className="aspect-square rounded-2xl flex items-center justify-center transition-colors bg-white border-2 border-dashed border-gray-300 hover:border-gray-400">
+          <button 
+            onClick={handleAddCategory} 
+            className="aspect-square rounded-2xl flex items-center justify-center transition-colors bg-white border-2 border-dashed border-gray-300 hover:border-gray-400"
+          >
             <Plus className="h-10 w-10 text-gray-500" />
           </button>
 
@@ -141,6 +175,16 @@ export const CategorySetup = () => {
         </div>
       </Card>
 
+      <div className="flex justify-end">
+        <Button 
+          onClick={handleSave}
+          disabled={isLoading}
+          className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-xl font-inter"
+        >
+          {isLoading ? "Saving..." : "Save Categories"}
+        </Button>
+      </div>
+
       <AddCategoryDialog 
         isOpen={isDialogOpen} 
         onOpenChange={setIsDialogOpen} 
@@ -151,7 +195,10 @@ export const CategorySetup = () => {
         }))} 
         imagePreview={newCategory.imagePreview} 
         onImageChange={handleNewCategoryImageChange} 
-        onSave={handleSaveNewCategory} 
+        onSave={handleSaveNewCategory}
+        onDelete={editingIndex !== null ? handleDeleteCategory : undefined}
+        isEditing={editingIndex !== null}
       />
-    </div>;
+    </div>
+  );
 };
