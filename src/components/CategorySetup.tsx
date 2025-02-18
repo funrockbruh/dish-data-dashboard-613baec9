@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { Plus } from "lucide-react";
@@ -25,9 +25,40 @@ export const CategorySetup = () => {
     name: string;
     image?: File;
     imagePreview?: string;
+    image_url?: string;
   }>>([]);
   
   const { toast } = useToast();
+
+  // Load existing categories when component mounts
+  useEffect(() => {
+    const loadCategories = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+
+      const { data, error } = await supabase
+        .from('menu_categories')
+        .select('*')
+        .eq('restaurant_id', session.user.id);
+
+      if (error) {
+        console.error('Error loading categories:', error);
+        return;
+      }
+
+      if (data) {
+        const formattedCategories = data.map(category => ({
+          id: category.id,
+          name: category.name,
+          imagePreview: category.image_url,
+          image_url: category.image_url
+        }));
+        setCategories(formattedCategories);
+      }
+    };
+
+    loadCategories();
+  }, []);
 
   const handleAddCategory = () => {
     setEditingIndex(null);
@@ -42,7 +73,6 @@ export const CategorySetup = () => {
         image: file
       };
 
-      // Create preview URL
       const reader = new FileReader();
       reader.onloadend = () => {
         setNewCategory(current => ({
@@ -58,12 +88,33 @@ export const CategorySetup = () => {
   const handleEditCategory = (index: number) => {
     const categoryToEdit = categories[index];
     setEditingIndex(index);
-    setNewCategory(categoryToEdit);
+    setNewCategory({
+      name: categoryToEdit.name,
+      imagePreview: categoryToEdit.imagePreview
+    });
     setIsDialogOpen(true);
   };
 
-  const handleDeleteCategory = () => {
+  const handleDeleteCategory = async () => {
     if (editingIndex !== null) {
+      const categoryToDelete = categories[editingIndex];
+      
+      if (categoryToDelete.id) {
+        const { error } = await supabase
+          .from('menu_categories')
+          .delete()
+          .eq('id', categoryToDelete.id);
+
+        if (error) {
+          toast({
+            title: "Error",
+            description: "Failed to delete category",
+            variant: "destructive"
+          });
+          return;
+        }
+      }
+
       const updatedCategories = categories.filter((_, index) => index !== editingIndex);
       setCategories(updatedCategories);
       setIsDialogOpen(false);
@@ -79,7 +130,10 @@ export const CategorySetup = () => {
       if (editingIndex !== null) {
         // Update existing category
         const updatedCategories = [...categories];
-        updatedCategories[editingIndex] = newCategory;
+        updatedCategories[editingIndex] = {
+          ...updatedCategories[editingIndex],
+          ...newCategory
+        };
         setCategories(updatedCategories);
         toast({
           title: "Success",
@@ -104,10 +158,20 @@ export const CategorySetup = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) throw new Error("Not authenticated");
 
+      // First, clear existing categories
+      const { error: deleteError } = await supabase
+        .from('menu_categories')
+        .delete()
+        .eq('restaurant_id', session.user.id);
+
+      if (deleteError) throw deleteError;
+
+      // Then save all current categories
       for (const category of categories) {
         if (!category.name.trim()) continue;
 
-        let image_url = null;
+        let image_url = category.image_url; // Use existing image URL if available
+        
         if (category.image) {
           const fileExt = category.image.name.split('.').pop();
           const filePath = `${session.user.id}/${crypto.randomUUID()}.${fileExt}`;
