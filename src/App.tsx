@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import Verify from "./pages/Verify";
 import { RestaurantSetup } from "./components/RestaurantSetup";
 import { CategorySetup } from "./components/CategorySetup";
+import { MenuItemsList } from "./components/menu/MenuItemsList";
 
 const queryClient = new QueryClient();
 
@@ -23,6 +24,7 @@ const App = () => (
           <Route path="/verify" element={<Verify />} />
           <Route path="/setup" element={<RestaurantSetup />} />
           <Route path="/categories" element={<CategorySetup />} />
+          <Route path="/menu" element={<MenuItemsList />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>

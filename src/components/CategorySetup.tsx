@@ -1,7 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { Plus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Header } from "./categories/Header";
 import { CategoryCard } from "./categories/CategoryCard";
 import { AddCategoryDialog } from "./categories/AddCategoryDialog";
@@ -12,6 +14,7 @@ export const CategorySetup = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const navigate = useNavigate();
   const [newCategory, setNewCategory] = useState<{
     name: string;
     image?: File;
@@ -177,45 +180,45 @@ export const CategorySetup = () => {
           const { error: uploadError } = await supabase.storage
             .from('menu-category-images')
             .upload(filePath, category.image);
-        
-        if (uploadError) throw uploadError;
+          
+          if (uploadError) throw uploadError;
 
-        const { data: { publicUrl } } = supabase.storage
-          .from('menu-category-images')
-          .getPublicUrl(filePath);
-        
-        image_url = publicUrl;
+          const { data: { publicUrl } } = supabase.storage
+            .from('menu-category-images')
+            .getPublicUrl(filePath);
+          
+          image_url = publicUrl;
+        }
+
+        const { error: insertError } = await supabase
+          .from('menu_categories')
+          .insert({
+            name: category.name,
+            image_url,
+            restaurant_id: session.user.id
+          });
+
+        if (insertError) throw insertError;
       }
 
-      const { error: insertError } = await supabase
-        .from('menu_categories')
-        .insert({
-          name: category.name,
-          image_url,
-          restaurant_id: session.user.id
-        });
-
-      if (insertError) throw insertError;
+      // Navigate to menu items page after successful save
+      navigate('/menu');
+      
+      toast({
+        title: "Success",
+        description: "Categories saved successfully"
+      });
+    } catch (error) {
+      console.error('Save error:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to save categories",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
     }
-
-    // Navigate to menu items page after successful save
-    window.location.href = '/menu';
-    
-    toast({
-      title: "Success",
-      description: "Categories saved successfully"
-    });
-  } catch (error) {
-    console.error('Save error:', error);
-    toast({
-      title: "Error",
-      description: error.message || "Failed to save categories",
-      variant: "destructive"
-    });
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
   return (
     <div className="max-w-4xl mx-auto p-4 space-y-6">
