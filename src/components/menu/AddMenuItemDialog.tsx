@@ -49,25 +49,52 @@ export const AddMenuItemDialog = ({
     });
   };
 
-  const handleSubmit = async () => {
-    if (!formData.name.trim() || !formData.price.trim() || !formData.categoryId) {
+  const validateForm = () => {
+    // Check for empty name
+    if (!formData.name.trim()) {
       toast({
         title: "Error",
-        description: "Please fill in all required fields",
+        description: "Please enter an item name",
         variant: "destructive"
       });
-      return;
+      return false;
+    }
+
+    // Check for empty or invalid price
+    if (!formData.price) {
+      toast({
+        title: "Error",
+        description: "Please enter a price",
+        variant: "destructive"
+      });
+      return false;
     }
 
     const price = parseFloat(formData.price);
     if (isNaN(price) || price <= 0) {
       toast({
         title: "Error",
-        description: "Please enter a valid price",
+        description: "Please enter a valid price greater than 0",
         variant: "destructive"
       });
-      return;
+      return false;
     }
+
+    // Check for category
+    if (!formData.categoryId) {
+      toast({
+        title: "Error",
+        description: "Please select a category",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
 
     setIsLoading(true);
     try {
@@ -92,6 +119,7 @@ export const AddMenuItemDialog = ({
         image_url = publicUrl;
       }
 
+      const price = parseFloat(formData.price);
       const priceInCents = Math.round(price * 100);
 
       const { error: insertError } = await supabase
@@ -218,11 +246,14 @@ export const AddMenuItemDialog = ({
           <div className="space-y-2">
             <Label className="font-inter">Price</Label>
             <Input
-              type="number"
-              step="0.01"
-              min="0"
+              type="text"
+              inputMode="decimal"
+              pattern="[0-9]*[.,]?[0-9]*"
               value={formData.price}
-              onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
+              onChange={(e) => {
+                const value = e.target.value.replace(/[^0-9.]/g, '');
+                setFormData(prev => ({ ...prev, price: value }));
+              }}
               placeholder="0.00"
               className="font-inter"
             />
