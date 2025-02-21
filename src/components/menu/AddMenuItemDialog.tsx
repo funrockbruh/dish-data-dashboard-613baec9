@@ -126,8 +126,8 @@ export const AddMenuItemDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md rounded-3xl">
-        <DialogHeader>
+      <DialogContent className="max-w-md rounded-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="sticky top-0 bg-white z-10 pb-4">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-2xl font-bold font-inter">
               Add menu item
@@ -138,7 +138,7 @@ export const AddMenuItemDialog = ({
           </div>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
+        <div className="space-y-6">
           <div className="space-y-2">
             <Label className="font-inter">Image</Label>
             <div 
