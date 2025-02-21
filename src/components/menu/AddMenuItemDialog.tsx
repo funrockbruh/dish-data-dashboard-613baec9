@@ -50,10 +50,20 @@ export const AddMenuItemDialog = ({
   };
 
   const handleSubmit = async () => {
-    if (!formData.name.trim() || !formData.price || !formData.categoryId) {
+    if (!formData.name.trim() || !formData.price.trim() || !formData.categoryId) {
       toast({
         title: "Error",
         description: "Please fill in all required fields",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const price = parseFloat(formData.price);
+    if (isNaN(price) || price <= 0) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid price",
         variant: "destructive"
       });
       return;
@@ -82,7 +92,7 @@ export const AddMenuItemDialog = ({
         image_url = publicUrl;
       }
 
-      const priceInCents = Math.round(parseFloat(formData.price) * 100);
+      const priceInCents = Math.round(price * 100);
 
       const { error: insertError } = await supabase
         .from('menu_items')
@@ -127,7 +137,7 @@ export const AddMenuItemDialog = ({
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md rounded-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="sticky top-0 bg-white z-10 pb-4">
+        <DialogHeader className="bg-white border-b pb-4">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-2xl font-bold font-inter">
               Add menu item
@@ -138,7 +148,7 @@ export const AddMenuItemDialog = ({
           </div>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-6 pt-4">
           <div className="space-y-2">
             <Label className="font-inter">Image</Label>
             <div 
