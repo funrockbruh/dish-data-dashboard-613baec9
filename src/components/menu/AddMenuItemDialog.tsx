@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { X, Plus, Image as ImageIcon, Pencil } from "lucide-react";
+import { X, Plus, Image as ImageIcon, Pencil, Trash2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 interface MenuItem {
@@ -69,7 +69,6 @@ export const AddMenuItemDialog = ({
   const handleImageChange = (file: File) => {
     setFormData(prev => {
       const updated = { ...prev, image: file };
-
       const reader = new FileReader();
       reader.onloadend = () => {
         setFormData(current => ({
@@ -121,6 +120,37 @@ export const AddMenuItemDialog = ({
     }
 
     return true;
+  };
+
+  const handleDelete = async () => {
+    if (!editItem) return;
+
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from('menu_items')
+        .delete()
+        .eq('id', editItem.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Menu item deleted successfully"
+      });
+      
+      onSuccess();
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error deleting menu item:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete menu item",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -207,7 +237,7 @@ export const AddMenuItemDialog = ({
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md rounded-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="bg-white border-b pb-4">
+        <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle className="text-2xl font-bold font-inter">
               {editItem ? 'Edit menu item' : 'Add menu item'}
@@ -301,18 +331,32 @@ export const AddMenuItemDialog = ({
             />
           </div>
 
-          <Button
-            onClick={handleSubmit}
-            disabled={isLoading}
-            className="w-full bg-green-500 hover:bg-green-600 text-white h-12 font-inter rounded-xl"
-          >
-            {isLoading ? (editItem ? "Updating..." : "Adding...") : (
-              <>
-                {editItem ? <Pencil className="h-4 w-4 mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
-                {editItem ? 'Update Item' : 'Add Item'}
-              </>
+          <div className="space-y-3">
+            <Button
+              onClick={handleSubmit}
+              disabled={isLoading}
+              className="w-full bg-green-500 hover:bg-green-600 text-white h-12 font-inter rounded-xl"
+            >
+              {isLoading ? (editItem ? "Updating..." : "Adding...") : (
+                <>
+                  {editItem ? <Pencil className="h-4 w-4 mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
+                  {editItem ? 'Update Item' : 'Add Item'}
+                </>
+              )}
+            </Button>
+
+            {editItem && (
+              <Button
+                onClick={handleDelete}
+                disabled={isLoading}
+                variant="destructive"
+                className="w-full h-12 font-inter rounded-xl"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete Item
+              </Button>
             )}
-          </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
