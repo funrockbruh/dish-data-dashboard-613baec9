@@ -1,26 +1,37 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { X, Plus, Image as ImageIcon } from "lucide-react";
+import { X, Plus, Image as ImageIcon, Pencil } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+
+interface MenuItem {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  image_url: string | null;
+  category_id: string;
+}
 
 interface AddMenuItemDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   categories: Array<{ id: string; name: string; }>;
   onSuccess: () => void;
+  editItem?: MenuItem | null;
 }
 
 export const AddMenuItemDialog = ({
   isOpen,
   onOpenChange,
   categories,
-  onSuccess
+  onSuccess,
+  editItem
 }: AddMenuItemDialogProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -32,6 +43,28 @@ export const AddMenuItemDialog = ({
     imagePreview: null as string | null
   });
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (editItem) {
+      setFormData({
+        name: editItem.name,
+        description: editItem.description || "",
+        price: (editItem.price / 100).toString(),
+        categoryId: editItem.category_id,
+        image: null,
+        imagePreview: editItem.image_url
+      });
+    } else {
+      setFormData({
+        name: "",
+        description: "",
+        price: "",
+        categoryId: categories[0]?.id || "",
+        image: null,
+        imagePreview: null
+      });
+    }
+  }, [editItem, categories]);
 
   const handleImageChange = (file: File) => {
     setFormData(prev => {
@@ -50,7 +83,6 @@ export const AddMenuItemDialog = ({
   };
 
   const validateForm = () => {
-    // Check for empty name
     if (!formData.name.trim()) {
       toast({
         title: "Error",
@@ -60,7 +92,6 @@ export const AddMenuItemDialog = ({
       return false;
     }
 
-    // Check for empty or invalid price
     if (!formData.price) {
       toast({
         title: "Error",
@@ -80,7 +111,6 @@ export const AddMenuItemDialog = ({
       return false;
     }
 
-    // Check for category
     if (!formData.categoryId) {
       toast({
         title: "Error",
@@ -101,7 +131,7 @@ export const AddMenuItemDialog = ({
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) throw new Error("Not authenticated");
 
-      let image_url = null;
+      let image_url = editItem?.image_url || null;
       if (formData.image) {
         const fileExt = formData.image.name.split('.').pop();
         const filePath = `${session.user.id}/${crypto.randomUUID()}.${fileExt}`;
@@ -122,39 +152,51 @@ export const AddMenuItemDialog = ({
       const price = parseFloat(formData.price);
       const priceInCents = Math.round(price * 100);
 
-      const { error: insertError } = await supabase
-        .from('menu_items')
-        .insert({
-          name: formData.name,
-          description: formData.description,
-          price: priceInCents,
-          category_id: formData.categoryId,
-          image_url,
-          restaurant_id: session.user.id
+      if (editItem) {
+        const { error: updateError } = await supabase
+          .from('menu_items')
+          .update({
+            name: formData.name,
+            description: formData.description,
+            price: priceInCents,
+            category_id: formData.categoryId,
+            ...(image_url && { image_url })
+          })
+          .eq('id', editItem.id);
+
+        if (updateError) throw updateError;
+
+        toast({
+          title: "Success",
+          description: "Menu item updated successfully"
         });
+      } else {
+        const { error: insertError } = await supabase
+          .from('menu_items')
+          .insert({
+            name: formData.name,
+            description: formData.description,
+            price: priceInCents,
+            category_id: formData.categoryId,
+            image_url,
+            restaurant_id: session.user.id
+          });
 
-      if (insertError) throw insertError;
+        if (insertError) throw insertError;
 
-      toast({
-        title: "Success",
-        description: "Menu item added successfully"
-      });
+        toast({
+          title: "Success",
+          description: "Menu item added successfully"
+        });
+      }
       
       onSuccess();
       onOpenChange(false);
-      setFormData({
-        name: "",
-        description: "",
-        price: "",
-        categoryId: categories[0]?.id || "",
-        image: null,
-        imagePreview: null
-      });
     } catch (error) {
-      console.error('Error adding menu item:', error);
+      console.error('Error with menu item:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to add menu item",
+        description: error.message || `Failed to ${editItem ? 'update' : 'add'} menu item`,
         variant: "destructive"
       });
     } finally {
@@ -168,7 +210,7 @@ export const AddMenuItemDialog = ({
         <DialogHeader className="bg-white border-b pb-4">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-2xl font-bold font-inter">
-              Add menu item
+              {editItem ? 'Edit menu item' : 'Add menu item'}
             </DialogTitle>
             <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)}>
               <X className="h-4 w-4" />
@@ -264,10 +306,10 @@ export const AddMenuItemDialog = ({
             disabled={isLoading}
             className="w-full bg-green-500 hover:bg-green-600 text-white h-12 font-inter rounded-xl"
           >
-            {isLoading ? "Adding..." : (
+            {isLoading ? (editItem ? "Updating..." : "Adding...") : (
               <>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Item
+                {editItem ? <Pencil className="h-4 w-4 mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
+                {editItem ? 'Update Item' : 'Add Item'}
               </>
             )}
           </Button>

@@ -24,6 +24,7 @@ export const MenuItemsList = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -62,6 +63,16 @@ export const MenuItemsList = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleEdit = (item: MenuItem) => {
+    setSelectedItem(item);
+    setIsDialogOpen(true);
+  };
+
+  const handleDialogClose = () => {
+    setSelectedItem(null);
+    setIsDialogOpen(false);
   };
 
   const filteredItems = items.filter(item =>
@@ -104,7 +115,7 @@ export const MenuItemsList = () => {
                 key={item.id}
                 item={item}
                 categoryName={categories.find(c => c.id === item.category_id)?.name || ""}
-                onEdit={() => {/* TODO */}}
+                onEdit={() => handleEdit(item)}
               />
             ))
           )}
@@ -113,9 +124,10 @@ export const MenuItemsList = () => {
 
       <AddMenuItemDialog
         isOpen={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
+        onOpenChange={handleDialogClose}
         categories={categories}
         onSuccess={loadData}
+        editItem={selectedItem}
       />
     </div>
   );
