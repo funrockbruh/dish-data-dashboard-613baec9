@@ -25,36 +25,11 @@ export const MenuItemsList = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
-  const [profile, setProfile] = useState<{
-    restaurant_name: string | null;
-    owner_name: string | null;
-    logo_url: string | null;
-  }>({
-    restaurant_name: "",
-    owner_name: "",
-    logo_url: null
-  });
   const { toast } = useToast();
 
   useEffect(() => {
     loadData();
-    loadProfile();
   }, []);
-
-  const loadProfile = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session?.user) return;
-
-    const { data, error } = await supabase
-      .from('restaurant_profiles')
-      .select('restaurant_name, owner_name, logo_url')
-      .eq('id', session.user.id)
-      .single();
-
-    if (data && !error) {
-      setProfile(data);
-    }
-  };
 
   const loadData = async () => {
     try {
@@ -106,20 +81,6 @@ export const MenuItemsList = () => {
 
   return (
     <div className="max-w-4xl mx-auto p-4 space-y-6">
-      <Card className="flex items-center gap-4 mb-8 p-4 bg-white border border-gray-200 rounded-2xl">
-        {profile.logo_url && (
-          <img 
-            src={profile.logo_url} 
-            alt="Restaurant logo" 
-            className="w-12 h-12 rounded-full object-cover border-2 border-gray-100"
-          />
-        )}
-        <div className="-space-y-1">
-          <h1 className="text-2xl font-bold font-figtree">{profile.restaurant_name || "Restaurant"}</h1>
-          <p className="text-gray-500 text-sm font-figtree">by {profile.owner_name || "Owner"}</p>
-        </div>
-      </Card>
-
       <div className="flex items-center justify-between gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -131,12 +92,13 @@ export const MenuItemsList = () => {
             className="pl-10"
           />
         </div>
-        <button 
-          onClick={() => setIsDialogOpen(true)} 
-          className="aspect-square w-12 h-12 rounded-xl flex items-center justify-center transition-colors bg-white border-2 border-dashed border-gray-300 hover:border-gray-400"
+        <Button
+          onClick={() => setIsDialogOpen(true)}
+          className="bg-green-500 hover:bg-green-600 text-white gap-2"
         >
-          <Plus className="h-6 w-6 text-gray-500" />
-        </button>
+          <Plus className="h-4 w-4" />
+          Add Item
+        </Button>
       </div>
 
       <Card className="p-6 bg-white border border-gray-200 rounded-2xl">

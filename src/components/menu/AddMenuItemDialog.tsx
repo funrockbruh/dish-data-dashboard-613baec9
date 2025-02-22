@@ -1,27 +1,29 @@
+
 import { useState, useEffect } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, X, Pencil, Trash2 } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { X, Plus, Image as ImageIcon, Pencil } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+
+interface MenuItem {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  image_url: string | null;
+  category_id: string;
+}
 
 interface AddMenuItemDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  categories: Array<{ id: string; name: string }>;
+  categories: Array<{ id: string; name: string; }>;
   onSuccess: () => void;
-  editItem?: {
-    id: string;
-    name: string;
-    description: string;
-    price: number;
-    image_url: string | null;
-    category_id: string;
-  } | null;
+  editItem?: MenuItem | null;
 }
 
 export const AddMenuItemDialog = ({
@@ -33,11 +35,12 @@ export const AddMenuItemDialog = ({
 }: AddMenuItemDialogProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
-    name: editItem?.name || "",
-    description: editItem?.description || "",
-    price: editItem?.price ? (editItem.price / 100).toString() : "",
-    categoryId: editItem?.category_id || (categories.length > 0 ? categories[0].id : ""),
+    name: "",
+    description: "",
+    price: "",
+    categoryId: categories[0]?.id || "",
     image: null as File | null,
+    imagePreview: null as string | null
   });
   const { toast } = useToast();
 
@@ -45,100 +48,79 @@ export const AddMenuItemDialog = ({
     if (editItem) {
       setFormData({
         name: editItem.name,
-        description: editItem.description,
+        description: editItem.description || "",
         price: (editItem.price / 100).toString(),
         categoryId: editItem.category_id,
         image: null,
+        imagePreview: editItem.image_url
       });
     } else {
       setFormData({
         name: "",
         description: "",
         price: "",
-        categoryId: categories.length > 0 ? categories[0].id : "",
+        categoryId: categories[0]?.id || "",
         image: null,
+        imagePreview: null
       });
     }
   }, [editItem, categories]);
 
+  const handleImageChange = (file: File) => {
+    setFormData(prev => {
+      const updated = { ...prev, image: file };
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData(current => ({
+          ...current,
+          imagePreview: reader.result as string
+        }));
+      };
+      reader.readAsDataURL(file);
+      return updated;
+    });
+  };
+
   const validateForm = () => {
-    if (!formData.name || !formData.description || !formData.price || !formData.categoryId) {
+    if (!formData.name.trim()) {
       toast({
         title: "Error",
-        description: "Please fill in all fields.",
+        description: "Please enter an item name",
         variant: "destructive"
       });
       return false;
     }
-    if (isNaN(Number(formData.price))) {
+
+    if (!formData.price) {
       toast({
         title: "Error",
-        description: "Price must be a number.",
+        description: "Please enter a price",
         variant: "destructive"
       });
       return false;
     }
+
+    const price = parseFloat(formData.price);
+    if (isNaN(price) || price <= 0) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid price greater than 0",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    if (!formData.categoryId) {
+      toast({
+        title: "Error",
+        description: "Please select a category",
+        variant: "destructive"
+      });
+      return false;
+    }
+
     return true;
-  };
-
-  const handleImageUpload = async (file: File) => {
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('category', 'menu-item');
-
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('Not authenticated');
-
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/optimize-image`, {
-        method: 'POST',
-        body: formData,
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to upload image');
-      }
-
-      const data = await response.json();
-      return data.url;
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      throw error;
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!editItem) return;
-
-    setIsLoading(true);
-    try {
-      const { error } = await supabase
-        .from('menu_items')
-        .delete()
-        .eq('id', editItem.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Menu item deleted successfully"
-      });
-      
-      onSuccess();
-      onOpenChange(false);
-    } catch (error) {
-      console.error('Error deleting menu item:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete menu item",
-        variant: "destructive"
-      });
-    } finally {
-      setIsLoading(false);
-    }
   };
 
   const handleSubmit = async () => {
@@ -151,7 +133,20 @@ export const AddMenuItemDialog = ({
 
       let image_url = editItem?.image_url || null;
       if (formData.image) {
-        image_url = await handleImageUpload(formData.image);
+        const fileExt = formData.image.name.split('.').pop();
+        const filePath = `${session.user.id}/${crypto.randomUUID()}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('menu-item-images')
+          .upload(filePath, formData.image);
+        
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('menu-item-images')
+          .getPublicUrl(filePath);
+        
+        image_url = publicUrl;
       }
 
       const price = parseFloat(formData.price);
@@ -212,10 +207,10 @@ export const AddMenuItemDialog = ({
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md rounded-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+        <DialogHeader className="bg-white border-b pb-4">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-2xl font-bold font-inter">
-              {editItem ? 'Edit Item' : 'Add Item'}
+              {editItem ? 'Edit menu item' : 'Add menu item'}
             </DialogTitle>
             <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)}>
               <X className="h-4 w-4" />
@@ -223,69 +218,89 @@ export const AddMenuItemDialog = ({
           </div>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          <div className="grid gap-2">
-            <Label htmlFor="name">Name</Label>
+        <div className="space-y-6 pt-4">
+          <div className="space-y-2">
+            <Label className="font-inter">Image</Label>
+            <div 
+              onClick={() => document.getElementById('menu-item-image')?.click()}
+              className="relative w-full h-48 rounded-xl flex items-center justify-center cursor-pointer bg-gray-100 hover:bg-gray-50 transition-colors"
+            >
+              {formData.imagePreview ? (
+                <img 
+                  src={formData.imagePreview} 
+                  alt="Preview" 
+                  className="w-full h-full object-cover rounded-xl"
+                />
+              ) : (
+                <div className="flex flex-col items-center gap-2 text-gray-400">
+                  <ImageIcon className="h-8 w-8" />
+                  <span className="text-sm font-inter">Click to upload image</span>
+                </div>
+              )}
+            </div>
             <Input
-              id="name"
-              placeholder="Item name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            />
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              placeholder="Item description"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            />
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="price">Price</Label>
-            <Input
-              id="price"
-              placeholder="Item price"
-              type="number"
-              value={formData.price}
-              onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-            />
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="category">Category</Label>
-            <Select onValueChange={(value) => setFormData({ ...formData, categoryId: value })}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select a category" defaultValue={formData.categoryId} />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((category) => (
-                  <SelectItem key={category.id} value={category.id}>{category.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="image">Image</Label>
-            <Input
-              id="image"
+              id="menu-item-image"
               type="file"
               accept="image/*"
+              className="hidden"
               onChange={(e) => {
                 const file = e.target.files?.[0];
-                if (file) {
-                  setFormData({ ...formData, image: file });
-                }
+                if (file) handleImageChange(file);
               }}
             />
           </div>
-        </div>
-        
-        <div className="space-y-3 mt-6">
+
+          <div className="space-y-2">
+            <Label className="font-inter">Category</Label>
+            <select
+              value={formData.categoryId}
+              onChange={(e) => setFormData(prev => ({ ...prev, categoryId: e.target.value }))}
+              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              {categories.map(category => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="font-inter">Name</Label>
+            <Input
+              value={formData.name}
+              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+              placeholder="Item name"
+              className="font-inter"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label className="font-inter">Description (optional)</Label>
+            <Textarea
+              value={formData.description}
+              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+              placeholder="Describe your item..."
+              className="font-inter"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label className="font-inter">Price</Label>
+            <Input
+              type="text"
+              inputMode="decimal"
+              pattern="[0-9]*[.,]?[0-9]*"
+              value={formData.price}
+              onChange={(e) => {
+                const value = e.target.value.replace(/[^0-9.]/g, '');
+                setFormData(prev => ({ ...prev, price: value }));
+              }}
+              placeholder="0.00"
+              className="font-inter"
+            />
+          </div>
+
           <Button
             onClick={handleSubmit}
             disabled={isLoading}
@@ -298,18 +313,6 @@ export const AddMenuItemDialog = ({
               </>
             )}
           </Button>
-
-          {editItem && (
-            <Button
-              onClick={handleDelete}
-              disabled={isLoading}
-              variant="destructive"
-              className="w-full h-12 font-inter rounded-xl"
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete Item
-            </Button>
-          )}
         </div>
       </DialogContent>
     </Dialog>
