@@ -1,7 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
-import Sharp from 'https://esm.sh/sharp@0.32.6'
+import { decode, encode } from 'https://deno.land/x/imagescript@1.2.15/mod.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -24,16 +24,26 @@ serve(async (req) => {
     }
 
     const buffer = await file.arrayBuffer()
-    const sharp = new Sharp(new Uint8Array(buffer))
+    const image = await decode(new Uint8Array(buffer))
 
-    // Optimize the image
-    const optimizedBuffer = await sharp
-      .resize(800, 800, { 
-        fit: 'inside',
-        withoutEnlargement: true 
-      })
-      .webp({ quality: 80 })
-      .toBuffer()
+    // Resize image while maintaining aspect ratio
+    const MAX_SIZE = 800
+    let width = image.width
+    let height = image.height
+
+    if (width > MAX_SIZE || height > MAX_SIZE) {
+      if (width > height) {
+        height = Math.round((height * MAX_SIZE) / width)
+        width = MAX_SIZE
+      } else {
+        width = Math.round((width * MAX_SIZE) / height)
+        height = MAX_SIZE
+      }
+      image.resize(width, height)
+    }
+
+    // Optimize and encode image
+    const optimizedBuffer = await encode(image, { quality: 80 })
 
     // Create Supabase client
     const supabase = createClient(
@@ -41,16 +51,17 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const fileExt = 'webp'
-    const userId = (await req.json()).userId
-    const filePath = `${userId}/${crypto.randomUUID()}.${fileExt}`
+    const { data: { user } } = await supabase.auth.getUser(req.headers.get('Authorization')?.split('Bearer ')[1] ?? '')
+    if (!user) throw new Error('Not authenticated')
+
+    const fileName = `${user.id}/${crypto.randomUUID()}.jpg`
     const bucketName = category === 'menu-item' ? 'menu-item-images' : 'menu-category-images'
 
     // Upload optimized image
-    const { error: uploadError, data } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
       .from(bucketName)
-      .upload(filePath, optimizedBuffer, {
-        contentType: 'image/webp',
+      .upload(fileName, optimizedBuffer, {
+        contentType: 'image/jpeg',
         upsert: false
       })
 
@@ -61,7 +72,7 @@ serve(async (req) => {
     // Get public URL
     const { data: { publicUrl } } = supabase.storage
       .from(bucketName)
-      .getPublicUrl(filePath)
+      .getPublicUrl(fileName)
 
     return new Response(
       JSON.stringify({ 
@@ -77,6 +88,7 @@ serve(async (req) => {
     )
 
   } catch (error) {
+    console.error('Error processing image:', error)
     return new Response(
       JSON.stringify({ 
         error: 'Failed to process image',
