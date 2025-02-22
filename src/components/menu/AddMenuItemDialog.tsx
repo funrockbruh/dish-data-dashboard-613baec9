@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -102,17 +103,20 @@ export const AddMenuItemDialog = ({
 
       let image_url = null;
       if (formData.image) {
-        const formDataToSend = new FormData();
-        formDataToSend.append('file', formData.image);
-        formDataToSend.append('category', 'menu-item');
+        const fileExt = formData.image.name.split('.').pop();
+        const filePath = `${session.user.id}/${crypto.randomUUID()}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('menu-item-images')
+          .upload(filePath, formData.image);
+        
+        if (uploadError) throw uploadError;
 
-        const { data: optimizedImageData, error: optimizeError } = await supabase.functions
-          .invoke('optimize-image', {
-            body: formDataToSend
-          });
-
-        if (optimizeError) throw optimizeError;
-        image_url = optimizedImageData.url;
+        const { data: { publicUrl } } = supabase.storage
+          .from('menu-item-images')
+          .getPublicUrl(filePath);
+        
+        image_url = publicUrl;
       }
 
       const price = parseFloat(formData.price);
