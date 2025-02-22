@@ -1,9 +1,9 @@
-
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, X, Pencil, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { supabase } from "@/lib/supabase";
 
 interface AddCategoryDialogProps {
   isOpen: boolean;
@@ -29,8 +29,47 @@ export const AddCategoryDialog = ({
   isEditing = false
 }: AddCategoryDialogProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isOptimizing, setIsOptimizing] = useState(false);
 
-  return <Dialog open={isOpen} onOpenChange={onOpenChange}>
+  const handleImageUpload = async (file: File) => {
+    try {
+      setIsOptimizing(true);
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/optimize-image`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to optimize image');
+      }
+
+      const { url } = await response.json();
+      
+      // Create a temporary URL for preview
+      const reader = new FileReader();
+      reader.onloadend = () => onImageChange(file);
+      reader.readAsDataURL(file);
+
+      return url;
+    } catch (error) {
+      console.error('Error optimizing image:', error);
+      throw error;
+    } finally {
+      setIsOptimizing(false);
+    }
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md rounded-3xl">
         <DialogHeader>
           <div className="flex items-center justify-between">
@@ -60,15 +99,26 @@ export const AddCategoryDialog = ({
               ) : (
                 <Plus className="h-10 w-10 text-gray-500" />
               )}
+              {isOptimizing && (
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-xl">
+                  <div className="text-white">Optimizing...</div>
+                </div>
+              )}
             </div>
             <Input 
               type="file" 
               accept="image/*" 
               className="hidden" 
               ref={fileInputRef} 
-              onChange={e => {
+              onChange={async (e) => {
                 const file = e.target.files?.[0];
-                if (file) onImageChange(file);
+                if (file) {
+                  try {
+                    await handleImageUpload(file);
+                  } catch (error) {
+                    console.error('Failed to optimize image:', error);
+                  }
+                }
               }} 
             />
           </div>
@@ -101,5 +151,6 @@ export const AddCategoryDialog = ({
           </div>
         </div>
       </DialogContent>
-    </Dialog>;
+    </Dialog>
+  );
 };

@@ -1,1 +1,5 @@
+
 project_id = "uuvpagsucqabvkhqlbwi"
+
+[functions.optimize-image]
+verify_jwt = true

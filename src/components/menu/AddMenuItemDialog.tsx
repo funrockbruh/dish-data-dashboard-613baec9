@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -79,6 +78,48 @@ export const AddMenuItemDialog = ({
       reader.readAsDataURL(file);
       return updated;
     });
+  };
+
+  const handleImageUpload = async (file: File) => {
+    try {
+      setIsLoading(true);
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/optimize-image`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to optimize image');
+      }
+
+      const { url } = await response.json();
+      
+      // Create a temporary URL for preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData(current => ({
+          ...current,
+          imagePreview: reader.result as string
+        }));
+      };
+      reader.readAsDataURL(file);
+
+      return url;
+    } catch (error) {
+      console.error('Error optimizing image:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const validateForm = () => {
@@ -163,20 +204,7 @@ export const AddMenuItemDialog = ({
 
       let image_url = editItem?.image_url || null;
       if (formData.image) {
-        const fileExt = formData.image.name.split('.').pop();
-        const filePath = `${session.user.id}/${crypto.randomUUID()}.${fileExt}`;
-        
-        const { error: uploadError } = await supabase.storage
-          .from('menu-item-images')
-          .upload(filePath, formData.image);
-        
-        if (uploadError) throw uploadError;
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('menu-item-images')
-          .getPublicUrl(filePath);
-        
-        image_url = publicUrl;
+        image_url = await handleImageUpload(formData.image);
       }
 
       const price = parseFloat(formData.price);
