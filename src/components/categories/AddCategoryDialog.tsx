@@ -52,12 +52,20 @@ export const AddCategoryDialog = ({
         },
       });
 
-      const responseData = await response.json();
-      
       if (!response.ok) {
-        throw new Error(responseData.error || 'Failed to optimize image');
+        const errorText = await response.text();
+        let errorMessage;
+        try {
+          const errorJson = JSON.parse(errorText);
+          errorMessage = errorJson.error || 'Failed to optimize image';
+        } catch {
+          errorMessage = errorText || 'Failed to optimize image';
+        }
+        throw new Error(errorMessage);
       }
 
+      const responseData = await response.json();
+      
       if (!responseData.url) {
         throw new Error('No URL returned from image optimization');
       }
