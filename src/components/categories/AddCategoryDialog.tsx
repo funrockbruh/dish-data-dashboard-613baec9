@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Plus, X, Pencil, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/lib/supabase";
+import { useToast } from "@/hooks/use-toast";
 
 interface AddCategoryDialogProps {
   isOpen: boolean;
@@ -30,6 +31,8 @@ export const AddCategoryDialog = ({
 }: AddCategoryDialogProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isOptimizing, setIsOptimizing] = useState(false);
+  const [optimizedImageUrl, setOptimizedImageUrl] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const handleImageUpload = async (file: File) => {
     try {
@@ -53,19 +56,35 @@ export const AddCategoryDialog = ({
       }
 
       const { url } = await response.json();
+      setOptimizedImageUrl(url);
       
       // Create a temporary URL for preview
       const reader = new FileReader();
-      reader.onloadend = () => onImageChange(file);
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        onImageChange(file);
+      };
       reader.readAsDataURL(file);
 
-      return url;
     } catch (error) {
       console.error('Error optimizing image:', error);
-      throw error;
+      toast({
+        title: "Error",
+        description: "Failed to optimize image",
+        variant: "destructive"
+      });
     } finally {
       setIsOptimizing(false);
     }
+  };
+
+  const handleSave = async () => {
+    if (optimizedImageUrl) {
+      // Pass the optimized URL to the parent component
+      const fakeFile = new File([""], "optimized.jpg", { type: "image/jpeg" });
+      onImageChange(fakeFile, optimizedImageUrl);
+    }
+    onSave();
   };
 
   return (
@@ -113,11 +132,7 @@ export const AddCategoryDialog = ({
               onChange={async (e) => {
                 const file = e.target.files?.[0];
                 if (file) {
-                  try {
-                    await handleImageUpload(file);
-                  } catch (error) {
-                    console.error('Failed to optimize image:', error);
-                  }
+                  await handleImageUpload(file);
                 }
               }} 
             />
@@ -134,7 +149,11 @@ export const AddCategoryDialog = ({
           </div>
 
           <div className="space-y-3">
-            <Button onClick={onSave} className="w-full bg-green-500 hover:bg-green-600 text-white h-12 font-inter rounded-xl">
+            <Button 
+              onClick={handleSave} 
+              className="w-full bg-green-500 hover:bg-green-600 text-white h-12 font-inter rounded-xl"
+              disabled={isOptimizing}
+            >
               {isEditing ? 'Update' : 'Add'}
             </Button>
             

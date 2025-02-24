@@ -116,6 +116,11 @@ export const AddMenuItemDialog = ({
       return url;
     } catch (error) {
       console.error('Error optimizing image:', error);
+      toast({
+        title: "Error",
+        description: "Failed to optimize image",
+        variant: "destructive"
+      });
       throw error;
     } finally {
       setIsLoading(false);
