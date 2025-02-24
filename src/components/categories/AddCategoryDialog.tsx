@@ -52,16 +52,22 @@ export const AddCategoryDialog = ({
         },
       });
 
+      const responseData = await response.json();
+      
       if (!response.ok) {
-        throw new Error('Failed to optimize image');
+        throw new Error(responseData.error || 'Failed to optimize image');
       }
 
-      const { url } = await response.json();
-      setOptimizedImageUrl(url);
+      if (!responseData.url) {
+        throw new Error('No URL returned from image optimization');
+      }
+
+      setOptimizedImageUrl(responseData.url);
       
       // Create a temporary URL for preview
       const reader = new FileReader();
       reader.onloadend = () => {
+        // Set the preview using the local file for immediate feedback
         onImageChange(file);
       };
       reader.readAsDataURL(file);
@@ -70,7 +76,7 @@ export const AddCategoryDialog = ({
       console.error('Error optimizing image:', error);
       toast({
         title: "Error",
-        description: "Failed to optimize image",
+        description: error.message || "Failed to optimize image",
         variant: "destructive"
       });
     } finally {
@@ -79,6 +85,14 @@ export const AddCategoryDialog = ({
   };
 
   const handleSave = () => {
+    if (!optimizedImageUrl && imagePreview) {
+      toast({
+        title: "Error",
+        description: "Please wait for image optimization to complete",
+        variant: "destructive"
+      });
+      return;
+    }
     onSave(optimizedImageUrl || undefined);
   };
 
