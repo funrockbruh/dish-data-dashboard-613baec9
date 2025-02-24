@@ -8,55 +8,57 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const formData = await req.formData()
-    const file = formData.get('file') as File
+    const formData = await req.formData();
+    const file = formData.get('file') as File;
 
     if (!file) {
-      throw new Error('No file provided')
+      throw new Error('No file provided');
     }
 
     // Create Supabase client
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
+    );
 
-    const { data: { user } } = await supabase.auth.getUser(req.headers.get('Authorization')?.split('Bearer ')[1] ?? '')
-    if (!user) throw new Error('Not authenticated')
+    // Get user from auth header
+    const { data: { user } } = await supabase.auth.getUser(
+      req.headers.get('Authorization')?.split('Bearer ')[1] ?? ''
+    );
+    
+    if (!user) throw new Error('Not authenticated');
 
-    const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg'
-    const fileName = `${user.id}/${crypto.randomUUID()}.${fileExt}`
+    // Generate a unique file name
+    const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+    const fileName = `${user.id}/${crypto.randomUUID()}.${fileExt}`;
 
-    // Upload the original file
-    const { error: uploadError } = await supabase.storage
-      .from('menu-images')
+    // Upload file to Supabase Storage
+    const { error: uploadError, data } = await supabase.storage
+      .from('menu-category-images')
       .upload(fileName, file, {
         contentType: file.type,
         upsert: false
-      })
+      });
 
     if (uploadError) {
-      throw uploadError
+      throw new Error(`Failed to upload image: ${uploadError.message}`);
     }
 
-    // Get public URL
+    // Get the public URL
     const { data: { publicUrl } } = supabase.storage
-      .from('menu-images')
-      .getPublicUrl(fileName)
-
-    // Add image transformation parameters to the URL
-    // This will use Supabase's built-in image transformation
-    const transformedUrl = `${publicUrl}?width=800&height=800&resize=contain`
+      .from('menu-category-images')
+      .getPublicUrl(fileName);
 
     return new Response(
       JSON.stringify({ 
-        message: 'Image uploaded successfully',
-        url: transformedUrl
+        url: publicUrl,
+        message: 'Image uploaded successfully' 
       }),
       { 
         headers: { 
@@ -64,14 +66,13 @@ serve(async (req) => {
           'Content-Type': 'application/json'
         }
       }
-    )
+    );
 
   } catch (error) {
-    console.error('Error processing image:', error)
+    console.error('Error processing image:', error);
     return new Response(
       JSON.stringify({ 
-        error: 'Failed to process image',
-        details: error.message
+        error: error.message || 'Failed to process image',
       }),
       { 
         headers: { 
@@ -80,6 +81,6 @@ serve(async (req) => {
         },
         status: 400 
       }
-    )
+    );
   }
-})
+});
