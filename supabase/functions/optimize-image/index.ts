@@ -1,7 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
-import Sharp from 'https://esm.sh/sharp@0.32.6'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -21,22 +20,6 @@ serve(async (req) => {
       throw new Error('No file provided')
     }
 
-    // Read the file as an ArrayBuffer
-    const arrayBuffer = await file.arrayBuffer()
-    const buffer = new Uint8Array(arrayBuffer)
-
-    // Process image with Sharp
-    const optimizedImage = await Sharp(buffer)
-      .resize(800, 800, {
-        fit: 'inside',
-        withoutEnlargement: true
-      })
-      .jpeg({
-        quality: 80,
-        progressive: true
-      })
-      .toBuffer()
-
     // Create Supabase client
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -46,14 +29,14 @@ serve(async (req) => {
     const { data: { user } } = await supabase.auth.getUser(req.headers.get('Authorization')?.split('Bearer ')[1] ?? '')
     if (!user) throw new Error('Not authenticated')
 
-    const fileExt = 'jpg'
+    const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg'
     const fileName = `${user.id}/${crypto.randomUUID()}.${fileExt}`
 
-    // Upload optimized image
+    // Upload the original file
     const { error: uploadError } = await supabase.storage
       .from('menu-images')
-      .upload(fileName, optimizedImage, {
-        contentType: 'image/jpeg',
+      .upload(fileName, file, {
+        contentType: file.type,
         upsert: false
       })
 
@@ -66,10 +49,14 @@ serve(async (req) => {
       .from('menu-images')
       .getPublicUrl(fileName)
 
+    // Add image transformation parameters to the URL
+    // This will use Supabase's built-in image transformation
+    const transformedUrl = `${publicUrl}?width=800&height=800&resize=contain`
+
     return new Response(
       JSON.stringify({ 
-        message: 'Image optimized and uploaded successfully',
-        url: publicUrl
+        message: 'Image uploaded successfully',
+        url: transformedUrl
       }),
       { 
         headers: { 
