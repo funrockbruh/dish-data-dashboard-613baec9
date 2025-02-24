@@ -1,3 +1,4 @@
+
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 interface AddCategoryDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: () => void;
+  onSave: (optimizedUrl?: string) => void;
   onDelete?: () => void;
   categoryName: string;
   onCategoryNameChange: (name: string) => void;
@@ -61,7 +62,6 @@ export const AddCategoryDialog = ({
       // Create a temporary URL for preview
       const reader = new FileReader();
       reader.onloadend = () => {
-        const base64String = reader.result as string;
         onImageChange(file);
       };
       reader.readAsDataURL(file);
@@ -78,13 +78,8 @@ export const AddCategoryDialog = ({
     }
   };
 
-  const handleSave = async () => {
-    if (optimizedImageUrl) {
-      // Pass the optimized URL to the parent component
-      const fakeFile = new File([""], "optimized.jpg", { type: "image/jpeg" });
-      onImageChange(fakeFile, optimizedImageUrl);
-    }
-    onSave();
+  const handleSave = () => {
+    onSave(optimizedImageUrl || undefined);
   };
 
   return (
