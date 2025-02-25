@@ -34,6 +34,69 @@ export const AddCategoryDialog = ({
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [optimizedImageUrl, setOptimizedImageUrl] = useState<string | null>(null);
   const { toast } = useToast();
+  
+  // Function to optimize image size using canvas before uploading
+  const optimizeImage = (file: File): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      try {
+        // Create an image element
+        const img = new Image();
+        img.onload = () => {
+          // Create a canvas
+          const canvas = document.createElement('canvas');
+          
+          // Calculate new dimensions (max 800px width/height while maintaining aspect ratio)
+          let width = img.width;
+          let height = img.height;
+          const maxSize = 800;
+          
+          if (width > height) {
+            if (width > maxSize) {
+              height = Math.round(height * (maxSize / width));
+              width = maxSize;
+            }
+          } else {
+            if (height > maxSize) {
+              width = Math.round(width * (maxSize / height));
+              height = maxSize;
+            }
+          }
+          
+          // Set canvas dimensions
+          canvas.width = width;
+          canvas.height = height;
+          
+          // Draw image on canvas
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('Could not get canvas context'));
+            return;
+          }
+          
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // Convert to blob with compression
+          canvas.toBlob((blob) => {
+            if (blob) {
+              console.log(`Original size: ${file.size} bytes, Optimized size: ${blob.size} bytes`);
+              resolve(blob);
+            } else {
+              reject(new Error('Failed to create blob from canvas'));
+            }
+          }, 'image/jpeg', 0.8); // 80% quality JPEG
+        };
+        
+        img.onerror = () => {
+          reject(new Error('Failed to load image'));
+        };
+        
+        // Load image from file
+        img.src = URL.createObjectURL(file);
+      } catch (error) {
+        reject(error);
+      }
+    });
+  };
 
   const handleImageUpload = async (file: File) => {
     try {
@@ -54,15 +117,24 @@ export const AddCategoryDialog = ({
         throw new Error('Not authenticated');
       }
 
-      // Upload directly to storage instead of using the edge function
-      // This is more reliable and should work regardless of edge function status
-      const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+      // Optimize the image
+      const optimizedBlob = await optimizeImage(file);
+      
+      // Create a new file from the optimized blob
+      const optimizedFile = new File(
+        [optimizedBlob], 
+        file.name.split('.')[0] + '_optimized.jpg', 
+        { type: 'image/jpeg' }
+      );
+
+      // Upload to storage
+      const fileExt = 'jpg'; // Always jpg after optimization
       const filePath = `${session.user.id}/${crypto.randomUUID()}.${fileExt}`;
       
       const { error: uploadError } = await supabase.storage
         .from('menu-category-images')
-        .upload(filePath, file, {
-          contentType: file.type,
+        .upload(filePath, optimizedFile, {
+          contentType: 'image/jpeg',
           upsert: false
         });
 
@@ -150,7 +222,7 @@ export const AddCategoryDialog = ({
               )}
               {isOptimizing && (
                 <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-xl">
-                  <div className="text-white">Uploading...</div>
+                  <div className="text-white">Optimizing...</div>
                 </div>
               )}
             </div>
