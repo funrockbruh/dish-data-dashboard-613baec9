@@ -1,6 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
+import Sharp from 'https://esm.sh/sharp@0.32.6'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -8,140 +9,107 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    console.log('Received request to optimize image');
-    
-    // First try to create the bucket if it doesn't exist
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
-    // Try to create bucket first (it will silently fail if it already exists)
-    const { error: bucketError } = await supabaseAdmin.storage.createBucket('menu-category-images', {
-      public: true,
-      fileSizeLimit: 5242880, // 5MB
-    });
-    
-    console.log('Bucket creation result:', bucketError ? 'Error: ' + bucketError.message : 'Success or already exists');
+    console.log('Starting image optimization');
     
     const formData = await req.formData();
     const file = formData.get('file');
 
     if (!file || !(file instanceof File)) {
-      console.error('No valid file provided');
-      return new Response(
-        JSON.stringify({ error: 'No valid file provided' }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 400
-        }
-      );
+      throw new Error('No valid file provided');
     }
+
+    // Convert File to ArrayBuffer
+    const arrayBuffer = await file.arrayBuffer();
+    
+    // Optimize the image
+    const optimizedImageBuffer = await Sharp(new Uint8Array(arrayBuffer))
+      .resize(800, 800, { // Max dimensions
+        fit: 'inside',
+        withoutEnlargement: true
+      })
+      .jpeg({ // Convert to JPEG and compress
+        quality: 80,
+        progressive: true
+      })
+      .toBuffer();
+
+    // Create new File from optimized buffer
+    const optimizedFile = new File(
+      [optimizedImageBuffer],
+      file.name.replace(/\.[^/.]+$/, "") + "_optimized.jpg",
+      { type: 'image/jpeg' }
+    );
+
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
 
     // Get user from auth header
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      console.error('No authorization header');
-      return new Response(
-        JSON.stringify({ error: 'No authorization header' }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 401
-        }
-      );
+      throw new Error('No authorization header');
     }
 
     const token = authHeader.split('Bearer ')[1];
     if (!token) {
-      console.error('No token provided');
-      return new Response(
-        JSON.stringify({ error: 'No token provided' }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 401
-        }
-      );
+      throw new Error('No token provided');
     }
 
     const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
-    
     if (authError || !user) {
-      console.error('Authentication failed:', authError);
-      return new Response(
-        JSON.stringify({ error: 'Authentication failed' }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 401
-        }
-      );
+      throw new Error('Authentication failed');
     }
 
-    // Generate a unique file name
-    const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-    const fileName = `${user.id}/${crypto.randomUUID()}.${fileExt}`;
+    // Generate filename
+    const fileName = `${user.id}/${crypto.randomUUID()}.jpg`;
 
-    console.log('Attempting to upload file:', fileName);
+    console.log('Uploading optimized file:', fileName);
 
-    // Upload file to Supabase Storage
-    const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
+    const { error: uploadError } = await supabaseAdmin.storage
       .from('menu-category-images')
-      .upload(fileName, file, {
-        contentType: file.type,
+      .upload(fileName, optimizedFile, {
+        contentType: 'image/jpeg',
         upsert: false
       });
 
     if (uploadError) {
-      console.error('Upload error:', uploadError);
-      return new Response(
-        JSON.stringify({ error: `Failed to upload image: ${uploadError.message}` }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 500
-        }
-      );
+      throw new Error(`Upload failed: ${uploadError.message}`);
     }
 
-    // Get the public URL
     const { data: { publicUrl } } = supabaseAdmin.storage
       .from('menu-category-images')
       .getPublicUrl(fileName);
 
-    console.log('File uploaded successfully:', publicUrl);
+    console.log('Upload successful:', publicUrl);
 
     return new Response(
-      JSON.stringify({ 
-        url: publicUrl,
-        message: 'Image uploaded successfully' 
-      }),
+      JSON.stringify({ url: publicUrl }),
       { 
         headers: { 
           ...corsHeaders,
           'Content-Type': 'application/json'
-        },
-        status: 200
+        }
       }
     );
 
   } catch (error) {
-    console.error('Error processing image:', error);
-    
-    // Ensure we always return a properly formatted JSON response
+    console.error('Error:', error);
     return new Response(
       JSON.stringify({ 
-        error: error instanceof Error ? error.message : 'Failed to process image',
+        error: error instanceof Error ? error.message : 'Failed to optimize image' 
       }),
       { 
         headers: { 
           ...corsHeaders,
           'Content-Type': 'application/json'
         },
-        status: 500 
+        status: 500
       }
     );
   }
