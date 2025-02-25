@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,13 +34,16 @@ export const AddMenuItemDialog = ({
   editItem
 }: AddMenuItemDialogProps) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [isOptimizing, setIsOptimizing] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
     price: "",
     categoryId: categories[0]?.id || "",
     image: null as File | null,
-    imagePreview: null as string | null
+    imagePreview: null as string | null,
+    optimizedImage: null as File | null
   });
   const { toast } = useToast();
 
@@ -52,6 +55,7 @@ export const AddMenuItemDialog = ({
         price: (editItem.price / 100).toString(),
         categoryId: editItem.category_id,
         image: null,
+        optimizedImage: null,
         imagePreview: editItem.image_url
       });
     } else {
@@ -61,24 +65,119 @@ export const AddMenuItemDialog = ({
         price: "",
         categoryId: categories[0]?.id || "",
         image: null,
+        optimizedImage: null,
         imagePreview: null
       });
     }
   }, [editItem, categories]);
 
-  const handleImageChange = (file: File) => {
-    setFormData(prev => {
-      const updated = { ...prev, image: file };
+  // Function to optimize image using canvas
+  const optimizeImage = async (file: File): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      try {
+        // Create an image element
+        const img = new Image();
+        img.onload = () => {
+          // Create a canvas
+          const canvas = document.createElement('canvas');
+          
+          // Calculate new dimensions (max 800px width/height while maintaining aspect ratio)
+          let width = img.width;
+          let height = img.height;
+          const maxSize = 800;
+          
+          if (width > height) {
+            if (width > maxSize) {
+              height = Math.round(height * (maxSize / width));
+              width = maxSize;
+            }
+          } else {
+            if (height > maxSize) {
+              width = Math.round(width * (maxSize / height));
+              height = maxSize;
+            }
+          }
+          
+          // Set canvas dimensions
+          canvas.width = width;
+          canvas.height = height;
+          
+          // Draw image on canvas
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('Could not get canvas context'));
+            return;
+          }
+          
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // Convert to blob with compression
+          canvas.toBlob((blob) => {
+            if (blob) {
+              console.log(`Original size: ${(file.size / 1024).toFixed(2)}KB, Optimized size: ${(blob.size / 1024).toFixed(2)}KB`);
+              
+              // Create a new file from the optimized blob
+              const optimizedFile = new File(
+                [blob], 
+                file.name.replace(/\.[^/.]+$/, "") + "_optimized.jpg", 
+                { type: 'image/jpeg' }
+              );
+              
+              resolve(optimizedFile);
+            } else {
+              reject(new Error('Failed to create blob from canvas'));
+            }
+          }, 'image/jpeg', 0.8); // 80% quality JPEG
+        };
+        
+        img.onerror = () => {
+          reject(new Error('Failed to load image'));
+        };
+        
+        // Load image from file
+        img.src = URL.createObjectURL(file);
+      } catch (error) {
+        reject(error);
+      }
+    });
+  };
+
+  const handleImageChange = async (file: File) => {
+    try {
+      setIsOptimizing(true);
+      
+      // Create a preview immediately for better UX
       const reader = new FileReader();
       reader.onloadend = () => {
-        setFormData(current => ({
-          ...current,
-          imagePreview: reader.result as string
-        }));
+        if (typeof reader.result === 'string') {
+          setFormData(prev => ({
+            ...prev,
+            image: file,
+            imagePreview: reader.result as string
+          }));
+        }
       };
       reader.readAsDataURL(file);
-      return updated;
-    });
+      
+      // Optimize the image
+      const optimizedFile = await optimizeImage(file);
+      
+      // Now update with the optimized file
+      setFormData(prev => ({
+        ...prev,
+        optimizedImage: optimizedFile
+      }));
+      
+    } catch (error) {
+      console.error('Error optimizing image:', error);
+      toast({
+        title: "Error optimizing image",
+        description: "Failed to optimize the image. Using original instead.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsOptimizing(false);
+    }
   };
 
   const validateForm = () => {
@@ -155,6 +254,13 @@ export const AddMenuItemDialog = ({
 
   const handleSubmit = async () => {
     if (!validateForm()) return;
+    if (isOptimizing) {
+      toast({
+        title: "Please wait",
+        description: "Image is still being optimized",
+      });
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -162,13 +268,21 @@ export const AddMenuItemDialog = ({
       if (!session?.user) throw new Error("Not authenticated");
 
       let image_url = editItem?.image_url || null;
+      
+      // If we have an image to upload
       if (formData.image) {
-        const fileExt = formData.image.name.split('.').pop();
+        // Use the optimized image if available, otherwise use the original
+        const fileToUpload = formData.optimizedImage || formData.image;
+        
+        const fileExt = 'jpg'; // Always jpg after optimization
         const filePath = `${session.user.id}/${crypto.randomUUID()}.${fileExt}`;
         
         const { error: uploadError } = await supabase.storage
           .from('menu-item-images')
-          .upload(filePath, formData.image);
+          .upload(filePath, fileToUpload, {
+            contentType: 'image/jpeg',
+            upsert: false
+          });
         
         if (uploadError) throw uploadError;
 
@@ -252,7 +366,7 @@ export const AddMenuItemDialog = ({
           <div className="space-y-2">
             <Label className="font-inter">Image</Label>
             <div 
-              onClick={() => document.getElementById('menu-item-image')?.click()}
+              onClick={() => fileInputRef.current?.click()}
               className="relative w-full h-48 rounded-xl flex items-center justify-center cursor-pointer bg-gray-100 hover:bg-gray-50 transition-colors"
             >
               {formData.imagePreview ? (
@@ -267,12 +381,18 @@ export const AddMenuItemDialog = ({
                   <span className="text-sm font-inter">Click to upload image</span>
                 </div>
               )}
+              {isOptimizing && (
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-xl">
+                  <div className="text-white">Optimizing...</div>
+                </div>
+              )}
             </div>
             <Input
               id="menu-item-image"
               type="file"
               accept="image/*"
               className="hidden"
+              ref={fileInputRef}
               onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) handleImageChange(file);
@@ -334,7 +454,7 @@ export const AddMenuItemDialog = ({
           <div className="space-y-3">
             <Button
               onClick={handleSubmit}
-              disabled={isLoading}
+              disabled={isLoading || isOptimizing}
               className="w-full bg-green-500 hover:bg-green-600 text-white h-12 font-inter rounded-xl"
             >
               {isLoading ? (editItem ? "Updating..." : "Adding...") : (

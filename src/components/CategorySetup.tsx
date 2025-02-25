@@ -175,7 +175,7 @@ export const CategorySetup = () => {
         let image_url = category.image_url;
         
         if (category.image) {
-          const fileExt = category.image.name.split('.').pop();
+          const fileExt = 'jpg'; // Always jpg after optimization
           const filePath = `${session.user.id}/${crypto.randomUUID()}.${fileExt}`;
           const { error: uploadError } = await supabase.storage
             .from('menu-category-images')
@@ -228,46 +228,4 @@ export const CategorySetup = () => {
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           <button 
             onClick={handleAddCategory} 
-            className="aspect-square rounded-2xl flex items-center justify-center transition-colors bg-white border-2 border-dashed border-gray-300 hover:border-gray-400"
-          >
-            <Plus className="h-10 w-10 text-gray-500" />
-          </button>
-
-          {categories.map((category, index) => (
-            <CategoryCard 
-              key={index} 
-              name={category.name} 
-              imagePreview={category.imagePreview} 
-              onEdit={() => handleEditCategory(index)} 
-            />
-          ))}
-        </div>
-      </Card>
-
-      <div className="flex justify-end">
-        <Button 
-          onClick={handleSave}
-          disabled={isLoading}
-          className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-xl font-inter"
-        >
-          {isLoading ? "Saving..." : "Save Categories"}
-        </Button>
-      </div>
-
-      <AddCategoryDialog 
-        isOpen={isDialogOpen} 
-        onOpenChange={setIsDialogOpen} 
-        categoryName={newCategory.name} 
-        onCategoryNameChange={name => setNewCategory(prev => ({
-          ...prev,
-          name
-        }))} 
-        imagePreview={newCategory.imagePreview} 
-        onImageChange={handleNewCategoryImageChange} 
-        onSave={handleSaveNewCategory}
-        onDelete={editingIndex !== null ? handleDeleteCategory : undefined}
-        isEditing={editingIndex !== null}
-      />
-    </div>
-  );
-};
+            className="aspect-square rounded-2xl flex items-center justify-center transition-colors bg-white
