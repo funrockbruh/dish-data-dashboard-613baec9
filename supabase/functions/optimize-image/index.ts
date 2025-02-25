@@ -14,30 +14,75 @@ serve(async (req) => {
   }
 
   try {
+    console.log('Received request to optimize image');
+    
     const formData = await req.formData();
     const file = formData.get('file');
 
     if (!file || !(file instanceof File)) {
-      throw new Error('No valid file provided');
+      console.error('No valid file provided');
+      return new Response(
+        JSON.stringify({ error: 'No valid file provided' }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 400
+        }
+      );
     }
 
     // Create Supabase client
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('Missing Supabase credentials');
+      return new Response(
+        JSON.stringify({ error: 'Server configuration error' }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 500
+        }
+      );
+    }
+    
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Get user from auth header
     const authHeader = req.headers.get('Authorization');
-    if (!authHeader) throw new Error('No authorization header');
+    if (!authHeader) {
+      console.error('No authorization header');
+      return new Response(
+        JSON.stringify({ error: 'No authorization header' }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 401
+        }
+      );
+    }
 
     const token = authHeader.split('Bearer ')[1];
-    if (!token) throw new Error('No token provided');
+    if (!token) {
+      console.error('No token provided');
+      return new Response(
+        JSON.stringify({ error: 'No token provided' }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 401
+        }
+      );
+    }
 
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     
     if (authError || !user) {
-      throw new Error('Authentication failed');
+      console.error('Authentication failed:', authError);
+      return new Response(
+        JSON.stringify({ error: 'Authentication failed' }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 401
+        }
+      );
     }
 
     // Generate a unique file name
@@ -47,7 +92,7 @@ serve(async (req) => {
     console.log('Attempting to upload file:', fileName);
 
     // Upload file to Supabase Storage
-    const { error: uploadError } = await supabase.storage
+    const { data: uploadData, error: uploadError } = await supabase.storage
       .from('menu-category-images')
       .upload(fileName, file, {
         contentType: file.type,
@@ -56,7 +101,13 @@ serve(async (req) => {
 
     if (uploadError) {
       console.error('Upload error:', uploadError);
-      throw new Error(`Failed to upload image: ${uploadError.message}`);
+      return new Response(
+        JSON.stringify({ error: `Failed to upload image: ${uploadError.message}` }),
+        { 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 500
+        }
+      );
     }
 
     // Get the public URL
@@ -93,7 +144,7 @@ serve(async (req) => {
           ...corsHeaders,
           'Content-Type': 'application/json'
         },
-        status: 400 
+        status: 500 
       }
     );
   }

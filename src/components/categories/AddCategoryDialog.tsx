@@ -44,6 +44,15 @@ export const AddCategoryDialog = ({
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('Not authenticated');
 
+      // Create a temporary preview before the upload
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (typeof reader.result === 'string') {
+          onImageChange(file);
+        }
+      };
+      reader.readAsDataURL(file);
+
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/optimize-image`, {
         method: 'POST',
         body: formData,
@@ -52,38 +61,32 @@ export const AddCategoryDialog = ({
         },
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        let errorMessage;
-        try {
-          const errorJson = JSON.parse(errorText);
-          errorMessage = errorJson.error || 'Failed to optimize image';
-        } catch {
-          errorMessage = errorText || 'Failed to optimize image';
-        }
-        throw new Error(errorMessage);
+      let responseData;
+      const responseText = await response.text();
+      
+      try {
+        // Try to parse the response as JSON
+        responseData = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('Failed to parse response as JSON:', responseText);
+        throw new Error(`Server returned invalid response: ${responseText.substring(0, 100)}...`);
       }
 
-      const responseData = await response.json();
+      if (!response.ok) {
+        throw new Error(responseData.error || `Upload failed with status: ${response.status}`);
+      }
       
       if (!responseData.url) {
         throw new Error('No URL returned from image optimization');
       }
 
+      console.log('Image uploaded successfully:', responseData.url);
       setOptimizedImageUrl(responseData.url);
-      
-      // Create a temporary URL for preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        // Set the preview using the local file for immediate feedback
-        onImageChange(file);
-      };
-      reader.readAsDataURL(file);
 
     } catch (error) {
       console.error('Error optimizing image:', error);
       toast({
-        title: "Error",
+        title: "Error optimizing image",
         description: error.message || "Failed to optimize image",
         variant: "destructive"
       });
@@ -93,7 +96,16 @@ export const AddCategoryDialog = ({
   };
 
   const handleSave = () => {
-    if (!optimizedImageUrl && imagePreview) {
+    if (isOptimizing) {
+      toast({
+        title: "Please wait",
+        description: "Image is still being processed",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (!optimizedImageUrl && imagePreview && !isEditing) {
       toast({
         title: "Error",
         description: "Please wait for image optimization to complete",
@@ -101,6 +113,7 @@ export const AddCategoryDialog = ({
       });
       return;
     }
+    
     onSave(optimizedImageUrl || undefined);
   };
 
