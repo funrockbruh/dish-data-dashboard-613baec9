@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -65,6 +66,55 @@ export const AddMenuItemDialog = ({
     }
   }, [editItem, categories]);
 
+  const optimizeImage = async (file: File): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      img.onload = () => {
+        // Calculate dimensions while maintaining aspect ratio
+        let width = img.width;
+        let height = img.height;
+        const maxSize = 800;
+        
+        if (width > height) {
+          if (width > maxSize) {
+            height = Math.round(height * (maxSize / width));
+            width = maxSize;
+          }
+        } else {
+          if (height > maxSize) {
+            width = Math.round(width * (maxSize / height));
+            height = maxSize;
+          }
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        if (!ctx) {
+          reject(new Error('Could not get canvas context'));
+          return;
+        }
+        
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        canvas.toBlob((blob) => {
+          if (blob) {
+            console.log(`Optimized image: Original: ${(file.size / 1024).toFixed(2)}KB, New: ${(blob.size / 1024).toFixed(2)}KB`);
+            resolve(blob);
+          } else {
+            reject(new Error('Could not create blob'));
+          }
+        }, 'image/jpeg', 0.75); // 75% quality
+      };
+      
+      img.onerror = () => reject(new Error('Error loading image'));
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
   const handleImageChange = (file: File) => {
     setFormData(prev => {
       const updated = { ...prev, image: file };
@@ -83,42 +133,47 @@ export const AddMenuItemDialog = ({
   const handleImageUpload = async (file: File) => {
     try {
       setIsLoading(true);
-      const formData = new FormData();
-      formData.append('file', file);
-
+      
+      // Optimize image using canvas-based approach
+      const optimizedBlob = await optimizeImage(file);
+      
+      // Create a new file from the optimized blob
+      const optimizedFile = new File(
+        [optimizedBlob], 
+        `${file.name.split('.')[0]}_optimized.jpg`,
+        { type: 'image/jpeg' }
+      );
+      
+      // Get authenticated session
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) throw new Error('Not authenticated');
-
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/optimize-image`, {
-        method: 'POST',
-        body: formData,
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to optimize image');
-      }
-
-      const { url } = await response.json();
       
-      // Create a temporary URL for preview
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData(current => ({
-          ...current,
-          imagePreview: reader.result as string
-        }));
-      };
-      reader.readAsDataURL(file);
-
-      return url;
+      // Upload directly to Supabase Storage
+      const fileExt = 'jpg';
+      const filePath = `${session.user.id}/${crypto.randomUUID()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('menu-items')
+        .upload(filePath, optimizedFile, {
+          contentType: 'image/jpeg',
+          upsert: true,
+        });
+        
+      if (uploadError) throw uploadError;
+      
+      // Get the public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('menu-items')
+        .getPublicUrl(filePath);
+        
+      console.log('Image uploaded successfully:', publicUrl);
+      
+      return publicUrl;
     } catch (error) {
-      console.error('Error optimizing image:', error);
+      console.error('Error optimizing/uploading image:', error);
       toast({
         title: "Error",
-        description: "Failed to optimize image",
+        description: "Failed to process image",
         variant: "destructive"
       });
       throw error;
@@ -298,6 +353,11 @@ export const AddMenuItemDialog = ({
                 <div className="flex flex-col items-center gap-2 text-gray-400">
                   <ImageIcon className="h-8 w-8" />
                   <span className="text-sm font-inter">Click to upload image</span>
+                </div>
+              )}
+              {isLoading && (
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-xl">
+                  <div className="text-white">Optimizing...</div>
                 </div>
               )}
             </div>
