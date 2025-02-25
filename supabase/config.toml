@@ -58,9 +58,6 @@ double_confirm_changes = true
 # If enabled, users need to confirm their email address before signing in.
 enable_confirmations = false
 
-# Use an external OAuth provider. The full list of providers are: `apple`, `azure`, `bitbucket`,
-# `discord`, `facebook`, `github`, `gitlab`, `google`, `keycloak`, `linkedin`, `notion`, `twitch`,
-# `twitter`, `slack`, `spotify`, `workos`, `zoom`.
 [auth.external.apple]
 enabled = false
 client_id = ""
@@ -101,15 +98,9 @@ redirect_uri = ""
 # or any other third-party OIDC providers.
 url = ""
 
-# Configure Storage functionality
 [functions]
-# Only functions paths under this directory will be checked for changes
-path = "supabase/functions"
+# Define the functions directories
+included_files = ["**"]
 
-[local.functions]
-# Only functions paths under this directory will be checked for changes
+[[functions.paths]]
 path = "supabase/functions"
-
-[local.env]
-# Set env var values to override defaults in env_vars.template
-EXAMPLE_ENV_VAR = "example value"
