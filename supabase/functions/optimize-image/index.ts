@@ -16,6 +16,20 @@ serve(async (req) => {
   try {
     console.log('Received request to optimize image');
     
+    // First try to create the bucket if it doesn't exist
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    // Try to create bucket first (it will silently fail if it already exists)
+    const { error: bucketError } = await supabaseAdmin.storage.createBucket('menu-category-images', {
+      public: true,
+      fileSizeLimit: 5242880, // 5MB
+    });
+    
+    console.log('Bucket creation result:', bucketError ? 'Error: ' + bucketError.message : 'Success or already exists');
+    
     const formData = await req.formData();
     const file = formData.get('file');
 
@@ -29,23 +43,6 @@ serve(async (req) => {
         }
       );
     }
-
-    // Create Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL');
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    
-    if (!supabaseUrl || !supabaseKey) {
-      console.error('Missing Supabase credentials');
-      return new Response(
-        JSON.stringify({ error: 'Server configuration error' }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 500
-        }
-      );
-    }
-    
-    const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Get user from auth header
     const authHeader = req.headers.get('Authorization');
@@ -72,7 +69,7 @@ serve(async (req) => {
       );
     }
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
     
     if (authError || !user) {
       console.error('Authentication failed:', authError);
@@ -92,7 +89,7 @@ serve(async (req) => {
     console.log('Attempting to upload file:', fileName);
 
     // Upload file to Supabase Storage
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
       .from('menu-category-images')
       .upload(fileName, file, {
         contentType: file.type,
@@ -111,7 +108,7 @@ serve(async (req) => {
     }
 
     // Get the public URL
-    const { data: { publicUrl } } = supabase.storage
+    const { data: { publicUrl } } = supabaseAdmin.storage
       .from('menu-category-images')
       .getPublicUrl(fileName);
 

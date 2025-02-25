@@ -38,12 +38,7 @@ export const AddCategoryDialog = ({
   const handleImageUpload = async (file: File) => {
     try {
       setIsOptimizing(true);
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('Not authenticated');
-
+      
       // Create a temporary preview before the upload
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -53,35 +48,40 @@ export const AddCategoryDialog = ({
       };
       reader.readAsDataURL(file);
 
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/optimize-image`, {
-        method: 'POST',
-        body: formData,
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-      });
+      // Get the session
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Not authenticated');
+      }
 
-      let responseData;
-      const responseText = await response.text();
+      // Upload directly to storage instead of using the edge function
+      // This is more reliable and should work regardless of edge function status
+      const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+      const filePath = `${session.user.id}/${crypto.randomUUID()}.${fileExt}`;
       
-      try {
-        // Try to parse the response as JSON
-        responseData = JSON.parse(responseText);
-      } catch (parseError) {
-        console.error('Failed to parse response as JSON:', responseText);
-        throw new Error(`Server returned invalid response: ${responseText.substring(0, 100)}...`);
+      const { error: uploadError } = await supabase.storage
+        .from('menu-category-images')
+        .upload(filePath, file, {
+          contentType: file.type,
+          upsert: false
+        });
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw new Error(`Failed to upload image: ${uploadError.message}`);
       }
 
-      if (!response.ok) {
-        throw new Error(responseData.error || `Upload failed with status: ${response.status}`);
-      }
-      
-      if (!responseData.url) {
-        throw new Error('No URL returned from image optimization');
+      // Get the public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('menu-category-images')
+        .getPublicUrl(filePath);
+
+      if (!publicUrl) {
+        throw new Error('No URL returned from image upload');
       }
 
-      console.log('Image uploaded successfully:', responseData.url);
-      setOptimizedImageUrl(responseData.url);
+      console.log('Image uploaded successfully:', publicUrl);
+      setOptimizedImageUrl(publicUrl);
 
     } catch (error) {
       console.error('Error optimizing image:', error);
@@ -108,7 +108,7 @@ export const AddCategoryDialog = ({
     if (!optimizedImageUrl && imagePreview && !isEditing) {
       toast({
         title: "Error",
-        description: "Please wait for image optimization to complete",
+        description: "Image upload failed. Please try again or continue without an image.",
         variant: "destructive"
       });
       return;
@@ -150,7 +150,7 @@ export const AddCategoryDialog = ({
               )}
               {isOptimizing && (
                 <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-xl">
-                  <div className="text-white">Optimizing...</div>
+                  <div className="text-white">Uploading...</div>
                 </div>
               )}
             </div>
