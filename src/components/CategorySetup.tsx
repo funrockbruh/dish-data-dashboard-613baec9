@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
@@ -160,14 +159,21 @@ export const CategorySetup = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) throw new Error("Not authenticated");
 
-      // First, clear existing categories
-      const { error: deleteError } = await supabase
-        .from('menu_categories')
-        .delete()
+      // Check if there are any existing menu items
+      const { data: existingItems } = await supabase
+        .from('menu_items')
+        .select('id')
         .eq('restaurant_id', session.user.id);
-
-      if (deleteError) throw deleteError;
-
+      
+      // First, store existing categories IDs to keep track of which ones to delete
+      const { data: existingCategories } = await supabase
+        .from('menu_categories')
+        .select('id')
+        .eq('restaurant_id', session.user.id);
+        
+      const existingCategoryIds = new Set(existingCategories?.map(cat => cat.id) || []);
+      const updatedCategoryIds = new Set<string>();
+      
       // Then save all current categories
       for (const category of categories) {
         if (!category.name.trim()) continue;
@@ -190,15 +196,62 @@ export const CategorySetup = () => {
           image_url = publicUrl;
         }
 
-        const { error: insertError } = await supabase
-          .from('menu_categories')
-          .insert({
-            name: category.name,
-            image_url,
-            restaurant_id: session.user.id
-          });
+        if (category.id) {
+          // Update existing category
+          const { error: updateError, data: updatedCategory } = await supabase
+            .from('menu_categories')
+            .update({
+              name: category.name,
+              image_url,
+            })
+            .eq('id', category.id)
+            .select('id')
+            .single();
 
-        if (insertError) throw insertError;
+          if (updateError) throw updateError;
+          if (updatedCategory) updatedCategoryIds.add(updatedCategory.id);
+        } else {
+          // Insert new category
+          const { error: insertError, data: newCategory } = await supabase
+            .from('menu_categories')
+            .insert({
+              name: category.name,
+              image_url,
+              restaurant_id: session.user.id
+            })
+            .select('id')
+            .single();
+
+          if (insertError) throw insertError;
+          if (newCategory) updatedCategoryIds.add(newCategory.id);
+        }
+      }
+      
+      // Delete categories that no longer exist
+      // But only if there are no menu items assigned to them
+      for (const catId of existingCategoryIds) {
+        if (!updatedCategoryIds.has(catId)) {
+          // Check if there are any menu items using this category
+          const { data: itemsUsingCategory, error: countError } = await supabase
+            .from('menu_items')
+            .select('id')
+            .eq('category_id', catId);
+            
+          if (countError) throw countError;
+          
+          // Only delete if no items are using this category
+          if (!itemsUsingCategory || itemsUsingCategory.length === 0) {
+            const { error: deleteError } = await supabase
+              .from('menu_categories')
+              .delete()
+              .eq('id', catId);
+              
+            if (deleteError) throw deleteError;
+          } else {
+            // If there are items using this category, keep it
+            updatedCategoryIds.add(catId);
+          }
+        }
       }
 
       // Navigate to menu items page after successful save
