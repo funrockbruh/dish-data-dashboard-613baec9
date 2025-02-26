@@ -237,8 +237,8 @@ export const CategorySetup = () => {
             <CategoryCard
               key={index}
               name={category.name}
-              imageUrl={category.imagePreview}
-              onClick={() => handleEditCategory(index)}
+              imagePreview={category.imagePreview}
+              onEdit={() => handleEditCategory(index)}
             />
           ))}
         </div>
