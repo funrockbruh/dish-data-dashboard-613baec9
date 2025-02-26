@@ -228,4 +228,43 @@ export const CategorySetup = () => {
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           <button 
             onClick={handleAddCategory} 
-            className="aspect-square rounded-2xl flex items-center justify-center transition-colors bg-white
+            className="aspect-square rounded-2xl flex items-center justify-center transition-colors bg-white border-2 border-dashed border-gray-300 hover:border-gray-400"
+          >
+            <Plus className="h-10 w-10 text-gray-400" />
+          </button>
+
+          {categories.map((category, index) => (
+            <CategoryCard
+              key={index}
+              name={category.name}
+              imageUrl={category.imagePreview}
+              onClick={() => handleEditCategory(index)}
+            />
+          ))}
+        </div>
+      </Card>
+
+      <div className="flex justify-end">
+        <Button 
+          onClick={handleSave}
+          disabled={isLoading}
+          className="px-6 py-6 rounded-xl"
+        >
+          {isLoading ? "Saving..." : "Save & Continue"}
+        </Button>
+      </div>
+
+      <AddCategoryDialog
+        isOpen={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        categoryName={newCategory.name}
+        onCategoryNameChange={(name) => setNewCategory(prev => ({ ...prev, name }))}
+        imagePreview={newCategory.imagePreview}
+        onImageChange={handleNewCategoryImageChange}
+        onSave={handleSaveNewCategory}
+        onDelete={editingIndex !== null ? handleDeleteCategory : undefined}
+        isEditing={editingIndex !== null}
+      />
+    </div>
+  );
+};
