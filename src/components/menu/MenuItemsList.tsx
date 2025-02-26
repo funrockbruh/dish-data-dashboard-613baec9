@@ -156,7 +156,7 @@ export const MenuItemsList = () => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
           <Input
             type="text"
-            placeholder="Search menu items by name or description..."
+            placeholder="Search..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
@@ -191,18 +191,16 @@ export const MenuItemsList = () => {
         </div>
       </Card>
 
-      {hasUnsavedChanges && (
-        <div className="flex justify-end">
-          <Button 
-            onClick={saveItems} 
-            disabled={isLoading}
-            className="px-6 py-2 rounded-xl flex items-center gap-2"
-          >
-            <Save className="h-4 w-4" />
-            Save Items
-          </Button>
-        </div>
-      )}
+      <div className="flex justify-end">
+        <Button 
+          onClick={saveItems} 
+          disabled={isLoading}
+          className="px-6 py-2 rounded-xl flex items-center gap-2"
+        >
+          <Save className="h-4 w-4" />
+          Save Items
+        </Button>
+      </div>
 
       <AddMenuItemDialog
         isOpen={isDialogOpen}
