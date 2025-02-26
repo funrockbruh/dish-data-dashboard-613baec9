@@ -162,6 +162,15 @@ export const MenuItemsList = () => {
             className="pl-10"
           />
         </div>
+        <Button
+          onClick={saveItems}
+          disabled={isLoading || !hasUnsavedChanges}
+          className="px-4 py-2 rounded-xl flex items-center gap-2"
+          variant="outline"
+        >
+          <Save className="h-4 w-4" />
+          Save Items
+        </Button>
         <button 
           onClick={() => setIsDialogOpen(true)} 
           className="aspect-square w-12 h-12 rounded-xl flex items-center justify-center transition-colors bg-white border-2 border-dashed border-gray-300 hover:border-gray-400"
@@ -190,19 +199,6 @@ export const MenuItemsList = () => {
           )}
         </div>
       </Card>
-
-      {hasUnsavedChanges && (
-        <div className="flex justify-end">
-          <Button 
-            onClick={saveItems} 
-            disabled={isLoading}
-            className="px-6 py-2 rounded-xl flex items-center gap-2"
-          >
-            <Save className="h-4 w-4" />
-            Save Items
-          </Button>
-        </div>
-      )}
 
       <AddMenuItemDialog
         isOpen={isDialogOpen}
