@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Save } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,7 @@ export const MenuItemsList = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [profile, setProfile] = useState<{
     restaurant_name: string | null;
     owner_name: string | null;
@@ -78,6 +79,7 @@ export const MenuItemsList = () => {
 
       if (itemsError) throw itemsError;
       setItems(itemsData || []);
+      setHasUnsavedChanges(false);
     } catch (error) {
       console.error('Error loading data:', error);
       toast({
@@ -100,8 +102,37 @@ export const MenuItemsList = () => {
     setIsDialogOpen(false);
   };
 
+  const handleSuccess = () => {
+    loadData();
+    setHasUnsavedChanges(true);
+  };
+
+  const saveItems = async () => {
+    try {
+      setIsLoading(true);
+      // No action needed here since items are already saved to Supabase
+      // during add/edit operations. This is mainly for UX feedback.
+      toast({
+        title: "Success",
+        description: "All menu items saved successfully"
+      });
+      setHasUnsavedChanges(false);
+    } catch (error) {
+      console.error('Error saving items:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save menu items",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Filter items by both name and description
   const filteredItems = items.filter(item =>
-    item.name.toLowerCase().includes(searchQuery.toLowerCase())
+    item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   return (
@@ -125,7 +156,7 @@ export const MenuItemsList = () => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
           <Input
             type="text"
-            placeholder="Search menu items..."
+            placeholder="Search menu items by name or description..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
@@ -160,11 +191,24 @@ export const MenuItemsList = () => {
         </div>
       </Card>
 
+      {hasUnsavedChanges && (
+        <div className="flex justify-end">
+          <Button 
+            onClick={saveItems} 
+            disabled={isLoading}
+            className="px-6 py-2 rounded-xl flex items-center gap-2"
+          >
+            <Save className="h-4 w-4" />
+            Save Items
+          </Button>
+        </div>
+      )}
+
       <AddMenuItemDialog
         isOpen={isDialogOpen}
         onOpenChange={handleDialogClose}
         categories={categories}
-        onSuccess={loadData}
+        onSuccess={handleSuccess}
         editItem={selectedItem}
       />
     </div>

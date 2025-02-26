@@ -370,11 +370,18 @@ export const AddMenuItemDialog = ({
               className="relative w-full h-48 rounded-xl flex items-center justify-center cursor-pointer bg-gray-100 hover:bg-gray-50 transition-colors"
             >
               {formData.imagePreview ? (
-                <img 
-                  src={formData.imagePreview} 
-                  alt="Preview" 
-                  className="w-full h-full object-cover rounded-xl"
-                />
+                <div className="relative w-full h-full">
+                  <img 
+                    src={formData.imagePreview} 
+                    alt="Preview" 
+                    className="w-full h-full object-cover rounded-xl"
+                  />
+                  <div className="absolute inset-0 bg-black/20 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center rounded-xl">
+                    <div className="bg-white p-2 rounded-full shadow-md">
+                      <Pencil className="h-5 w-5 text-gray-700" />
+                    </div>
+                  </div>
+                </div>
               ) : (
                 <div className="flex flex-col items-center gap-2 text-gray-400">
                   <ImageIcon className="h-8 w-8" />
