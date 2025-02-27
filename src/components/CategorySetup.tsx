@@ -8,7 +8,6 @@ import { CategoryCard } from "./categories/CategoryCard";
 import { AddCategoryDialog } from "./categories/AddCategoryDialog";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-
 export const CategorySetup = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -28,25 +27,27 @@ export const CategorySetup = () => {
     imagePreview?: string;
     image_url?: string;
   }>>([]);
-  
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
 
   // Load existing categories when component mounts
   useEffect(() => {
     const loadCategories = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: {
+          session
+        }
+      } = await supabase.auth.getSession();
       if (!session?.user) return;
-
-      const { data, error } = await supabase
-        .from('menu_categories')
-        .select('*')
-        .eq('restaurant_id', session.user.id);
-
+      const {
+        data,
+        error
+      } = await supabase.from('menu_categories').select('*').eq('restaurant_id', session.user.id);
       if (error) {
         console.error('Error loading categories:', error);
         return;
       }
-
       if (data) {
         const formattedCategories = data.map(category => ({
           id: category.id,
@@ -57,23 +58,21 @@ export const CategorySetup = () => {
         setCategories(formattedCategories);
       }
     };
-
     loadCategories();
   }, []);
-
   const handleAddCategory = () => {
     setEditingIndex(null);
-    setNewCategory({ name: "" });
+    setNewCategory({
+      name: ""
+    });
     setIsDialogOpen(true);
   };
-
   const handleNewCategoryImageChange = (file: File) => {
     setNewCategory(prev => {
       const updated = {
         ...prev,
         image: file
       };
-
       const reader = new FileReader();
       reader.onloadend = () => {
         setNewCategory(current => ({
@@ -85,7 +84,6 @@ export const CategorySetup = () => {
       return updated;
     });
   };
-
   const handleEditCategory = (index: number) => {
     const categoryToEdit = categories[index];
     setEditingIndex(index);
@@ -95,17 +93,13 @@ export const CategorySetup = () => {
     });
     setIsDialogOpen(true);
   };
-
   const handleDeleteCategory = async () => {
     if (editingIndex !== null) {
       const categoryToDelete = categories[editingIndex];
-      
       if (categoryToDelete.id) {
-        const { error } = await supabase
-          .from('menu_categories')
-          .delete()
-          .eq('id', categoryToDelete.id);
-
+        const {
+          error
+        } = await supabase.from('menu_categories').delete().eq('id', categoryToDelete.id);
         if (error) {
           toast({
             title: "Error",
@@ -115,7 +109,6 @@ export const CategorySetup = () => {
           return;
         }
       }
-
       const updatedCategories = categories.filter((_, index) => index !== editingIndex);
       setCategories(updatedCategories);
       setIsDialogOpen(false);
@@ -125,7 +118,6 @@ export const CategorySetup = () => {
       });
     }
   };
-
   const handleSaveNewCategory = () => {
     if (newCategory.name.trim()) {
       if (editingIndex !== null) {
@@ -148,104 +140,94 @@ export const CategorySetup = () => {
           description: "Category added successfully"
         });
       }
-      setNewCategory({ name: "" }); // Reset form
+      setNewCategory({
+        name: ""
+      }); // Reset form
       setIsDialogOpen(false);
     }
   };
-
   const handleSave = async () => {
     setIsLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: {
+          session
+        }
+      } = await supabase.auth.getSession();
       if (!session?.user) throw new Error("Not authenticated");
 
       // Check if there are any existing menu items
-      const { data: existingItems } = await supabase
-        .from('menu_items')
-        .select('id')
-        .eq('restaurant_id', session.user.id);
-      
+      const {
+        data: existingItems
+      } = await supabase.from('menu_items').select('id').eq('restaurant_id', session.user.id);
+
       // First, store existing categories IDs to keep track of which ones to delete
-      const { data: existingCategories } = await supabase
-        .from('menu_categories')
-        .select('id')
-        .eq('restaurant_id', session.user.id);
-        
+      const {
+        data: existingCategories
+      } = await supabase.from('menu_categories').select('id').eq('restaurant_id', session.user.id);
       const existingCategoryIds = new Set(existingCategories?.map(cat => cat.id) || []);
       const updatedCategoryIds = new Set<string>();
-      
+
       // Then save all current categories
       for (const category of categories) {
         if (!category.name.trim()) continue;
-
         let image_url = category.image_url;
-        
         if (category.image) {
           const fileExt = 'jpg'; // Always jpg after optimization
           const filePath = `${session.user.id}/${crypto.randomUUID()}.${fileExt}`;
-          const { error: uploadError } = await supabase.storage
-            .from('menu-category-images')
-            .upload(filePath, category.image);
-          
+          const {
+            error: uploadError
+          } = await supabase.storage.from('menu-category-images').upload(filePath, category.image);
           if (uploadError) throw uploadError;
-
-          const { data: { publicUrl } } = supabase.storage
-            .from('menu-category-images')
-            .getPublicUrl(filePath);
-          
+          const {
+            data: {
+              publicUrl
+            }
+          } = supabase.storage.from('menu-category-images').getPublicUrl(filePath);
           image_url = publicUrl;
         }
-
         if (category.id) {
           // Update existing category
-          const { error: updateError, data: updatedCategory } = await supabase
-            .from('menu_categories')
-            .update({
-              name: category.name,
-              image_url,
-            })
-            .eq('id', category.id)
-            .select('id')
-            .single();
-
+          const {
+            error: updateError,
+            data: updatedCategory
+          } = await supabase.from('menu_categories').update({
+            name: category.name,
+            image_url
+          }).eq('id', category.id).select('id').single();
           if (updateError) throw updateError;
           if (updatedCategory) updatedCategoryIds.add(updatedCategory.id);
         } else {
           // Insert new category
-          const { error: insertError, data: newCategory } = await supabase
-            .from('menu_categories')
-            .insert({
-              name: category.name,
-              image_url,
-              restaurant_id: session.user.id
-            })
-            .select('id')
-            .single();
-
+          const {
+            error: insertError,
+            data: newCategory
+          } = await supabase.from('menu_categories').insert({
+            name: category.name,
+            image_url,
+            restaurant_id: session.user.id
+          }).select('id').single();
           if (insertError) throw insertError;
           if (newCategory) updatedCategoryIds.add(newCategory.id);
         }
       }
-      
+
       // Delete categories that no longer exist
       // But only if there are no menu items assigned to them
       for (const catId of existingCategoryIds) {
         if (!updatedCategoryIds.has(catId)) {
           // Check if there are any menu items using this category
-          const { data: itemsUsingCategory, error: countError } = await supabase
-            .from('menu_items')
-            .select('id')
-            .eq('category_id', catId);
-            
+          const {
+            data: itemsUsingCategory,
+            error: countError
+          } = await supabase.from('menu_items').select('id').eq('category_id', catId);
           if (countError) throw countError;
-          
+
           // Only delete if no items are using this category
           if (!itemsUsingCategory || itemsUsingCategory.length === 0) {
-            const { error: deleteError } = await supabase
-              .from('menu_categories')
-              .delete()
-              .eq('id', catId);
-              
+            const {
+              error: deleteError
+            } = await supabase.from('menu_categories').delete().eq('id', catId);
             if (deleteError) throw deleteError;
           } else {
             // If there are items using this category, keep it
@@ -256,7 +238,6 @@ export const CategorySetup = () => {
 
       // Navigate to menu items page after successful save
       navigate('/menu');
-      
       toast({
         title: "Success",
         description: "Categories saved successfully"
@@ -272,52 +253,28 @@ export const CategorySetup = () => {
       setIsLoading(false);
     }
   };
-
-  return (
-    <div className="max-w-4xl mx-auto p-4 space-y-6">
+  return <div className="max-w-4xl mx-auto p-4 space-y-6">
       <Header />
 
       <Card className="p-6 bg-white border border-gray-200 rounded-2xl">
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          <button 
-            onClick={handleAddCategory} 
-            className="aspect-square rounded-2xl flex items-center justify-center transition-colors bg-white border-2 border-dashed border-gray-300 hover:border-gray-400"
-          >
+          <button onClick={handleAddCategory} className="aspect-square rounded-2xl flex items-center justify-center transition-colors bg-white border-2 border-dashed border-gray-300 hover:border-gray-400">
             <Plus className="h-10 w-10 text-gray-400" />
           </button>
 
-          {categories.map((category, index) => (
-            <CategoryCard
-              key={index}
-              name={category.name}
-              imagePreview={category.imagePreview}
-              onEdit={() => handleEditCategory(index)}
-            />
-          ))}
+          {categories.map((category, index) => <CategoryCard key={index} name={category.name} imagePreview={category.imagePreview} onEdit={() => handleEditCategory(index)} />)}
         </div>
       </Card>
 
       <div className="flex justify-end">
-        <Button 
-          onClick={handleSave}
-          disabled={isLoading}
-          className="px-6 py-6 rounded-xl"
-        >
+        <Button onClick={handleSave} disabled={isLoading} className="px-6 py-6 rounded-xl bg-[#23c55e]">
           {isLoading ? "Saving..." : "Save & Continue"}
         </Button>
       </div>
 
-      <AddCategoryDialog
-        isOpen={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
-        categoryName={newCategory.name}
-        onCategoryNameChange={(name) => setNewCategory(prev => ({ ...prev, name }))}
-        imagePreview={newCategory.imagePreview}
-        onImageChange={handleNewCategoryImageChange}
-        onSave={handleSaveNewCategory}
-        onDelete={editingIndex !== null ? handleDeleteCategory : undefined}
-        isEditing={editingIndex !== null}
-      />
-    </div>
-  );
+      <AddCategoryDialog isOpen={isDialogOpen} onOpenChange={setIsDialogOpen} categoryName={newCategory.name} onCategoryNameChange={name => setNewCategory(prev => ({
+      ...prev,
+      name
+    }))} imagePreview={newCategory.imagePreview} onImageChange={handleNewCategoryImageChange} onSave={handleSaveNewCategory} onDelete={editingIndex !== null ? handleDeleteCategory : undefined} isEditing={editingIndex !== null} />
+    </div>;
 };
