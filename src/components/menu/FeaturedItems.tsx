@@ -67,12 +67,9 @@ export const FeaturedItems = () => {
 
       if (itemsError) throw itemsError;
       
-      // Get featured items (in a real app, there would be a is_featured column)
-      // For now we'll just mock this
-      const featured = itemsData?.slice(0, 2) || [];
-      
+      // Start with empty featured items - let user manually select
       setItems(itemsData || []);
-      setFeaturedItems(featured);
+      setFeaturedItems([]);
     } catch (error) {
       console.error('Error loading data:', error);
       toast({
