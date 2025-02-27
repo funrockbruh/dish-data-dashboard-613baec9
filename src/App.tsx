@@ -10,6 +10,7 @@ import Verify from "./pages/Verify";
 import { RestaurantSetup } from "./components/RestaurantSetup";
 import { CategorySetup } from "./components/CategorySetup";
 import { MenuItemsList } from "./components/menu/MenuItemsList";
+import { FeaturedItems } from "./components/menu/FeaturedItems";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +26,7 @@ const App = () => (
           <Route path="/setup" element={<RestaurantSetup />} />
           <Route path="/categories" element={<CategorySetup />} />
           <Route path="/menu" element={<MenuItemsList />} />
+          <Route path="/featured" element={<FeaturedItems />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>

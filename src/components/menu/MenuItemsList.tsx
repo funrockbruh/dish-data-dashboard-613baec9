@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { AddMenuItemDialog } from "./AddMenuItemDialog";
 import { MenuItemCard } from "./MenuItemCard";
+import { useNavigate } from "react-router-dom";
 
 interface MenuItem {
   id: string;
@@ -36,6 +37,7 @@ export const MenuItemsList = () => {
     logo_url: null
   });
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     loadData();
@@ -117,6 +119,9 @@ export const MenuItemsList = () => {
         description: "All menu items saved successfully"
       });
       setHasUnsavedChanges(false);
+      
+      // Navigate to featured items page after saving
+      navigate('/featured');
     } catch (error) {
       console.error('Error saving items:', error);
       toast({
