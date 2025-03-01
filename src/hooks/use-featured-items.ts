@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 
@@ -22,6 +22,7 @@ export function useFeaturedItems() {
 
   const loadData = async () => {
     try {
+      setIsLoading(true);
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) return;
 
@@ -33,9 +34,12 @@ export function useFeaturedItems() {
 
       if (itemsError) throw itemsError;
       
-      // Start with empty featured items - let user manually select
+      // Set all items
       setItems(itemsData || []);
-      setFeaturedItems([]);
+      
+      // Filter featured items
+      const featured = itemsData?.filter(item => item.is_featured) || [];
+      setFeaturedItems(featured);
     } catch (error) {
       console.error('Error loading data:', error);
       toast({
@@ -60,11 +64,6 @@ export function useFeaturedItems() {
         setFeaturedItems([...featuredItems, item]);
       }
       
-      // In a real app, you would save this to the database
-      // await supabase.from('menu_items')
-      //   .update({ is_featured: !isCurrentlyFeatured })
-      //   .eq('id', item.id);
-      
       toast({
         title: "Success",
         description: isCurrentlyFeatured 
@@ -84,7 +83,22 @@ export function useFeaturedItems() {
   const saveFeatured = async () => {
     try {
       setIsLoading(true);
-      // In a real app, you would save all featured items to the database here
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+      
+      // First, reset all items to not featured
+      await supabase
+        .from('menu_items')
+        .update({ is_featured: false })
+        .eq('restaurant_id', session.user.id);
+      
+      // Then update only the featured items
+      for (const item of featuredItems) {
+        await supabase
+          .from('menu_items')
+          .update({ is_featured: true })
+          .eq('id', item.id);
+      }
       
       toast({
         title: "Success",
