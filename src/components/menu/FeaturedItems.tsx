@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { ChevronLeft, Plus } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -7,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 import { Link } from "react-router-dom";
+import { AddFeaturedDialog } from "./AddFeaturedDialog";
 
 interface MenuItem {
   id: string;
@@ -33,6 +33,8 @@ export const FeaturedItems = () => {
     logo_url: null
   });
   const { toast } = useToast();
+
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -136,6 +138,16 @@ export const FeaturedItems = () => {
     }
   };
 
+  const addFeaturedItem = (item: MenuItem) => {
+    if (!featuredItems.some(featured => featured.id === item.id)) {
+      setFeaturedItems([...featuredItems, item]);
+      toast({
+        title: "Success",
+        description: `${item.name} added to featured items`
+      });
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto p-4 space-y-6">
       <Card className="flex items-center justify-between gap-4 mb-8 p-4 bg-white border border-gray-200 rounded-2xl">
@@ -171,18 +183,10 @@ export const FeaturedItems = () => {
       </div>
 
       <div className="space-y-4">
-        {/* Add featured item placeholder */}
+        {/* Add featured item button */}
         <div 
           className="bg-gray-200 rounded-xl aspect-video flex items-center justify-center cursor-pointer hover:bg-gray-300 transition-colors"
-          onClick={() => {
-            if (items.length > 0 && featuredItems.length < items.length) {
-              // Find first item that isn't already featured
-              const nonFeatured = items.find(item => !featuredItems.some(f => f.id === item.id));
-              if (nonFeatured) {
-                toggleFeatured(nonFeatured);
-              }
-            }
-          }}
+          onClick={() => setDialogOpen(true)}
         >
           <Plus className="h-16 w-16 text-gray-500" />
         </div>
@@ -218,6 +222,14 @@ export const FeaturedItems = () => {
           {isLoading ? "Saving..." : "Save & Continue"}
         </Button>
       </div>
+
+      <AddFeaturedDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        items={items}
+        featuredItems={featuredItems}
+        onAddFeatured={addFeaturedItem}
+      />
     </div>
   );
 };
