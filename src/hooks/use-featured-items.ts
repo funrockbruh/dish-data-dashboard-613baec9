@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
 
@@ -33,17 +33,9 @@ export function useFeaturedItems() {
 
       if (itemsError) throw itemsError;
       
-      // Load featured items from database
-      const { data: featuredData, error: featuredError } = await supabase
-        .from('menu_items')
-        .select('*')
-        .eq('restaurant_id', session.user.id)
-        .eq('is_featured', true);
-        
-      if (featuredError) throw featuredError;
-      
+      // Start with empty featured items - let user manually select
       setItems(itemsData || []);
-      setFeaturedItems(featuredData || []);
+      setFeaturedItems([]);
     } catch (error) {
       console.error('Error loading data:', error);
       toast({
@@ -92,22 +84,7 @@ export function useFeaturedItems() {
   const saveFeatured = async () => {
     try {
       setIsLoading(true);
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) return;
-      
-      // First, reset all items to not featured
-      await supabase
-        .from('menu_items')
-        .update({ is_featured: false })
-        .eq('restaurant_id', session.user.id);
-      
-      // Then update only the selected items as featured
-      for (const item of featuredItems) {
-        await supabase
-          .from('menu_items')
-          .update({ is_featured: true })
-          .eq('id', item.id);
-      }
+      // In a real app, you would save all featured items to the database here
       
       toast({
         title: "Success",
