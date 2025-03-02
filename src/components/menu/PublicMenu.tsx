@@ -26,6 +26,7 @@ type Category = {
 };
 
 type Restaurant = {
+  id: string;
   restaurant_name: string | null;
   owner_name: string | null;
   logo_url: string | null;
@@ -45,26 +46,40 @@ export const PublicMenu = () => {
       try {
         setLoading(true);
         
-        // Step 1: Find the restaurant by name
+        if (!restaurantName) {
+          setError("Restaurant name not provided");
+          setLoading(false);
+          return;
+        }
+
+        // Convert the URL param back to a format that might match the database
+        // For example, "just-fajita" should match "Just Fajita"
+        const formattedRestaurantName = restaurantName.replace(/-/g, ' ');
+        
+        // Step 1: Find the restaurant by name - using ILIKE for case-insensitive search
+        // and % for partial matching in case the formatting is slightly different
         const { data: restaurantData, error: restaurantError } = await supabase
           .from('restaurant_profiles')
           .select('*')
-          .ilike('restaurant_name', restaurantName || '')
-          .single();
+          .ilike('restaurant_name', `%${formattedRestaurantName}%`);
         
-        if (restaurantError || !restaurantData) {
+        if (restaurantError) throw restaurantError;
+        
+        if (!restaurantData || restaurantData.length === 0) {
           setError("Restaurant not found");
           setLoading(false);
           return;
         }
         
-        setRestaurant(restaurantData);
+        // Use the first matching restaurant
+        const matchedRestaurant = restaurantData[0];
+        setRestaurant(matchedRestaurant);
         
         // Step 2: Get featured items
         const { data: featuredData, error: featuredError } = await supabase
           .from('menu_items')
           .select('*')
-          .eq('restaurant_id', restaurantData.id)
+          .eq('restaurant_id', matchedRestaurant.id)
           .eq('is_featured', true);
           
         if (featuredError) throw featuredError;
@@ -74,7 +89,7 @@ export const PublicMenu = () => {
         const { data: categoriesData, error: categoriesError } = await supabase
           .from('menu_categories')
           .select('*')
-          .eq('restaurant_id', restaurantData.id);
+          .eq('restaurant_id', matchedRestaurant.id);
           
         if (categoriesError) throw categoriesError;
         setCategories(categoriesData || []);
@@ -83,7 +98,7 @@ export const PublicMenu = () => {
         const { data: itemsData, error: itemsError } = await supabase
           .from('menu_items')
           .select('*')
-          .eq('restaurant_id', restaurantData.id);
+          .eq('restaurant_id', matchedRestaurant.id);
           
         if (itemsError) throw itemsError;
         setMenuItems(itemsData || []);
@@ -98,6 +113,19 @@ export const PublicMenu = () => {
     
     fetchRestaurantData();
   }, [restaurantName]);
+  
+  // Display a subdomain-style header to simulate the desired URL format
+  const renderSubdomainHeader = () => {
+    if (!restaurant) return null;
+    
+    const subdomain = restaurantName?.toLowerCase();
+    
+    return (
+      <div className="bg-gray-900 text-gray-400 text-xs py-1 px-4 text-center">
+        <span>{subdomain}.mydomain.com</span>
+      </div>
+    );
+  };
   
   if (loading) return (
     <div className="flex items-center justify-center min-h-screen bg-black">
@@ -123,6 +151,9 @@ export const PublicMenu = () => {
 
   return (
     <div className="min-h-screen bg-black text-white">
+      {/* Subdomain simulation header */}
+      {renderSubdomainHeader()}
+      
       {/* Header with logo and search */}
       <header className="flex justify-between items-center p-4 border-b border-gray-800">
         <div className="w-10 h-10">
@@ -132,7 +163,7 @@ export const PublicMenu = () => {
           </svg>
         </div>
         
-        <div className="flex items-center justify-center">
+        <div className="flex flex-col items-center justify-center">
           {restaurant?.logo_url && (
             <img 
               src={restaurant.logo_url} 
@@ -140,6 +171,7 @@ export const PublicMenu = () => {
               className="h-16 w-16 rounded-full"
             />
           )}
+          <h1 className="text-lg font-bold mt-2">{restaurant?.restaurant_name}</h1>
         </div>
         
         <div className="w-10 h-10">
