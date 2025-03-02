@@ -38,9 +38,9 @@ const qrCodeItems = [
 ];
 
 export const QRCodeCarousel = () => {
-  // Use as-is without type annotations
+  // Create the autoplay plugin with type assertion to resolve the type conflict
   const autoplayPlugin = React.useRef(
-    Autoplay({ delay: 2000, stopOnInteraction: true })
+    Autoplay({ delay: 2000, stopOnInteraction: true }) as any
   );
 
   return (
