@@ -49,7 +49,6 @@ export const PublicMenu = () => {
         console.log("Searching for restaurant:", restaurantName);
 
         // Improved restaurant search - more flexible matching
-        // The name in URL might be hyphenated (just-fajita) while in DB it's "Just Fajita"
         const formattedName = restaurantName?.replace(/-/g, ' ');
         
         const { data: restaurantData, error: restaurantError } = await supabase
@@ -66,6 +65,7 @@ export const PublicMenu = () => {
         }
         
         if (!restaurantData || restaurantData.length === 0) {
+          console.log("No restaurant found with initial search, trying alternative search");
           // Try a more flexible search if the first one failed
           const { data: altRestaurantData, error: altError } = await supabase
             .from("restaurant_profiles")
@@ -82,6 +82,7 @@ export const PublicMenu = () => {
             );
             
             if (foundRestaurant) {
+              console.log("Found restaurant with alternative search:", foundRestaurant);
               setRestaurant(foundRestaurant);
               await loadMenuData(foundRestaurant.id);
               setIsLoading(false);
@@ -95,6 +96,7 @@ export const PublicMenu = () => {
         }
 
         const currentRestaurant = restaurantData[0];
+        console.log("Found restaurant:", currentRestaurant);
         setRestaurant(currentRestaurant);
         await loadMenuData(currentRestaurant.id);
       } catch (err) {
@@ -106,6 +108,8 @@ export const PublicMenu = () => {
     };
 
     const loadMenuData = async (restaurantId: string) => {
+      console.log("Loading menu data for restaurant ID:", restaurantId);
+      
       // Fetch categories
       const { data: categoriesData, error: categoriesError } = await supabase
         .from("menu_categories")
@@ -113,7 +117,12 @@ export const PublicMenu = () => {
         .eq("restaurant_id", restaurantId)
         .order("name");
 
-      if (categoriesError) throw categoriesError;
+      if (categoriesError) {
+        console.error("Categories query error:", categoriesError);
+        throw categoriesError;
+      }
+      
+      console.log("Categories loaded:", categoriesData);
       setCategories(categoriesData || []);
 
       // Fetch menu items
@@ -122,11 +131,17 @@ export const PublicMenu = () => {
         .select("*")
         .eq("restaurant_id", restaurantId);
 
-      if (itemsError) throw itemsError;
+      if (itemsError) {
+        console.error("Menu items query error:", itemsError);
+        throw itemsError;
+      }
+      
+      console.log("Menu items loaded:", itemsData);
       setMenuItems(itemsData || []);
       
       // Filter featured items
-      const featured = itemsData?.filter(item => item.is_featured) || [];
+      const featured = itemsData?.filter(item => item.is_featured === true) || [];
+      console.log("Featured items:", featured);
       setFeaturedItems(featured);
     };
 
@@ -138,10 +153,11 @@ export const PublicMenu = () => {
   // Format price to currency
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
-      style: 'decimal',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(price);
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(price / 100);
   };
 
   if (isLoading) {
@@ -186,6 +202,20 @@ export const PublicMenu = () => {
       </header>
 
       <main className="p-4 space-y-6">
+        {/* Restaurant name display */}
+        <div className="text-center mb-4">
+          <h1 className="text-2xl font-bold">{restaurant?.restaurant_name}</h1>
+        </div>
+
+        {/* Debug information if nothing is showing */}
+        {featuredItems.length === 0 && categories.length === 0 && menuItems.length === 0 && (
+          <div className="p-4 bg-gray-800 rounded-lg mb-4">
+            <p className="text-yellow-400 font-bold">Debugging Info:</p>
+            <p>Restaurant ID: {restaurant?.id}</p>
+            <p>No menu items or categories found. Please check if items have been added to this restaurant.</p>
+          </div>
+        )}
+
         {/* Featured Section */}
         {featuredItems.length > 0 && (
           <section>
@@ -208,6 +238,7 @@ export const PublicMenu = () => {
                         />
                         <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black to-transparent p-4">
                           <h3 className="text-3xl font-bold text-white">{item.name}</h3>
+                          <p className="text-white text-xl">{formatPrice(item.price)}</p>
                         </div>
                       </div>
                     </CarouselItem>
@@ -221,6 +252,7 @@ export const PublicMenu = () => {
         {/* Categories */}
         {categories.length > 0 && (
           <section className="overflow-x-auto">
+            <h2 className="text-xl font-bold mb-4">Categories</h2>
             <div className="flex space-x-4 py-2">
               {categories.map((category) => (
                 <div key={category.id} className="flex-shrink-0 w-32 text-center">
@@ -239,23 +271,28 @@ export const PublicMenu = () => {
         )}
 
         {/* Menu Items Grid */}
-        <section className="grid grid-cols-2 gap-4">
-          {menuItems.map((item) => (
-            <div key={item.id} className="overflow-hidden">
-              <div className="relative">
-                <img
-                  src={item.image_url || "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9"}
-                  alt={item.name}
-                  className="w-full aspect-square object-cover rounded-lg"
-                />
-                <div className="p-2 space-y-1">
-                  <h3 className="text-lg font-semibold truncate">{item.name}</h3>
-                  <p className="text-gray-400 text-sm truncate">{formatPrice(item.price)} L.L.</p>
+        {menuItems.length > 0 && (
+          <section>
+            <h2 className="text-xl font-bold mb-4">Menu Items</h2>
+            <div className="grid grid-cols-2 gap-4">
+              {menuItems.map((item) => (
+                <div key={item.id} className="overflow-hidden">
+                  <div className="relative">
+                    <img
+                      src={item.image_url || "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9"}
+                      alt={item.name}
+                      className="w-full aspect-square object-cover rounded-lg"
+                    />
+                    <div className="p-2 space-y-1">
+                      <h3 className="text-lg font-semibold truncate">{item.name}</h3>
+                      <p className="text-gray-400 text-sm truncate">{formatPrice(item.price)}</p>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              ))}
             </div>
-          ))}
-        </section>
+          </section>
+        )}
       </main>
     </div>
   );
