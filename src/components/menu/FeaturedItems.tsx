@@ -1,5 +1,5 @@
+
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { AddFeaturedDialog } from "./AddFeaturedDialog";
@@ -8,7 +8,6 @@ import { FeaturedItem } from "./FeaturedItem";
 import { AddFeaturedButton } from "./AddFeaturedButton";
 import { useFeaturedItems } from "@/hooks/use-featured-items";
 import { useRestaurantProfile } from "@/hooks/use-restaurant-profile";
-import { toast } from "@/hooks/use-toast";
 
 export const FeaturedItems = () => {
   const { 
@@ -25,40 +24,10 @@ export const FeaturedItems = () => {
   
   const { profile } = useRestaurantProfile();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const navigate = useNavigate();
 
   useEffect(() => {
     loadData();
   }, []);
-
-  const handleSaveAndContinue = async () => {
-    try {
-      await saveFeatured();
-      
-      // Format restaurant name for URL (remove spaces, lowercase)
-      const formattedName = profile.restaurant_name 
-        ? profile.restaurant_name.toLowerCase().replace(/\s+/g, '-')
-        : '';
-      
-      if (formattedName) {
-        // Navigate to the public menu with the restaurant name as a parameter
-        navigate(`/menu/${formattedName}`);
-        
-        toast({
-          title: "Preview Generated",
-          description: `Your menu is now available at ${formattedName}.mydomain.com`,
-        });
-      } else {
-        toast({
-          title: "Missing Restaurant Name",
-          description: "Please set up your restaurant profile first",
-          variant: "destructive"
-        });
-      }
-    } catch (error) {
-      console.error("Error saving featured items:", error);
-    }
-  };
 
   return (
     <div className="max-w-4xl mx-auto p-4 space-y-6">
@@ -91,7 +60,7 @@ export const FeaturedItems = () => {
 
       <div className="flex justify-end">
         <Button 
-          onClick={handleSaveAndContinue}
+          onClick={saveFeatured}
           disabled={isLoading}
           className="px-6 py-6 rounded-xl bg-[#23c55e]"
         >

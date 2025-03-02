@@ -11,7 +11,6 @@ import { RestaurantSetup } from "./components/RestaurantSetup";
 import { CategorySetup } from "./components/CategorySetup";
 import { MenuItemsList } from "./components/menu/MenuItemsList";
 import { FeaturedItems } from "./components/menu/FeaturedItems";
-import { PublicMenu } from "./components/menu/PublicMenu";
 
 const queryClient = new QueryClient();
 
@@ -28,7 +27,6 @@ const App = () => (
           <Route path="/categories" element={<CategorySetup />} />
           <Route path="/menu" element={<MenuItemsList />} />
           <Route path="/featured" element={<FeaturedItems />} />
-          <Route path="/menu/:restaurantName" element={<PublicMenu />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
