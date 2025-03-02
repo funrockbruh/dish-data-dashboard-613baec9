@@ -1,5 +1,5 @@
 
-import React, { useEffect, useRef } from "react";
+import React from "react";
 import {
   Carousel,
   CarouselContent,
@@ -38,8 +38,8 @@ const qrCodeItems = [
 ];
 
 export const QRCodeCarousel = () => {
-  // Create the plugin without type annotation
-  const autoplayPlugin = useRef(
+  // Use as-is without type annotations
+  const autoplayPlugin = React.useRef(
     Autoplay({ delay: 2000, stopOnInteraction: true })
   );
 
