@@ -45,16 +45,50 @@ export const PublicMenu = () => {
       try {
         setIsLoading(true);
         setError(null);
+        
+        console.log("Searching for restaurant:", restaurantName);
 
-        // Find restaurant by name
+        // Improved restaurant search - more flexible matching
+        // The name in URL might be hyphenated (just-fajita) while in DB it's "Just Fajita"
+        const formattedName = restaurantName?.replace(/-/g, ' ');
+        
         const { data: restaurantData, error: restaurantError } = await supabase
           .from("restaurant_profiles")
           .select("id, restaurant_name, logo_url")
-          .ilike("restaurant_name", `%${restaurantName}%`)
+          .ilike("restaurant_name", `%${formattedName}%`)
           .limit(1);
 
-        if (restaurantError) throw restaurantError;
+        console.log("Restaurant search results:", restaurantData);
+
+        if (restaurantError) {
+          console.error("Restaurant query error:", restaurantError);
+          throw restaurantError;
+        }
+        
         if (!restaurantData || restaurantData.length === 0) {
+          // Try a more flexible search if the first one failed
+          const { data: altRestaurantData, error: altError } = await supabase
+            .from("restaurant_profiles")
+            .select("id, restaurant_name, logo_url");
+            
+          console.log("All restaurants:", altRestaurantData);
+          
+          if (!altError && altRestaurantData && altRestaurantData.length > 0) {
+            // Try to find a match manually with more flexible criteria
+            const foundRestaurant = altRestaurantData.find(r => 
+              r.restaurant_name && 
+              (r.restaurant_name.toLowerCase().includes(formattedName?.toLowerCase() || '') ||
+               formattedName?.toLowerCase().includes(r.restaurant_name.toLowerCase()))
+            );
+            
+            if (foundRestaurant) {
+              setRestaurant(foundRestaurant);
+              await loadMenuData(foundRestaurant.id);
+              setIsLoading(false);
+              return;
+            }
+          }
+          
           setError("Restaurant not found");
           setIsLoading(false);
           return;
@@ -62,35 +96,38 @@ export const PublicMenu = () => {
 
         const currentRestaurant = restaurantData[0];
         setRestaurant(currentRestaurant);
-
-        // Fetch categories
-        const { data: categoriesData, error: categoriesError } = await supabase
-          .from("menu_categories")
-          .select("id, name, image_url")
-          .eq("restaurant_id", currentRestaurant.id)
-          .order("name");
-
-        if (categoriesError) throw categoriesError;
-        setCategories(categoriesData || []);
-
-        // Fetch menu items
-        const { data: itemsData, error: itemsError } = await supabase
-          .from("menu_items")
-          .select("*")
-          .eq("restaurant_id", currentRestaurant.id);
-
-        if (itemsError) throw itemsError;
-        setMenuItems(itemsData || []);
-        
-        // Filter featured items
-        const featured = itemsData?.filter(item => item.is_featured) || [];
-        setFeaturedItems(featured);
+        await loadMenuData(currentRestaurant.id);
       } catch (err) {
         console.error("Error fetching data:", err);
         setError("Failed to load menu data");
       } finally {
         setIsLoading(false);
       }
+    };
+
+    const loadMenuData = async (restaurantId: string) => {
+      // Fetch categories
+      const { data: categoriesData, error: categoriesError } = await supabase
+        .from("menu_categories")
+        .select("id, name, image_url")
+        .eq("restaurant_id", restaurantId)
+        .order("name");
+
+      if (categoriesError) throw categoriesError;
+      setCategories(categoriesData || []);
+
+      // Fetch menu items
+      const { data: itemsData, error: itemsError } = await supabase
+        .from("menu_items")
+        .select("*")
+        .eq("restaurant_id", restaurantId);
+
+      if (itemsError) throw itemsError;
+      setMenuItems(itemsData || []);
+      
+      // Filter featured items
+      const featured = itemsData?.filter(item => item.is_featured) || [];
+      setFeaturedItems(featured);
     };
 
     if (restaurantName) {

@@ -37,11 +37,16 @@ export const FeaturedItems = () => {
     
     if (profile.restaurant_name) {
       // Convert restaurant name to URL-friendly format
-      const restaurantSlug = profile.restaurant_name.toLowerCase().replace(/\s+/g, '-');
+      // This ensures we handle special characters and spaces properly
+      const restaurantSlug = profile.restaurant_name
+        .toLowerCase()
+        .replace(/[^\w\s-]/g, '') // Remove special characters except spaces and hyphens
+        .replace(/\s+/g, '-') // Replace spaces with hyphens
+        .replace(/-+/g, '-'); // Replace multiple hyphens with single hyphen
       
       // Show toast with menu URL
       toast.success(
-        `Menu saved! Your customers can access it at /${restaurantSlug}`,
+        `Menu saved! Your customers can access it at /menu/${restaurantSlug}`,
         { duration: 5000 }
       );
       
