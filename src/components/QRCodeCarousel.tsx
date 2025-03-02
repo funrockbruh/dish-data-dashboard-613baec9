@@ -38,7 +38,8 @@ const qrCodeItems = [
 ];
 
 export const QRCodeCarousel = () => {
-  const plugin = useRef(
+  // Create the plugin without type annotation
+  const autoplayPlugin = useRef(
     Autoplay({ delay: 2000, stopOnInteraction: true })
   );
 
@@ -53,7 +54,7 @@ export const QRCodeCarousel = () => {
             align: "center",
             loop: true,
           }}
-          plugins={[plugin.current]}
+          plugins={[autoplayPlugin.current]}
           className="w-full max-w-6xl mx-auto"
         >
           <CarouselContent className="-ml-2 md:-ml-4 [perspective:1500px] relative" 
