@@ -108,6 +108,12 @@ export const EmptyMenuState = ({ restaurantId, restaurantName, debugInfo }: Empt
                             'No menu items found'}
                         </p>
                       </div>
+                      
+                      {debugInfo.alternativeSearch && (
+                        <div className="mt-2 text-blue-300">
+                          <p>Alternative search was attempted</p>
+                        </div>
+                      )}
                     </>
                   )}
                   
@@ -143,6 +149,11 @@ export const EmptyMenuState = ({ restaurantId, restaurantName, debugInfo }: Empt
                                 <p className="text-yellow-400 font-bold">Potential Issue:</p>
                                 <p>The restaurant ID from the URL ({restaurantId}) doesn't match your user ID ({currentUserData.userId}).</p>
                                 <p>Menu items are likely associated with your user ID, not the restaurant ID in the URL.</p>
+                                <p className="mt-2">To fix this issue:</p>
+                                <ul className="list-disc list-inside text-green-300">
+                                  <li>Try accessing your menu at: <strong>/menu/{currentUserData.userRestaurant?.restaurant_name?.toLowerCase().replace(/\s+/g, '-')}</strong></li>
+                                  <li>Or add menu items to restaurant ID: {restaurantId}</li>
+                                </ul>
                               </div>
                             </div>
                           )}
@@ -156,6 +167,9 @@ export const EmptyMenuState = ({ restaurantId, restaurantName, debugInfo }: Empt
                             {allRestaurantData.map((restaurant: any) => (
                               <li key={restaurant.id}>
                                 {restaurant.restaurant_name} (ID: {restaurant.id})
+                                {currentUserData?.userId === restaurant.id && (
+                                  <span className="text-green-400 ml-2">(Your Restaurant)</span>
+                                )}
                               </li>
                             ))}
                           </ul>

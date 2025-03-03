@@ -35,7 +35,10 @@ export function useMenuData() {
   });
   const [debugInfo, setDebugInfo] = useState({
     userId: null,
-    restaurantId: null
+    restaurantId: null,
+    restaurantName: null,
+    menuItemsCount: 0,
+    categoriesCount: 0
   });
   const { toast } = useToast();
 
@@ -54,6 +57,7 @@ export function useMenuData() {
 
     if (data && !error) {
       setProfile(data);
+      setDebugInfo(prev => ({...prev, restaurantName: data.restaurant_name}));
     } else {
       console.error('Error loading profile:', error);
     }
@@ -78,6 +82,7 @@ export function useMenuData() {
       if (categoriesError) throw categoriesError;
       console.log(`Found ${categoriesData?.length || 0} categories for restaurant ID ${userId}`);
       setCategories(categoriesData || []);
+      setDebugInfo(prev => ({...prev, categoriesCount: categoriesData?.length || 0}));
 
       // Load menu items
       const { data: itemsData, error: itemsError } = await supabase
@@ -88,6 +93,7 @@ export function useMenuData() {
       if (itemsError) throw itemsError;
       console.log(`Found ${itemsData?.length || 0} menu items for restaurant ID ${userId}`);
       setItems(itemsData || []);
+      setDebugInfo(prev => ({...prev, menuItemsCount: itemsData?.length || 0}));
       setHasUnsavedChanges(false);
     } catch (error) {
       console.error('Error loading data:', error);

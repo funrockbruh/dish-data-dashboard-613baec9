@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Search, Menu, Utensils } from "lucide-react";
@@ -57,7 +58,7 @@ export const PublicMenu = () => {
           .from("restaurant_profiles")
           .select("id, restaurant_name, logo_url")
           .ilike("restaurant_name", `%${formattedName}%`)
-          .limit(1);
+          .limit(10); // Increased limit to find more potential matches
 
         console.log("Restaurant search results:", restaurantData);
 
@@ -65,6 +66,8 @@ export const PublicMenu = () => {
           console.error("Restaurant query error:", restaurantError);
           throw restaurantError;
         }
+        
+        let currentRestaurant = null;
         
         if (!restaurantData || restaurantData.length === 0) {
           console.log("No restaurant found with initial search, trying alternative search");
@@ -77,30 +80,54 @@ export const PublicMenu = () => {
           
           if (!altError && altRestaurantData && altRestaurantData.length > 0) {
             // Try to find a match manually with more flexible criteria
-            const foundRestaurant = altRestaurantData.find(r => 
+            currentRestaurant = altRestaurantData.find(r => 
               r.restaurant_name && 
               (r.restaurant_name.toLowerCase().includes(formattedName?.toLowerCase() || '') ||
                formattedName?.toLowerCase().includes(r.restaurant_name.toLowerCase()))
             );
-            
-            if (foundRestaurant) {
-              console.log("Found restaurant with alternative search:", foundRestaurant);
-              setRestaurant(foundRestaurant);
-              await loadMenuData(foundRestaurant.id);
-              setIsLoading(false);
-              return;
-            }
           }
           
-          setError("Restaurant not found");
-          setIsLoading(false);
-          return;
+          if (!currentRestaurant) {
+            setError("Restaurant not found");
+            setIsLoading(false);
+            return;
+          }
+        } else {
+          // Find the best match from the initial search
+          // First try exact match (ignoring case)
+          currentRestaurant = restaurantData.find(r => 
+            r.restaurant_name && r.restaurant_name.toLowerCase() === formattedName?.toLowerCase()
+          );
+          
+          // If no exact match, take the first result
+          if (!currentRestaurant) {
+            currentRestaurant = restaurantData[0];
+          }
         }
-
-        const currentRestaurant = restaurantData[0];
+        
         console.log("Found restaurant:", currentRestaurant);
         setRestaurant(currentRestaurant);
-        await loadMenuData(currentRestaurant.id);
+        
+        // Try to load menu items for this restaurant ID
+        const foundItems = await loadMenuData(currentRestaurant.id);
+        
+        // If no items found and we have multiple results, try other restaurants from search
+        if (!foundItems && restaurantData && restaurantData.length > 1) {
+          console.log("No items found for first restaurant, trying alternatives");
+          
+          for (const altRestaurant of restaurantData) {
+            if (altRestaurant.id === currentRestaurant.id) continue;
+            
+            console.log("Trying alternative restaurant:", altRestaurant);
+            const hasItems = await loadMenuData(altRestaurant.id);
+            
+            if (hasItems) {
+              console.log("Found items in alternative restaurant:", altRestaurant);
+              setRestaurant(altRestaurant);
+              break;
+            }
+          }
+        }
       } catch (err) {
         console.error("Error fetching data:", err);
         setError("Failed to load menu data");
@@ -109,12 +136,13 @@ export const PublicMenu = () => {
       }
     };
 
-    const loadMenuData = async (restaurantId: string) => {
+    const loadMenuData = async (restaurantId: string): Promise<boolean> => {
       console.log("Loading menu data for restaurant ID:", restaurantId);
       let debugData = {
         restaurantId,
         categoriesResponse: null,
         itemsResponse: null,
+        alternativeSearch: false
       };
       
       try {
@@ -154,8 +182,56 @@ export const PublicMenu = () => {
         const featured = itemsData?.filter(item => item.is_featured === true) || [];
         console.log("Featured items:", featured);
         setFeaturedItems(featured);
+        
+        // Return true if we found either categories or menu items
+        const foundData = (categoriesData && categoriesData.length > 0) || 
+                         (itemsData && itemsData.length > 0);
+                         
+        if (!foundData) {
+          // If no data found with restaurant ID, try with the restaurant name as a last resort
+          debugData.alternativeSearch = true;
+          
+          // Get current authenticated user ID
+          const { data: { session } } = await supabase.auth.getSession();
+          const currentUserId = session?.user?.id;
+          
+          if (currentUserId) {
+            console.log("Trying to search with user ID:", currentUserId);
+            
+            // Try to find items using the current user ID
+            const { data: userItems } = await supabase
+              .from("menu_items")
+              .select("*")
+              .eq("restaurant_id", currentUserId);
+              
+            if (userItems && userItems.length > 0) {
+              console.log("Found items using user ID as restaurant_id:", userItems);
+              setMenuItems(userItems);
+              
+              // Filter featured items
+              const userFeatured = userItems.filter(item => item.is_featured === true) || [];
+              setFeaturedItems(userFeatured);
+              
+              // Get categories for these items
+              const { data: userCategories } = await supabase
+                .from("menu_categories")
+                .select("id, name, image_url")
+                .eq("restaurant_id", currentUserId);
+                
+              if (userCategories) {
+                console.log("Found categories using user ID:", userCategories);
+                setCategories(userCategories);
+              }
+              
+              return true;
+            }
+          }
+        }
+        
+        return foundData;
       } catch (error) {
         console.error("Error loading menu data:", error);
+        return false;
       } finally {
         setDebugInfo(debugData);
       }
