@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Search, Menu, Info } from "lucide-react";
+import { Search, Menu, Info, PlusCircle, ArrowRight, Utensils } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { 
   Carousel,
@@ -9,6 +9,7 @@ import {
   CarouselItem 
 } from "@/components/ui/carousel";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 interface Restaurant {
   id: string;
@@ -53,7 +54,7 @@ export const PublicMenu = () => {
         // Improved restaurant search - more flexible matching
         const formattedName = restaurantName?.replace(/-/g, ' ');
         
-        const { data: restaurantData, error: restaurantError } = await supabase
+        let { data: restaurantData, error: restaurantError } = await supabase
           .from("restaurant_profiles")
           .select("id, restaurant_name, logo_url")
           .ilike("restaurant_name", `%${formattedName}%`)
@@ -117,44 +118,48 @@ export const PublicMenu = () => {
         itemsResponse: null,
       };
       
-      // Fetch categories
-      const { data: categoriesData, error: categoriesError } = await supabase
-        .from("menu_categories")
-        .select("id, name, image_url")
-        .eq("restaurant_id", restaurantId);
+      try {
+        // Fetch categories
+        const { data: categoriesData, error: categoriesError } = await supabase
+          .from("menu_categories")
+          .select("id, name, image_url")
+          .eq("restaurant_id", restaurantId);
 
-      debugData.categoriesResponse = { data: categoriesData, error: categoriesError };
-      
-      if (categoriesError) {
-        console.error("Categories query error:", categoriesError);
+        debugData.categoriesResponse = { data: categoriesData, error: categoriesError };
+        
+        if (categoriesError) {
+          console.error("Categories query error:", categoriesError);
+          throw categoriesError;
+        }
+        
+        console.log("Categories loaded:", categoriesData);
+        setCategories(categoriesData || []);
+
+        // Fetch menu items
+        const { data: itemsData, error: itemsError } = await supabase
+          .from("menu_items")
+          .select("*")
+          .eq("restaurant_id", restaurantId);
+
+        debugData.itemsResponse = { data: itemsData, error: itemsError };
+        
+        if (itemsError) {
+          console.error("Menu items query error:", itemsError);
+          throw itemsError;
+        }
+        
+        console.log("Menu items loaded:", itemsData);
+        setMenuItems(itemsData || []);
+        
+        // Filter featured items
+        const featured = itemsData?.filter(item => item.is_featured === true) || [];
+        console.log("Featured items:", featured);
+        setFeaturedItems(featured);
+      } catch (error) {
+        console.error("Error loading menu data:", error);
+      } finally {
         setDebugInfo(debugData);
-        throw categoriesError;
       }
-      
-      console.log("Categories loaded:", categoriesData);
-      setCategories(categoriesData || []);
-
-      // Fetch menu items
-      const { data: itemsData, error: itemsError } = await supabase
-        .from("menu_items")
-        .select("*")
-        .eq("restaurant_id", restaurantId);
-
-      debugData.itemsResponse = { data: itemsData, error: itemsError };
-      setDebugInfo(debugData);
-
-      if (itemsError) {
-        console.error("Menu items query error:", itemsError);
-        throw itemsError;
-      }
-      
-      console.log("Menu items loaded:", itemsData);
-      setMenuItems(itemsData || []);
-      
-      // Filter featured items
-      const featured = itemsData?.filter(item => item.is_featured === true) || [];
-      console.log("Featured items:", featured);
-      setFeaturedItems(featured);
     };
 
     if (restaurantName) {
@@ -191,6 +196,7 @@ export const PublicMenu = () => {
   const noMenuItems = menuItems.length === 0;
   const noCategories = categories.length === 0;
   const noFeaturedItems = featuredItems.length === 0;
+  const noData = noMenuItems && noCategories;
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -201,13 +207,19 @@ export const PublicMenu = () => {
             <Search className="h-8 w-8 text-white" />
           </button>
           
-          {restaurant?.logo_url && (
+          {restaurant?.logo_url ? (
             <div className="flex-1 flex justify-center">
               <img 
                 src={restaurant.logo_url} 
                 alt={restaurant.restaurant_name} 
-                className="h-16 w-16 rounded-full"
+                className="h-16 w-16 rounded-full object-cover"
               />
+            </div>
+          ) : (
+            <div className="flex-1 flex justify-center">
+              <div className="h-16 w-16 rounded-full bg-gray-800 flex items-center justify-center">
+                <Utensils className="h-8 w-8 text-gray-400" />
+              </div>
             </div>
           )}
           
@@ -223,41 +235,67 @@ export const PublicMenu = () => {
           <h1 className="text-2xl font-bold">{restaurant?.restaurant_name}</h1>
         </div>
 
-        {/* Debug information if nothing is showing */}
-        {(noMenuItems && noCategories) && (
-          <Card className="p-4 bg-gray-800 rounded-lg mb-4">
-            <CardContent className="pt-4">
-              <div className="flex items-start gap-2 mb-2">
-                <Info className="h-5 w-5 text-yellow-400 mt-0.5" />
-                <h3 className="text-yellow-400 font-bold">Debugging Info:</h3>
-              </div>
-              <p>Restaurant ID: {restaurant?.id}</p>
-              <p className="mt-2">No menu items or categories found. This may be because:</p>
-              <ul className="list-disc list-inside mt-2 space-y-1 text-gray-300">
-                <li>No items have been added to this restaurant</li>
-                <li>Items exist but are associated with a different restaurant ID</li>
-                <li>There might be permission issues accessing the data</li>
-              </ul>
-              
-              {debugInfo && (
-                <div className="mt-4 border-t border-gray-700 pt-2">
-                  <p className="font-semibold">Categories Response:</p>
-                  <p className="text-sm text-gray-400">
-                    {debugInfo.categoriesResponse?.data ? 
-                      `Found ${debugInfo.categoriesResponse.data.length} categories` : 
-                      'No categories found'}
-                  </p>
-                  
-                  <p className="font-semibold mt-2">Menu Items Response:</p>
-                  <p className="text-sm text-gray-400">
-                    {debugInfo.itemsResponse?.data ? 
-                      `Found ${debugInfo.itemsResponse.data.length} menu items` : 
-                      'No menu items found'}
-                  </p>
+        {/* Empty State with Debug Info for Development */}
+        {noData && (
+          <>
+            <Card className="p-4 bg-gray-800 rounded-lg mb-4">
+              <CardContent className="pt-4">
+                <div className="flex items-start gap-2 mb-3">
+                  <Info className="h-5 w-5 text-yellow-400 mt-0.5 flex-shrink-0" />
+                  <h3 className="text-yellow-400 font-bold">No Menu Available</h3>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+                <p>This restaurant hasn't added any menu items or categories yet.</p>
+                
+                {debugInfo && (
+                  <div className="mt-6 pt-4 border-t border-gray-700">
+                    <details className="text-sm">
+                      <summary className="text-gray-400 cursor-pointer mb-2">Debug Information</summary>
+                      <div className="pl-3 text-gray-300 space-y-2 text-xs">
+                        <p>Restaurant ID: {restaurant?.id}</p>
+                        <div>
+                          <p className="font-semibold mt-2">Categories Response:</p>
+                          <p className="text-gray-400">
+                            {debugInfo.categoriesResponse?.data ? 
+                              `Found ${debugInfo.categoriesResponse.data.length} categories` : 
+                              'No categories found'}
+                          </p>
+                        </div>
+                        
+                        <div>
+                          <p className="font-semibold mt-2">Menu Items Response:</p>
+                          <p className="text-gray-400">
+                            {debugInfo.itemsResponse?.data ? 
+                              `Found ${debugInfo.itemsResponse.data.length} menu items` : 
+                              'No menu items found'}
+                          </p>
+                        </div>
+                      </div>
+                    </details>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            
+            <div className="flex flex-col items-center justify-center py-8">
+              <Card className="bg-gray-900 border border-gray-800 w-full max-w-md overflow-hidden">
+                <div className="p-6 text-center">
+                  <Utensils className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                  <h3 className="text-xl font-semibold mb-2">Ready to create your menu?</h3>
+                  <p className="text-gray-400 mb-6">
+                    If you own this restaurant, log in to add your menu items, categories and featured dishes.
+                  </p>
+                  <div className="flex justify-center gap-3">
+                    <Button variant="outline" className="border-gray-700 hover:bg-gray-800">
+                      Learn More <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                    <Button className="bg-green-600 hover:bg-green-500">
+                      <PlusCircle className="mr-2 h-4 w-4" /> Add Menu Items
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            </div>
+          </>
         )}
 
         {/* Featured Section */}
@@ -336,18 +374,6 @@ export const PublicMenu = () => {
               ))}
             </div>
           </section>
-        )}
-
-        {/* Empty State */}
-        {(noMenuItems && noCategories && noFeaturedItems) && (
-          <div className="flex flex-col items-center justify-center py-12">
-            <div className="text-center max-w-md">
-              <h3 className="text-xl font-semibold mb-2">Menu is Empty</h3>
-              <p className="text-gray-400">
-                This restaurant hasn't added any menu items yet.
-              </p>
-            </div>
-          </div>
         )}
       </main>
     </div>
