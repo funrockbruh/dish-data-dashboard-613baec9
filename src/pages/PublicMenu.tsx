@@ -1,15 +1,14 @@
-
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Search, Menu, Info, PlusCircle, ArrowRight, Utensils } from "lucide-react";
+import { Search, Menu, Utensils } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { 
   Carousel,
   CarouselContent,
   CarouselItem 
 } from "@/components/ui/carousel";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { EmptyMenuState } from "@/components/menu/EmptyMenuState";
 
 interface Restaurant {
   id: string;
@@ -166,7 +165,7 @@ export const PublicMenu = () => {
       fetchData();
     }
   }, [restaurantName]);
-
+  
   // Format price to currency
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -235,67 +234,13 @@ export const PublicMenu = () => {
           <h1 className="text-2xl font-bold">{restaurant?.restaurant_name}</h1>
         </div>
 
-        {/* Empty State with Debug Info for Development */}
+        {/* Empty State with Debug Info */}
         {noData && (
-          <>
-            <Card className="p-4 bg-gray-800 rounded-lg mb-4">
-              <CardContent className="pt-4">
-                <div className="flex items-start gap-2 mb-3">
-                  <Info className="h-5 w-5 text-yellow-400 mt-0.5 flex-shrink-0" />
-                  <h3 className="text-yellow-400 font-bold">No Menu Available</h3>
-                </div>
-                <p>This restaurant hasn't added any menu items or categories yet.</p>
-                
-                {debugInfo && (
-                  <div className="mt-6 pt-4 border-t border-gray-700">
-                    <details className="text-sm">
-                      <summary className="text-gray-400 cursor-pointer mb-2">Debug Information</summary>
-                      <div className="pl-3 text-gray-300 space-y-2 text-xs">
-                        <p>Restaurant ID: {restaurant?.id}</p>
-                        <div>
-                          <p className="font-semibold mt-2">Categories Response:</p>
-                          <p className="text-gray-400">
-                            {debugInfo.categoriesResponse?.data ? 
-                              `Found ${debugInfo.categoriesResponse.data.length} categories` : 
-                              'No categories found'}
-                          </p>
-                        </div>
-                        
-                        <div>
-                          <p className="font-semibold mt-2">Menu Items Response:</p>
-                          <p className="text-gray-400">
-                            {debugInfo.itemsResponse?.data ? 
-                              `Found ${debugInfo.itemsResponse.data.length} menu items` : 
-                              'No menu items found'}
-                          </p>
-                        </div>
-                      </div>
-                    </details>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-            
-            <div className="flex flex-col items-center justify-center py-8">
-              <Card className="bg-gray-900 border border-gray-800 w-full max-w-md overflow-hidden">
-                <div className="p-6 text-center">
-                  <Utensils className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                  <h3 className="text-xl font-semibold mb-2">Ready to create your menu?</h3>
-                  <p className="text-gray-400 mb-6">
-                    If you own this restaurant, log in to add your menu items, categories and featured dishes.
-                  </p>
-                  <div className="flex justify-center gap-3">
-                    <Button variant="outline" className="border-gray-700 hover:bg-gray-800">
-                      Learn More <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                    <Button className="bg-green-600 hover:bg-green-500">
-                      <PlusCircle className="mr-2 h-4 w-4" /> Add Menu Items
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            </div>
-          </>
+          <EmptyMenuState 
+            restaurantId={restaurant?.id || ''}
+            restaurantName={restaurant?.restaurant_name || ''}
+            debugInfo={debugInfo}
+          />
         )}
 
         {/* Featured Section */}
