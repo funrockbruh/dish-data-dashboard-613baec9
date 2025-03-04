@@ -136,7 +136,7 @@ export function usePublicMenu(restaurantName: string | undefined) {
       };
       
       try {
-        // Fetch categories
+        // Fetch categories without any authentication check
         const { data: categoriesData, error: categoriesError } = await supabase
           .from("menu_categories")
           .select("id, name, image_url")
@@ -152,7 +152,7 @@ export function usePublicMenu(restaurantName: string | undefined) {
         console.log("Categories loaded:", categoriesData);
         setCategories(categoriesData || []);
 
-        // Fetch menu items
+        // Fetch menu items without any authentication check
         const { data: itemsData, error: itemsError } = await supabase
           .from("menu_items")
           .select("*")
@@ -181,10 +181,7 @@ export function usePublicMenu(restaurantName: string | undefined) {
           // If no data found with restaurant ID, try with the restaurant name as a last resort
           debugData.alternativeSearch = true;
           
-          // We don't need to check authentication for public menu
-          // Public menu should be accessible without login
-
-          // Try a more generic search instead
+          // Try a more generic search instead - without requiring authentication
           const { data: allItems } = await supabase
             .from("menu_items")
             .select("*")

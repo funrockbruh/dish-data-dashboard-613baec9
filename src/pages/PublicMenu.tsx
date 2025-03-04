@@ -6,6 +6,7 @@ import { FeaturedSection } from "@/components/public-menu/FeaturedSection";
 import { CategoriesSection } from "@/components/public-menu/CategoriesSection";
 import { MenuItemsSection } from "@/components/public-menu/MenuItemsSection";
 import { EmptyMenuState } from "@/components/menu/EmptyMenuState";
+import { useEffect } from "react";
 
 const PublicMenu = () => {
   const { restaurantName } = useParams<{ restaurantName: string }>();
@@ -19,6 +20,17 @@ const PublicMenu = () => {
     debugInfo,
     formatPrice 
   } = usePublicMenu(restaurantName);
+
+  // Log the state for debugging
+  useEffect(() => {
+    console.log("Public Menu State:", {
+      restaurant,
+      menuItems: menuItems.length,
+      categories: categories.length,
+      featuredItems: featuredItems.length,
+      error
+    });
+  }, [restaurant, menuItems, categories, featuredItems, error]);
 
   if (isLoading) {
     return (
