@@ -7,6 +7,7 @@ import { CategoriesSection } from "@/components/public-menu/CategoriesSection";
 import { MenuItemsSection } from "@/components/public-menu/MenuItemsSection";
 import { EmptyMenuState } from "@/components/menu/EmptyMenuState";
 import { useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 
 const PublicMenu = () => {
   const { restaurantName } = useParams<{ restaurantName: string }>();
@@ -21,6 +22,16 @@ const PublicMenu = () => {
     formatPrice 
   } = usePublicMenu(restaurantName);
 
+  // Get current authentication status for debugging
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data } = await supabase.auth.getSession();
+      console.log("Auth status:", data.session ? "Authenticated" : "Not authenticated");
+    };
+    
+    checkAuth();
+  }, []);
+
   // Log the state for debugging
   useEffect(() => {
     console.log("Public Menu State:", {
@@ -30,6 +41,10 @@ const PublicMenu = () => {
       featuredItems: featuredItems.length,
       error
     });
+    
+    if (menuItems.length > 0) {
+      console.log("Sample menu item:", menuItems[0]);
+    }
   }, [restaurant, menuItems, categories, featuredItems, error]);
 
   if (isLoading) {
@@ -69,6 +84,16 @@ const PublicMenu = () => {
             <p className="text-gray-400">
               This restaurant doesn't have any menu items yet.
             </p>
+            {debugInfo && (
+              <div className="mt-4 text-left text-xs text-gray-500">
+                <details>
+                  <summary className="cursor-pointer">Debug Info</summary>
+                  <pre className="mt-2 p-2 bg-gray-800 rounded overflow-auto">
+                    {JSON.stringify(debugInfo, null, 2)}
+                  </pre>
+                </details>
+              </div>
+            )}
           </div>
         </div>
       </div>

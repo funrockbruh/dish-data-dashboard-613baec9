@@ -98,8 +98,8 @@ export function usePublicMenu(restaurantName: string | undefined) {
         console.log("Found restaurant:", currentRestaurant);
         setRestaurant(currentRestaurant);
         
-        // Try to load menu items for this restaurant ID - pass formattedName as parameter
-        const foundItems = await loadMenuData(currentRestaurant.id, formattedName);
+        // Load menu items for this restaurant ID
+        const foundItems = await loadMenuData(currentRestaurant.id, formattedName || '');
         
         // If no items found and we have multiple results, try other restaurants from search
         if (!foundItems && restaurantData && restaurantData.length > 1) {
@@ -109,7 +109,7 @@ export function usePublicMenu(restaurantName: string | undefined) {
             if (altRestaurant.id === currentRestaurant.id) continue;
             
             console.log("Trying alternative restaurant:", altRestaurant);
-            const hasItems = await loadMenuData(altRestaurant.id, formattedName);
+            const hasItems = await loadMenuData(altRestaurant.id, formattedName || '');
             
             if (hasItems) {
               console.log("Found items in alternative restaurant:", altRestaurant);
@@ -126,7 +126,7 @@ export function usePublicMenu(restaurantName: string | undefined) {
       }
     };
 
-    const loadMenuData = async (restaurantId: string, formattedName: string | undefined): Promise<boolean> => {
+    const loadMenuData = async (restaurantId: string, formattedName: string): Promise<boolean> => {
       console.log("Loading menu data for restaurant ID:", restaurantId);
       let debugData = {
         restaurantId,
@@ -193,8 +193,8 @@ export function usePublicMenu(restaurantName: string | undefined) {
             // Try to match by restaurant name if we have some items
             const matchingItems = allItems.filter(item => {
               // Try to find items that might be related to this restaurant
-              return item.name?.toLowerCase().includes(formattedName?.toLowerCase() || '') ||
-                     (item.description && item.description.toLowerCase().includes(formattedName?.toLowerCase() || ''));
+              return item.name?.toLowerCase().includes(formattedName.toLowerCase()) ||
+                     (item.description && item.description.toLowerCase().includes(formattedName.toLowerCase()));
             });
             
             if (matchingItems.length > 0) {
@@ -218,7 +218,7 @@ export function usePublicMenu(restaurantName: string | undefined) {
               }
               
               // Filter featured items
-              const userFeatured = matchingItems.filter(item => item.is_featured === true) || [];
+              const userFeatured = matchingItems.filter(item => item.is_featured === true);
               setFeaturedItems(userFeatured);
               
               return true;
