@@ -1,43 +1,47 @@
 
-import { Utensils, Search, Menu } from "lucide-react";
+import { useState } from "react";
+import { Search, Menu } from "lucide-react";
 
-interface PublicMenuHeaderProps {
-  restaurantName: string | undefined;
-  logoUrl: string | null;
+interface Restaurant {
+  id: string;
+  restaurant_name: string;
+  logo_url: string | null;
 }
 
-export const PublicMenuHeader = ({ restaurantName, logoUrl }: PublicMenuHeaderProps) => {
+interface PublicMenuHeaderProps {
+  restaurant: Restaurant | null;
+}
+
+export const PublicMenuHeader = ({ restaurant }: PublicMenuHeaderProps) => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   return (
-    <header className="sticky top-0 z-10 bg-black border-b border-gray-800 p-4">
+    <header className="sticky top-0 z-50 bg-black p-4 border-b border-gray-800">
       <div className="flex items-center justify-between">
-        <button className="p-2 rounded-full">
-          <Search className="h-8 w-8 text-white" />
-        </button>
+        <div className="rounded-full bg-white/10 p-2">
+          <Search className="h-6 w-6 text-white" />
+        </div>
         
-        {logoUrl ? (
-          <div className="flex-1 flex justify-center">
+        <div className="flex items-center justify-center">
+          {restaurant?.logo_url ? (
             <img 
-              src={logoUrl} 
-              alt={restaurantName} 
-              className="h-16 w-16 rounded-full object-cover"
+              src={restaurant.logo_url} 
+              alt={restaurant.restaurant_name || "Restaurant logo"} 
+              className="h-12 w-12 rounded-full"
             />
-          </div>
-        ) : (
-          <div className="flex-1 flex justify-center">
-            <div className="h-16 w-16 rounded-full bg-gray-800 flex items-center justify-center">
-              <Utensils className="h-8 w-8 text-gray-400" />
+          ) : (
+            <div className="bg-green-100 rounded-full h-16 w-16 flex items-center justify-center border-4 border-green-300">
+              <span className="text-gray-700 text-sm font-bold">{restaurant?.restaurant_name || "Menu"}</span>
             </div>
-          </div>
-        )}
+          )}
+        </div>
         
-        <button className="p-2 rounded-full">
-          <Menu className="h-8 w-8 text-white" />
+        <button 
+          onClick={() => setIsMenuOpen(!isMenuOpen)} 
+          className="rounded-full bg-white/10 p-2"
+        >
+          <Menu className="h-6 w-6 text-white" />
         </button>
-      </div>
-      
-      {/* Restaurant name display */}
-      <div className="text-center mb-4">
-        <h1 className="text-2xl font-bold">{restaurantName}</h1>
       </div>
     </header>
   );
