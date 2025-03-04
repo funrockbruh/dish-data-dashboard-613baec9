@@ -11,7 +11,7 @@ import { RestaurantSetup } from "./components/RestaurantSetup";
 import { CategorySetup } from "./components/CategorySetup";
 import { MenuItemsList } from "./components/menu/MenuItemsList";
 import { FeaturedItems } from "./components/menu/FeaturedItems";
-import { PublicMenu } from "./pages/PublicMenu";
+import PublicMenu from "./pages/PublicMenu";
 
 const queryClient = new QueryClient();
 
