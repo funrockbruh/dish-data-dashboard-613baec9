@@ -181,37 +181,48 @@ export function usePublicMenu(restaurantName: string | undefined) {
           // If no data found with restaurant ID, try with the restaurant name as a last resort
           debugData.alternativeSearch = true;
           
-          // Get current authenticated user ID
-          const { data: { session } } = await supabase.auth.getSession();
-          const currentUserId = session?.user?.id;
-          
-          if (currentUserId) {
-            console.log("Trying to search with user ID:", currentUserId);
+          // We don't need to check authentication for public menu
+          // Public menu should be accessible without login
+
+          // Try a more generic search instead
+          const { data: allItems } = await supabase
+            .from("menu_items")
+            .select("*")
+            .limit(50);
             
-            // Try to find items using the current user ID
-            const { data: userItems } = await supabase
-              .from("menu_items")
-              .select("*")
-              .eq("restaurant_id", currentUserId);
+          if (allItems && allItems.length > 0) {
+            console.log("Found some menu items in general search:", allItems);
+            
+            // Try to match by restaurant name if we have some items
+            const matchingItems = allItems.filter(item => {
+              // Try to find items that might be related to this restaurant
+              return item.name?.toLowerCase().includes(formattedName?.toLowerCase() || '') ||
+                     (item.description && item.description.toLowerCase().includes(formattedName?.toLowerCase() || ''));
+            });
+            
+            if (matchingItems.length > 0) {
+              console.log("Found potentially matching items:", matchingItems);
+              setMenuItems(matchingItems);
               
-            if (userItems && userItems.length > 0) {
-              console.log("Found items using user ID as restaurant_id:", userItems);
-              setMenuItems(userItems);
+              // Extract category IDs from these items
+              const categoryIds = [...new Set(matchingItems.map(item => item.category_id))].filter(Boolean);
+              
+              if (categoryIds.length > 0) {
+                // Fetch these categories
+                const { data: relatedCategories } = await supabase
+                  .from("menu_categories")
+                  .select("id, name, image_url")
+                  .in("id", categoryIds);
+                  
+                if (relatedCategories) {
+                  console.log("Found related categories:", relatedCategories);
+                  setCategories(relatedCategories);
+                }
+              }
               
               // Filter featured items
-              const userFeatured = userItems.filter(item => item.is_featured === true) || [];
+              const userFeatured = matchingItems.filter(item => item.is_featured === true) || [];
               setFeaturedItems(userFeatured);
-              
-              // Get categories for these items
-              const { data: userCategories } = await supabase
-                .from("menu_categories")
-                .select("id, name, image_url")
-                .eq("restaurant_id", currentUserId);
-                
-              if (userCategories) {
-                console.log("Found categories using user ID:", userCategories);
-                setCategories(userCategories);
-              }
               
               return true;
             }
