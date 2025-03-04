@@ -98,8 +98,8 @@ export function usePublicMenu(restaurantName: string | undefined) {
         console.log("Found restaurant:", currentRestaurant);
         setRestaurant(currentRestaurant);
         
-        // Try to load menu items for this restaurant ID
-        const foundItems = await loadMenuData(currentRestaurant.id);
+        // Try to load menu items for this restaurant ID - pass formattedName as parameter
+        const foundItems = await loadMenuData(currentRestaurant.id, formattedName);
         
         // If no items found and we have multiple results, try other restaurants from search
         if (!foundItems && restaurantData && restaurantData.length > 1) {
@@ -109,7 +109,7 @@ export function usePublicMenu(restaurantName: string | undefined) {
             if (altRestaurant.id === currentRestaurant.id) continue;
             
             console.log("Trying alternative restaurant:", altRestaurant);
-            const hasItems = await loadMenuData(altRestaurant.id);
+            const hasItems = await loadMenuData(altRestaurant.id, formattedName);
             
             if (hasItems) {
               console.log("Found items in alternative restaurant:", altRestaurant);
@@ -126,7 +126,7 @@ export function usePublicMenu(restaurantName: string | undefined) {
       }
     };
 
-    const loadMenuData = async (restaurantId: string): Promise<boolean> => {
+    const loadMenuData = async (restaurantId: string, formattedName: string | undefined): Promise<boolean> => {
       console.log("Loading menu data for restaurant ID:", restaurantId);
       let debugData = {
         restaurantId,
