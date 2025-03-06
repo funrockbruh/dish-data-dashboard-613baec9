@@ -44,12 +44,12 @@ export function usePublicMenu(restaurantName: string | undefined) {
         // Improved restaurant search - more flexible matching
         const formattedName = restaurantName?.replace(/-/g, ' ');
         
-        // Make sure to use .from().select() without any auth checks
-        let { data: restaurantData, error: restaurantError } = await supabase
+        // Use anonymous (public) query with supabase client
+        const { data: restaurantData, error: restaurantError } = await supabase
           .from("restaurant_profiles")
           .select("id, restaurant_name, logo_url")
           .ilike("restaurant_name", `%${formattedName}%`)
-          .limit(10); // Increased limit to find more potential matches
+          .limit(10);
 
         console.log("Restaurant search results:", restaurantData);
 
@@ -99,26 +99,8 @@ export function usePublicMenu(restaurantName: string | undefined) {
         console.log("Found restaurant:", currentRestaurant);
         setRestaurant(currentRestaurant);
         
-        // Load menu items for this restaurant ID with public access mode
-        const foundItems = await loadMenuData(currentRestaurant.id, formattedName || '');
-        
-        // If no items found and we have multiple results, try other restaurants from search
-        if (!foundItems && restaurantData && restaurantData.length > 1) {
-          console.log("No items found for first restaurant, trying alternatives");
-          
-          for (const altRestaurant of restaurantData) {
-            if (altRestaurant.id === currentRestaurant.id) continue;
-            
-            console.log("Trying alternative restaurant:", altRestaurant);
-            const hasItems = await loadMenuData(altRestaurant.id, formattedName || '');
-            
-            if (hasItems) {
-              console.log("Found items in alternative restaurant:", altRestaurant);
-              setRestaurant(altRestaurant);
-              break;
-            }
-          }
-        }
+        // Load menu data using unauthenticated access
+        await loadMenuData(currentRestaurant.id, formattedName || '');
       } catch (err) {
         console.error("Error fetching data:", err);
         setError("Failed to load menu data");
@@ -137,8 +119,7 @@ export function usePublicMenu(restaurantName: string | undefined) {
       };
       
       try {
-        // Use explicit `select()` call without any authentication headers
-        // Fetch categories as a completely public query
+        // Fetch categories without authentication
         const { data: categoriesData, error: categoriesError } = await supabase
           .from("menu_categories")
           .select("id, name, image_url")
@@ -148,14 +129,12 @@ export function usePublicMenu(restaurantName: string | undefined) {
         
         if (categoriesError) {
           console.error("Categories query error:", categoriesError);
-          throw categoriesError;
         }
         
         console.log("Categories loaded:", categoriesData);
         setCategories(categoriesData || []);
 
-        // Use explicit `select()` call without any authentication headers
-        // Fetch menu items as a completely public query
+        // Fetch menu items without authentication
         const { data: itemsData, error: itemsError } = await supabase
           .from("menu_items")
           .select("*")
@@ -165,7 +144,6 @@ export function usePublicMenu(restaurantName: string | undefined) {
         
         if (itemsError) {
           console.error("Menu items query error:", itemsError);
-          throw itemsError;
         }
         
         console.log("Menu items loaded:", itemsData);
@@ -184,7 +162,7 @@ export function usePublicMenu(restaurantName: string | undefined) {
           // If no data found with restaurant ID, try with the restaurant name as a last resort
           debugData.alternativeSearch = true;
           
-          // Attempt a truly public query
+          // Try a broader search
           const { data: allItems } = await supabase
             .from("menu_items")
             .select("*")
@@ -209,7 +187,7 @@ export function usePublicMenu(restaurantName: string | undefined) {
               const categoryIds = [...new Set(matchingItems.map(item => item.category_id))].filter(Boolean);
               
               if (categoryIds.length > 0) {
-                // Fetch these categories with a completely public query
+                // Fetch these categories with public access
                 const { data: relatedCategories } = await supabase
                   .from("menu_categories")
                   .select("id, name, image_url")
