@@ -1,6 +1,5 @@
-
 import { useParams } from "react-router-dom";
-import { usePublicMenu } from "@/hooks/use-public-menu";
+import { usePublicMenu } from "@/hooks/public-menu";
 import { PublicMenuHeader } from "@/components/public-menu/PublicMenuHeader";
 import { FeaturedSection } from "@/components/public-menu/FeaturedSection";
 import { CategoriesSection } from "@/components/public-menu/CategoriesSection";
