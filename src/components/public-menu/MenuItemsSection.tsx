@@ -22,47 +22,49 @@ export const MenuItemsSection = ({ menuItems, formatPrice }: MenuItemsSectionPro
     const sampleItems = [
       { 
         id: "1", 
-        name: "Fahita", 
-        description: null, 
-        price: 45000000, 
-        image_url: "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9", 
+        name: "Grilled Chicken Sandwich", 
+        description: "Grilled chicken breast with lettuce, tomato, and special sauce", 
+        price: 1299, 
+        image_url: "https://images.unsplash.com/photo-1521305916504-4a1121188589?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80", 
         category_id: "1", 
         is_featured: false 
       },
       { 
         id: "2", 
-        name: "Twister", 
-        description: null, 
-        price: 47000000, 
-        image_url: "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9", 
+        name: "Classic Burger", 
+        description: "Beef patty with cheese, lettuce, tomato, and special sauce", 
+        price: 1499, 
+        image_url: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80", 
         category_id: "2", 
         is_featured: false 
       },
       { 
         id: "3", 
-        name: "Lebanese burger", 
-        description: null, 
-        price: 51000000, 
-        image_url: "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9", 
-        category_id: "1", 
+        name: "Mediterranean Salad", 
+        description: "Fresh greens, feta cheese, olives, and house dressing", 
+        price: 1099, 
+        image_url: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80", 
+        category_id: "3", 
         is_featured: false 
       },
       { 
         id: "4", 
-        name: "Zinger 112", 
-        description: null, 
-        price: 54000000, 
-        image_url: "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9", 
-        category_id: "1", 
+        name: "Chocolate Brownie", 
+        description: "Rich chocolate brownie with vanilla ice cream", 
+        price: 899, 
+        image_url: "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80", 
+        category_id: "4", 
         is_featured: false 
       }
     ];
     
     return (
       <section>
+        <h2 className="text-2xl font-bold mb-4">Sample Menu</h2>
+        <p className="text-gray-400 mb-6">This restaurant hasn't added their real menu items yet. Here are some samples of what could be on the menu.</p>
         <div className="grid grid-cols-2 gap-4">
           {sampleItems.map((item) => (
-            <MenuItem key={item.id} item={item} formatPrice={(price) => `${price.toLocaleString()} L.L.`} />
+            <MenuItem key={item.id} item={item} formatPrice={formatPrice} />
           ))}
         </div>
       </section>
@@ -99,6 +101,9 @@ const MenuItem = ({ item, formatPrice }: MenuItemProps) => {
             <h3 className="text-white font-medium">{item.name}</h3>
             <p className="text-white">{formatPrice(item.price)}</p>
           </div>
+          {item.description && (
+            <p className="text-gray-400 text-sm mt-1 line-clamp-2">{item.description}</p>
+          )}
         </div>
       </div>
     </div>

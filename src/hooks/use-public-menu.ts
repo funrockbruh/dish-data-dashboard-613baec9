@@ -41,66 +41,81 @@ export function usePublicMenu(restaurantName: string | undefined) {
         
         console.log("Searching for restaurant:", restaurantName);
 
-        // Improved restaurant search - more flexible matching
-        const formattedName = restaurantName?.replace(/-/g, ' ');
+        if (!restaurantName) {
+          setError("No restaurant name provided");
+          setIsLoading(false);
+          return;
+        }
+
+        // Clean and format restaurant name for comparison
+        const formattedName = restaurantName.replace(/-/g, ' ').toLowerCase().trim();
         
-        // Use anonymous (public) query with supabase client
+        // Try first with an exact name match
         const { data: restaurantData, error: restaurantError } = await supabase
           .from("restaurant_profiles")
-          .select("id, restaurant_name, logo_url")
-          .ilike("restaurant_name", `%${formattedName}%`)
-          .limit(10);
-
-        console.log("Restaurant search results:", restaurantData);
+          .select("id, restaurant_name, logo_url");
 
         if (restaurantError) {
           console.error("Restaurant query error:", restaurantError);
           throw restaurantError;
         }
         
-        let currentRestaurant = null;
-        
         if (!restaurantData || restaurantData.length === 0) {
-          console.log("No restaurant found with initial search, trying alternative search");
-          // Try a more flexible search with explicit public access
-          const { data: altRestaurantData, error: altError } = await supabase
-            .from("restaurant_profiles")
-            .select("id, restaurant_name, logo_url");
-            
-          console.log("All restaurants:", altRestaurantData);
-          
-          if (!altError && altRestaurantData && altRestaurantData.length > 0) {
-            // Try to find a match manually with more flexible criteria
-            currentRestaurant = altRestaurantData.find(r => 
-              r.restaurant_name && 
-              (r.restaurant_name.toLowerCase().includes(formattedName?.toLowerCase() || '') ||
-               formattedName?.toLowerCase().includes(r.restaurant_name.toLowerCase()))
-            );
-          }
-          
-          if (!currentRestaurant) {
-            setError("Restaurant not found");
-            setIsLoading(false);
-            return;
-          }
-        } else {
-          // Find the best match from the initial search
-          // First try exact match (ignoring case)
+          setError("No restaurants found");
+          setIsLoading(false);
+          return;
+        }
+
+        console.log("All restaurants found:", restaurantData);
+        
+        // First try exact match (case-insensitive)
+        let currentRestaurant = restaurantData.find(r => 
+          r.restaurant_name && 
+          r.restaurant_name.toLowerCase().trim() === formattedName
+        );
+        
+        // If no exact match, try contains (more flexible)
+        if (!currentRestaurant) {
           currentRestaurant = restaurantData.find(r => 
-            r.restaurant_name && r.restaurant_name.toLowerCase() === formattedName?.toLowerCase()
+            r.restaurant_name && 
+            (r.restaurant_name.toLowerCase().includes(formattedName) ||
+             formattedName.includes(r.restaurant_name.toLowerCase()))
           );
-          
-          // If no exact match, take the first result
-          if (!currentRestaurant) {
-            currentRestaurant = restaurantData[0];
+        }
+        
+        // If still no match, try with parts of the name
+        if (!currentRestaurant && formattedName.includes(" ")) {
+          const nameParts = formattedName.split(" ");
+          for (const part of nameParts) {
+            if (part.length < 3) continue; // Skip very short words
+            
+            const matchByPart = restaurantData.find(r =>
+              r.restaurant_name && r.restaurant_name.toLowerCase().includes(part)
+            );
+            
+            if (matchByPart) {
+              currentRestaurant = matchByPart;
+              break;
+            }
           }
+        }
+        
+        // Try one more attempt - use the first restaurant if it's the only one
+        if (!currentRestaurant && restaurantData.length === 1) {
+          currentRestaurant = restaurantData[0];
+        }
+        
+        if (!currentRestaurant) {
+          setError(`Restaurant "${restaurantName}" not found`);
+          setIsLoading(false);
+          return;
         }
         
         console.log("Found restaurant:", currentRestaurant);
         setRestaurant(currentRestaurant);
         
-        // Load menu data using unauthenticated access
-        await loadMenuData(currentRestaurant.id, formattedName || '');
+        // Load menu data for the selected restaurant
+        await loadMenuData(currentRestaurant.id, formattedName);
       } catch (err) {
         console.error("Error fetching data:", err);
         setError("Failed to load menu data");
@@ -109,7 +124,7 @@ export function usePublicMenu(restaurantName: string | undefined) {
       }
     };
 
-    const loadMenuData = async (restaurantId: string, formattedName: string): Promise<boolean> => {
+    const loadMenuData = async (restaurantId: string, searchName: string): Promise<boolean> => {
       console.log("Loading menu data for restaurant ID:", restaurantId);
       let debugData = {
         restaurantId,
@@ -119,7 +134,7 @@ export function usePublicMenu(restaurantName: string | undefined) {
       };
       
       try {
-        // Fetch categories without authentication
+        // Fetch categories for this restaurant
         const { data: categoriesData, error: categoriesError } = await supabase
           .from("menu_categories")
           .select("id, name, image_url")
@@ -134,7 +149,7 @@ export function usePublicMenu(restaurantName: string | undefined) {
         console.log("Categories loaded:", categoriesData);
         setCategories(categoriesData || []);
 
-        // Fetch menu items without authentication
+        // Fetch menu items for this restaurant
         const { data: itemsData, error: itemsError } = await supabase
           .from("menu_items")
           .select("*")
@@ -159,51 +174,80 @@ export function usePublicMenu(restaurantName: string | undefined) {
                          (itemsData && itemsData.length > 0);
                          
         if (!foundData) {
-          // If no data found with restaurant ID, try with the restaurant name as a last resort
+          // If no data found with restaurant ID, try with other restaurants that might match
           debugData.alternativeSearch = true;
           
-          // Try a broader search
+          // Get all items to find potential matches
           const { data: allItems } = await supabase
             .from("menu_items")
-            .select("*")
-            .limit(100);
+            .select("*");
             
           if (allItems && allItems.length > 0) {
             console.log("Found some menu items in general search:", allItems);
             
-            // Try to match by restaurant name if we have some items
-            const matchingItems = allItems.filter(item => {
-              // Try to find items that might be related to this restaurant
-              return item.restaurant_id === restaurantId ||
-                     item.name?.toLowerCase().includes(formattedName.toLowerCase()) ||
-                     (item.description && item.description.toLowerCase().includes(formattedName.toLowerCase()));
-            });
+            // Find all unique restaurant IDs from items
+            const uniqueRestaurantIds = [...new Set(allItems.map(item => item.restaurant_id))];
+            console.log("Unique restaurant IDs with items:", uniqueRestaurantIds);
             
-            if (matchingItems.length > 0) {
-              console.log("Found potentially matching items:", matchingItems);
-              setMenuItems(matchingItems);
+            // Get restaurant profiles for these IDs
+            if (uniqueRestaurantIds.length > 0) {
+              const { data: itemRestaurants } = await supabase
+                .from("restaurant_profiles")
+                .select("id, restaurant_name")
+                .in("id", uniqueRestaurantIds);
+                
+              console.log("Restaurants with items:", itemRestaurants);
               
-              // Extract category IDs from these items
-              const categoryIds = [...new Set(matchingItems.map(item => item.category_id))].filter(Boolean);
-              
-              if (categoryIds.length > 0) {
-                // Fetch these categories with public access
-                const { data: relatedCategories } = await supabase
-                  .from("menu_categories")
-                  .select("id, name, image_url")
-                  .in("id", categoryIds);
+              // Find a better restaurant match based on name similarity
+              if (itemRestaurants && itemRestaurants.length > 0) {
+                const betterMatch = itemRestaurants.find(r => 
+                  r.restaurant_name && 
+                  (r.restaurant_name.toLowerCase().includes(searchName) ||
+                   searchName.includes(r.restaurant_name.toLowerCase()))
+                );
+                
+                if (betterMatch) {
+                  console.log("Found better restaurant match:", betterMatch);
                   
-                if (relatedCategories) {
-                  console.log("Found related categories:", relatedCategories);
-                  setCategories(relatedCategories);
+                  // Load data for this restaurant instead
+                  const { data: betterItems } = await supabase
+                    .from("menu_items")
+                    .select("*")
+                    .eq("restaurant_id", betterMatch.id);
+                    
+                  if (betterItems && betterItems.length > 0) {
+                    console.log("Found items for better match:", betterItems);
+                    setMenuItems(betterItems);
+                    
+                    // Update restaurant info
+                    const { data: fullRestaurant } = await supabase
+                      .from("restaurant_profiles")
+                      .select("id, restaurant_name, logo_url")
+                      .eq("id", betterMatch.id)
+                      .single();
+                      
+                    if (fullRestaurant) {
+                      setRestaurant(fullRestaurant);
+                    }
+                    
+                    // Get categories for this restaurant
+                    const { data: betterCategories } = await supabase
+                      .from("menu_categories")
+                      .select("id, name, image_url")
+                      .eq("restaurant_id", betterMatch.id);
+                      
+                    if (betterCategories) {
+                      setCategories(betterCategories);
+                    }
+                    
+                    // Filter featured items
+                    const betterFeatured = betterItems.filter(item => item.is_featured === true);
+                    setFeaturedItems(betterFeatured);
+                    
+                    return true;
+                  }
                 }
               }
-              
-              // Filter featured items
-              const userFeatured = matchingItems.filter(item => item.is_featured === true);
-              setFeaturedItems(userFeatured);
-              
-              return true;
             }
           }
         }
