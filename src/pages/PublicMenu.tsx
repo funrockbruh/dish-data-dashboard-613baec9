@@ -45,7 +45,11 @@ const PublicMenu = () => {
     if (menuItems.length > 0) {
       console.log("Sample menu item:", menuItems[0]);
     }
-  }, [restaurant, menuItems, categories, featuredItems, error]);
+    
+    if (debugInfo) {
+      console.log("Debug info:", debugInfo);
+    }
+  }, [restaurant, menuItems, categories, featuredItems, error, debugInfo]);
 
   if (isLoading) {
     return (
