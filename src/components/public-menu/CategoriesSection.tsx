@@ -1,11 +1,6 @@
 
 import { useRef } from "react";
 import { Category } from "@/hooks/public-menu/types";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-} from "@/components/ui/carousel";
 
 interface CategoriesSectionProps {
   categories: Category[];
@@ -24,11 +19,22 @@ export const CategoriesSection = ({ categories }: CategoriesSectionProps) => {
 
   if (displayCategories.length === 0) return null;
 
+  const scrollToCategory = (categoryId: string) => {
+    const element = document.getElementById(`category-${categoryId}`);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
   return (
     <section className="mb-4">
       <div className="flex overflow-x-auto hide-scrollbar gap-3 py-2">
         {displayCategories.map((category) => (
-          <div key={category.id} className="flex-none w-24">
+          <div 
+            key={category.id} 
+            className="flex-none w-24"
+            onClick={() => scrollToCategory(category.id)}
+          >
             <div className="aspect-square rounded-lg overflow-hidden relative cursor-pointer">
               <img
                 src={category.image_url || "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9"}

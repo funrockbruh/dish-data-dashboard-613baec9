@@ -1,13 +1,22 @@
 
 import { Card } from "@/components/ui/card";
 import type { MenuItem } from "@/hooks/public-menu/types";
+import { Category } from "@/hooks/public-menu/types";
 
 interface MenuItemsSectionProps {
   menuItems: MenuItem[];
+  categories: Category[];
   formatPrice: (price: number) => string;
 }
 
-export const MenuItemsSection = ({ menuItems, formatPrice }: MenuItemsSectionProps) => {
+export const MenuItemsSection = ({ menuItems, categories, formatPrice }: MenuItemsSectionProps) => {
+  // Group menu items by category
+  const itemsByCategory = categories.reduce((acc, category) => {
+    acc[category.id] = menuItems.filter(item => item.category_id === category.id);
+    return acc;
+  }, {} as Record<string, MenuItem[]>);
+
+  // Handle case when no menu items exist
   if (menuItems.length === 0) {
     // Create sample menu items for demonstration
     const sampleItems = [
@@ -64,11 +73,36 @@ export const MenuItemsSection = ({ menuItems, formatPrice }: MenuItemsSectionPro
 
   return (
     <section>
-      <div className="grid grid-cols-2 gap-4">
-        {menuItems.map((item) => (
-          <MenuItemComponent key={item.id} item={item} formatPrice={formatPrice} />
-        ))}
-      </div>
+      {categories.map(category => {
+        const categoryItems = itemsByCategory[category.id] || [];
+        
+        if (categoryItems.length === 0) return null;
+        
+        return (
+          <div key={category.id} id={`category-${category.id}`} className="mb-8">
+            <h2 className="text-2xl font-bold mb-4 border-b border-gray-800 pb-2">{category.name}</h2>
+            <div className="grid grid-cols-2 gap-4">
+              {categoryItems.map((item) => (
+                <MenuItemComponent key={item.id} item={item} formatPrice={formatPrice} />
+              ))}
+            </div>
+          </div>
+        );
+      })}
+      
+      {/* For uncategorized items (if any) */}
+      {menuItems.filter(item => !item.category_id || !categories.some(c => c.id === item.category_id)).length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold mb-4 border-b border-gray-800 pb-2">Other Items</h2>
+          <div className="grid grid-cols-2 gap-4">
+            {menuItems
+              .filter(item => !item.category_id || !categories.some(c => c.id === item.category_id))
+              .map((item) => (
+                <MenuItemComponent key={item.id} item={item} formatPrice={formatPrice} />
+              ))}
+          </div>
+        </div>
+      )}
     </section>
   );
 };
@@ -80,7 +114,7 @@ interface MenuItemProps {
 
 const MenuItemComponent = ({ item, formatPrice }: MenuItemProps) => {
   return (
-    <div className="mb-8">
+    <div className="mb-4">
       <div className="relative rounded-lg overflow-hidden">
         <img
           src={item.image_url || "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9"}

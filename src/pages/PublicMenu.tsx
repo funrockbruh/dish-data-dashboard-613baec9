@@ -1,3 +1,4 @@
+
 import { useParams } from "react-router-dom";
 import { usePublicMenu } from "@/hooks/public-menu";
 import { PublicMenuHeader } from "@/components/public-menu/PublicMenuHeader";
@@ -6,7 +7,6 @@ import { CategoriesSection } from "@/components/public-menu/CategoriesSection";
 import { MenuItemsSection } from "@/components/public-menu/MenuItemsSection";
 import { EmptyMenuState } from "@/components/menu/EmptyMenuState";
 import { useEffect } from "react";
-import { supabase } from "@/lib/supabase";
 
 const PublicMenu = () => {
   const { restaurantName } = useParams<{ restaurantName: string }>();
@@ -84,6 +84,7 @@ const PublicMenu = () => {
         
         <MenuItemsSection 
           menuItems={menuItems} 
+          categories={categories}
           formatPrice={formatPrice} 
         />
       </main>
