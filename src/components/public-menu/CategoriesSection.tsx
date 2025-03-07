@@ -25,35 +25,24 @@ export const CategoriesSection = ({ categories }: CategoriesSectionProps) => {
   if (displayCategories.length === 0) return null;
 
   return (
-    <section className="mb-6">
-      <Carousel
-        ref={carouselRef}
-        opts={{
-          align: "start",
-          loop: false,
-        }}
-        className="w-full"
-      >
-        <CarouselContent className="-ml-4">
-          {displayCategories.map((category) => (
-            <CarouselItem key={category.id} className="pl-4 md:basis-1/4 lg:basis-1/4">
-              <div className="h-full">
-                <div className="aspect-square rounded-lg overflow-hidden relative cursor-pointer">
-                  <img
-                    src={category.image_url || "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9"}
-                    alt={category.name}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-                  <div className="absolute bottom-0 left-0 right-0 p-4">
-                    <h3 className="text-white text-3xl font-bold">{category.name}</h3>
-                  </div>
-                </div>
+    <section className="mb-4">
+      <div className="flex overflow-x-auto hide-scrollbar gap-3 py-2">
+        {displayCategories.map((category) => (
+          <div key={category.id} className="flex-none w-24">
+            <div className="aspect-square rounded-lg overflow-hidden relative cursor-pointer">
+              <img
+                src={category.image_url || "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9"}
+                alt={category.name}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-black/40"></div>
+              <div className="absolute bottom-0 left-0 right-0 p-2 text-center">
+                <h3 className="text-white text-lg font-medium">{category.name}</h3>
               </div>
-            </CarouselItem>
-          ))}
-        </CarouselContent>
-      </Carousel>
+            </div>
+          </div>
+        ))}
+      </div>
     </section>
   );
 };
