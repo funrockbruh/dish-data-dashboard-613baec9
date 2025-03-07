@@ -1,9 +1,9 @@
 
 import { useState, useEffect } from "react";
-import { Restaurant, findRestaurantByName } from "./restaurant-search";
+import { findRestaurantByName } from "./restaurant-search";
 import { loadMenuData } from "./menu-data";
 import { formatPrice } from "./format-utils";
-import { Category, MenuItem, PublicMenuState } from "./types";
+import { Category, MenuItem, PublicMenuState, Restaurant } from "./types";
 
 export { formatPrice };
 export type { Restaurant, Category, MenuItem };

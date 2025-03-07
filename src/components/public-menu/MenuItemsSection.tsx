@@ -1,5 +1,6 @@
+
 import { Card } from "@/components/ui/card";
-import { MenuItem } from "@/hooks/public-menu/types";
+import type { MenuItem } from "@/hooks/public-menu/types";
 
 interface MenuItemsSectionProps {
   menuItems: MenuItem[];
@@ -54,7 +55,7 @@ export const MenuItemsSection = ({ menuItems, formatPrice }: MenuItemsSectionPro
         <p className="text-gray-400 mb-6">This restaurant hasn't added their real menu items yet. Here are some samples of what could be on the menu.</p>
         <div className="grid grid-cols-2 gap-4">
           {sampleItems.map((item) => (
-            <MenuItem key={item.id} item={item} formatPrice={formatPrice} />
+            <MenuItemComponent key={item.id} item={item} formatPrice={formatPrice} />
           ))}
         </div>
       </section>
@@ -65,7 +66,7 @@ export const MenuItemsSection = ({ menuItems, formatPrice }: MenuItemsSectionPro
     <section>
       <div className="grid grid-cols-2 gap-4">
         {menuItems.map((item) => (
-          <MenuItem key={item.id} item={item} formatPrice={formatPrice} />
+          <MenuItemComponent key={item.id} item={item} formatPrice={formatPrice} />
         ))}
       </div>
     </section>
@@ -77,7 +78,7 @@ interface MenuItemProps {
   formatPrice: (price: number) => string;
 }
 
-const MenuItem = ({ item, formatPrice }: MenuItemProps) => {
+const MenuItemComponent = ({ item, formatPrice }: MenuItemProps) => {
   return (
     <div className="mb-8">
       <div className="relative rounded-lg overflow-hidden">

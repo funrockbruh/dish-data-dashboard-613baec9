@@ -1,12 +1,6 @@
 
 import { supabase } from "@/lib/supabase";
-import { RestaurantSearchParams } from "./types";
-
-export interface Restaurant {
-  id: string;
-  restaurant_name: string;
-  logo_url: string | null;
-}
+import { Restaurant, RestaurantSearchParams } from "./types";
 
 export const findRestaurantByName = async (
   searchParams: RestaurantSearchParams

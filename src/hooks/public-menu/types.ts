@@ -1,5 +1,9 @@
 
-import { Restaurant } from "@/hooks/use-public-menu";
+export interface Restaurant {
+  id: string;
+  restaurant_name: string;
+  logo_url: string | null;
+}
 
 export interface Category {
   id: string;
