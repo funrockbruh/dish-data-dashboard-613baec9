@@ -43,7 +43,11 @@ const PublicMenu = () => {
   if (isLoading) {
     return (
       <div className="bg-black min-h-screen text-white">
-        <PublicMenuHeader restaurant={null} />
+        <PublicMenuHeader 
+          restaurant={null} 
+          menuItems={[]}
+          formatPrice={formatPrice}
+        />
         <div className="p-4 flex justify-center items-center h-[80vh]">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-white"></div>
         </div>
@@ -54,7 +58,11 @@ const PublicMenu = () => {
   if (error || (!isLoading && !restaurant)) {
     return (
       <div className="bg-black min-h-screen text-white">
-        <PublicMenuHeader restaurant={null} />
+        <PublicMenuHeader 
+          restaurant={null} 
+          menuItems={[]}
+          formatPrice={formatPrice}
+        />
         <div className="container mx-auto p-4">
           <EmptyMenuState 
             restaurantId={restaurant?.id || ''} 
@@ -68,7 +76,11 @@ const PublicMenu = () => {
 
   return (
     <div className="bg-black text-white min-h-screen">
-      <PublicMenuHeader restaurant={restaurant} />
+      <PublicMenuHeader 
+        restaurant={restaurant} 
+        menuItems={menuItems}
+        formatPrice={formatPrice} 
+      />
       
       <main className="container mx-auto p-4 pb-20">
         {featuredItems.length > 0 && (
