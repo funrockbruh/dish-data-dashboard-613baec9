@@ -1,7 +1,9 @@
 
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import type { MenuItem } from "@/hooks/public-menu/types";
 import { Category } from "@/hooks/public-menu/types";
+import { MenuItemDetailDialog } from "./MenuItemDetailDialog";
 
 interface MenuItemsSectionProps {
   menuItems: MenuItem[];
@@ -10,6 +12,14 @@ interface MenuItemsSectionProps {
 }
 
 export const MenuItemsSection = ({ menuItems, categories, formatPrice }: MenuItemsSectionProps) => {
+  const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+
+  const openItemDetail = (item: MenuItem) => {
+    setSelectedItem(item);
+    setIsDetailOpen(true);
+  };
+
   // Group menu items by category
   const itemsByCategory = categories.reduce((acc, category) => {
     acc[category.id] = menuItems.filter(item => item.category_id === category.id);
@@ -64,9 +74,20 @@ export const MenuItemsSection = ({ menuItems, categories, formatPrice }: MenuIte
         <p className="text-gray-400 mb-6">This restaurant hasn't added their real menu items yet. Here are some samples of what could be on the menu.</p>
         <div className="grid grid-cols-2 gap-4">
           {sampleItems.map((item) => (
-            <MenuItemComponent key={item.id} item={item} formatPrice={formatPrice} />
+            <MenuItemComponent 
+              key={item.id} 
+              item={item} 
+              formatPrice={formatPrice} 
+              onClick={() => openItemDetail(item)}
+            />
           ))}
         </div>
+        <MenuItemDetailDialog 
+          isOpen={isDetailOpen} 
+          onClose={() => setIsDetailOpen(false)} 
+          item={selectedItem} 
+          formatPrice={formatPrice}
+        />
       </section>
     );
   }
@@ -83,7 +104,12 @@ export const MenuItemsSection = ({ menuItems, categories, formatPrice }: MenuIte
             <h2 className="text-2xl font-bold mb-4 border-b border-gray-800 pb-2">{category.name}</h2>
             <div className="grid grid-cols-2 gap-4">
               {categoryItems.map((item) => (
-                <MenuItemComponent key={item.id} item={item} formatPrice={formatPrice} />
+                <MenuItemComponent 
+                  key={item.id} 
+                  item={item} 
+                  formatPrice={formatPrice} 
+                  onClick={() => openItemDetail(item)}
+                />
               ))}
             </div>
           </div>
@@ -98,11 +124,23 @@ export const MenuItemsSection = ({ menuItems, categories, formatPrice }: MenuIte
             {menuItems
               .filter(item => !item.category_id || !categories.some(c => c.id === item.category_id))
               .map((item) => (
-                <MenuItemComponent key={item.id} item={item} formatPrice={formatPrice} />
+                <MenuItemComponent 
+                  key={item.id} 
+                  item={item} 
+                  formatPrice={formatPrice} 
+                  onClick={() => openItemDetail(item)}
+                />
               ))}
           </div>
         </div>
       )}
+
+      <MenuItemDetailDialog 
+        isOpen={isDetailOpen} 
+        onClose={() => setIsDetailOpen(false)} 
+        item={selectedItem} 
+        formatPrice={formatPrice}
+      />
     </section>
   );
 };
@@ -110,11 +148,12 @@ export const MenuItemsSection = ({ menuItems, categories, formatPrice }: MenuIte
 interface MenuItemProps {
   item: MenuItem;
   formatPrice: (price: number) => string;
+  onClick: () => void;
 }
 
-const MenuItemComponent = ({ item, formatPrice }: MenuItemProps) => {
+const MenuItemComponent = ({ item, formatPrice, onClick }: MenuItemProps) => {
   return (
-    <div className="mb-4">
+    <div className="mb-4 cursor-pointer" onClick={onClick}>
       <div className="relative rounded-lg overflow-hidden">
         <img
           src={item.image_url || "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9"}
@@ -126,9 +165,7 @@ const MenuItemComponent = ({ item, formatPrice }: MenuItemProps) => {
             <h3 className="text-white font-medium">{item.name}</h3>
             <p className="text-white">{formatPrice(item.price)}</p>
           </div>
-          {item.description && (
-            <p className="text-gray-400 text-sm mt-1 line-clamp-2">{item.description}</p>
-          )}
+          {/* Description removed from here, will be shown in the dialog */}
         </div>
       </div>
     </div>
