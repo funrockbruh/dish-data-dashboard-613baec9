@@ -29,7 +29,7 @@ export const FeaturedSection = ({
                 </div>
                 
                 <div className="absolute bottom-0 left-0 w-full p-6 text-white">
-                  <h3 className="text-3xl font-bold">{item.name}</h3>
+                  <h3 className="text-3xl font-bold text-center">{item.name}</h3>
                 </div>
               </div>
             </CarouselItem>)}
