@@ -1,10 +1,4 @@
-
-import { 
-  Carousel,
-  CarouselContent,
-  CarouselItem 
-} from "@/components/ui/carousel";
-
+import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
 interface MenuItem {
   id: string;
   name: string;
@@ -14,29 +8,23 @@ interface MenuItem {
   category_id: string;
   is_featured: boolean;
 }
-
 interface FeaturedSectionProps {
   featuredItems: MenuItem[];
   formatPrice: (price: number) => string;
 }
-
-export const FeaturedSection = ({ featuredItems, formatPrice }: FeaturedSectionProps) => {
+export const FeaturedSection = ({
+  featuredItems,
+  formatPrice
+}: FeaturedSectionProps) => {
   if (featuredItems.length === 0) return null;
-
-  return (
-    <section className="mb-6">
+  return <section className="mb-6">
       <Carousel className="w-full">
         <CarouselContent>
-          {featuredItems.map((item) => (
-            <CarouselItem key={`featured-${item.id}`} className="relative">
+          {featuredItems.map(item => <CarouselItem key={`featured-${item.id}`} className="relative">
               <div className="overflow-hidden rounded-lg">
-                <img 
-                  src={item.image_url || "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9"}
-                  alt={item.name}
-                  className="w-full aspect-[16/9] object-cover"
-                />
+                <img src={item.image_url || "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9"} alt={item.name} className="w-full aspect-[16/9] object-cover" />
                 
-                <div className="absolute top-0 left-0 bg-white/90 px-6 py-1 font-bold tracking-widest">
+                <div className="absolute top-0 left-0 px-6 py-1 font-bold tracking-widest bg-black">
                   FEATURED
                 </div>
                 
@@ -44,10 +32,8 @@ export const FeaturedSection = ({ featuredItems, formatPrice }: FeaturedSectionP
                   <h3 className="text-3xl font-bold">{item.name}</h3>
                 </div>
               </div>
-            </CarouselItem>
-          ))}
+            </CarouselItem>)}
         </CarouselContent>
       </Carousel>
-    </section>
-  );
+    </section>;
 };
