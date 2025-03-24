@@ -22,7 +22,7 @@ export const MenuItemDetailDialog = ({
         </button>
         
         {/* Product image with rounded corners */}
-        <div className="w-full px-4 pt-4">
+        <div className="w-full px-4 pt-12">
           {item.image_url && <img src={item.image_url} alt={item.name} className="w-full aspect-[4/3] object-cover rounded-[10px]" />}
         </div>
         
