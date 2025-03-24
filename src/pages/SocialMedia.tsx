@@ -8,10 +8,39 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft, Instagram, Facebook, Mail, Phone } from "lucide-react";
 import { toast } from "sonner";
 import { TikTokIcon } from "@/components/icons/TikTokIcon";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
+
+// Country codes for the dropdown
+const countryCodes = [
+  { code: "+1", country: "US/Canada" },
+  { code: "+33", country: "France" },
+  { code: "+44", country: "UK" },
+  { code: "+49", country: "Germany" },
+  { code: "+61", country: "Australia" },
+  { code: "+81", country: "Japan" },
+  { code: "+86", country: "China" },
+  { code: "+91", country: "India" },
+  { code: "+961", country: "Lebanon" },
+  { code: "+971", country: "UAE" },
+  { code: "+966", country: "Saudi Arabia" },
+  { code: "+20", country: "Egypt" },
+  { code: "+212", country: "Morocco" },
+  { code: "+216", country: "Tunisia" },
+  { code: "+972", country: "Israel" },
+  { code: "+962", country: "Jordan" },
+  { code: "+963", country: "Syria" },
+];
 
 const SocialMedia = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [countryCode, setCountryCode] = useState("+961");
   const [socialLinks, setSocialLinks] = useState({
     whatsapp: "",
     instagram: "",
@@ -41,8 +70,25 @@ const SocialMedia = () => {
         if (error) throw error;
         
         if (profileData) {
+          // Parse whatsapp to extract country code and number
+          let whatsappNumber = profileData.whatsapp || "";
+          let detectedCountryCode = "+961"; // Default
+          
+          // Check if whatsapp starts with a country code
+          const countryCodeMatch = whatsappNumber.match(/^\+\d+/);
+          if (countryCodeMatch) {
+            // Try to find the matched country code in our list
+            const matchedCode = countryCodes.find(cc => whatsappNumber.startsWith(cc.code));
+            if (matchedCode) {
+              detectedCountryCode = matchedCode.code;
+              whatsappNumber = whatsappNumber.substring(matchedCode.code.length);
+            }
+          }
+          
+          setCountryCode(detectedCountryCode);
+          
           setSocialLinks({
-            whatsapp: profileData.whatsapp || "",
+            whatsapp: whatsappNumber,
             instagram: profileData.instagram || "",
             facebook: profileData.facebook || "",
             tiktok: profileData.tiktok || "",
@@ -70,10 +116,13 @@ const SocialMedia = () => {
         return;
       }
       
+      // Combine country code with whatsapp number before saving
+      const fullWhatsappNumber = socialLinks.whatsapp ? `${countryCode}${socialLinks.whatsapp}` : "";
+      
       const { error } = await supabase
         .from('restaurant_profiles')
         .update({
-          whatsapp: socialLinks.whatsapp,
+          whatsapp: fullWhatsappNumber,
           instagram: socialLinks.instagram,
           facebook: socialLinks.facebook,
           tiktok: socialLinks.tiktok,
@@ -122,10 +171,18 @@ const SocialMedia = () => {
             <div className="space-y-2">
               <Label htmlFor="whatsapp">WhatsApp:</Label>
               <div className="flex">
-                <span className="inline-flex items-center px-3 bg-gray-200 border border-r-0 border-gray-300 rounded-l-md">
-                  <Phone className="h-4 w-4 text-gray-500" />
-                  +961
-                </span>
+                <Select value={countryCode} onValueChange={setCountryCode}>
+                  <SelectTrigger className="rounded-r-none w-[120px]">
+                    <SelectValue placeholder="Code" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {countryCodes.map((country) => (
+                      <SelectItem key={country.code} value={country.code}>
+                        {country.code} {country.country}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <Input
                   id="whatsapp"
                   type="text"
