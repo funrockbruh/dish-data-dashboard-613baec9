@@ -20,7 +20,7 @@ export const PublicMenuHeader = ({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   return <>
-      <header className="sticky top-0 z-50 bg-black p-4 border-b border-gray-800 py-[5px]">
+      <header className="sticky top-[5px] z-50 bg-black/80 backdrop-blur-[10px] p-4 border border-gray-800 py-[5px] rounded-2xl">
         <div className="flex items-center justify-between">
           <div className="rounded-full bg-white/10 p-2" onClick={() => setIsSearchOpen(true)}>
             <Search className="h-6 w-6 text-white" />
