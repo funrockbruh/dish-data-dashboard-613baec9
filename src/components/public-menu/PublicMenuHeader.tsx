@@ -90,7 +90,7 @@ export const PublicMenuHeader = ({
               {filteredItems.map(item => (
                 <div key={item.id} className="overflow-hidden rounded-lg">
                   <div className="relative w-full">
-                    <AspectRatio ratio={16/9}>
+                    <AspectRatio ratio={4/3}>
                       {item.image_url ? (
                         <img 
                           src={item.image_url} 
@@ -103,11 +103,13 @@ export const PublicMenuHeader = ({
                         </div>
                       )}
                     </AspectRatio>
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-2 pt-6">
-                      <p className="text-white text-sm font-medium truncate">{item.name}</p>
-                      <p className="text-white text-xs">
-                        {formatPrice(item.price)}
-                      </p>
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-2">
+                      <div className="flex justify-between items-center">
+                        <p className="text-white text-sm font-medium truncate flex-1">{item.name}</p>
+                        <p className="text-white text-xs whitespace-nowrap ml-1">
+                          {formatPrice(item.price)}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
