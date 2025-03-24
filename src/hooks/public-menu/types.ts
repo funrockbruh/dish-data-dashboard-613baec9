@@ -23,6 +23,7 @@ export interface Restaurant {
   owner_name: string | null;
   owner_number: string | null;
   about: string | null;
+  theme_settings?: any; // Added theme_settings property
 }
 
 export interface PublicMenuState {
