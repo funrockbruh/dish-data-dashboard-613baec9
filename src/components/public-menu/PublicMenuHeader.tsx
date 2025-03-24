@@ -1,7 +1,6 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Search, Menu, X } from "lucide-react";
-import { SearchDialog } from "./SearchDialog";
 import { MenuItem } from "@/hooks/public-menu/types";
 
 interface Restaurant {
@@ -22,18 +21,33 @@ export const PublicMenuHeader = ({
   formatPrice
 }: PublicMenuHeaderProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isSearchBarVisible, setIsSearchBarVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [filteredItems, setFilteredItems] = useState<MenuItem[]>([]);
+
+  // Filter menu items based on search query
+  useEffect(() => {
+    if (searchQuery.trim() === "") {
+      setFilteredItems([]);
+      return;
+    }
+
+    const query = searchQuery.toLowerCase();
+    const results = menuItems.filter(
+      item => 
+        item.name.toLowerCase().includes(query) || 
+        (item.description && item.description.toLowerCase().includes(query))
+    );
+    
+    setFilteredItems(results);
+  }, [searchQuery, menuItems]);
 
   const handleSearchClick = () => {
     if (isSearchBarVisible) {
-      // If search bar is already visible and has query, open search dialog
-      if (searchQuery.trim()) {
-        setIsSearchOpen(true);
-      }
+      // Clear search and hide search bar
       setIsSearchBarVisible(false);
       setSearchQuery("");
+      setFilteredItems([]);
     } else {
       // Show search bar
       setIsSearchBarVisible(true);
@@ -42,18 +56,16 @@ export const PublicMenuHeader = ({
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (searchQuery.trim()) {
-      setIsSearchOpen(true);
-    }
+    // Just prevent default form submission, results already showing
   };
 
   return (
-    <>
-      <header className="sticky top-[5px] z-50 bg-black/50 backdrop-blur-[15px] p-4 border border-gray-800 py-[5px] rounded-2xl">
+    <div className={`sticky top-[5px] z-50 ${filteredItems.length > 0 ? "rounded-t-2xl" : "rounded-2xl"}`}>
+      <header className="bg-black/50 backdrop-blur-[15px] p-4 border border-gray-800 py-[5px] rounded-t-2xl">
         {!isSearchBarVisible ? (
           <div className="flex items-center justify-between">
             <div 
-              className="rounded-full bg-white/10 p-2" 
+              className="rounded-full bg-white/10 p-2 cursor-pointer" 
               onClick={handleSearchClick}
             >
               <Search className="h-6 w-6 text-white" />
@@ -93,9 +105,7 @@ export const PublicMenuHeader = ({
                 className="flex-1 bg-transparent text-white border-none outline-none"
                 autoFocus
               />
-              <button type="submit">
-                <Search className="h-6 w-6 text-white" />
-              </button>
+              <Search className="h-6 w-6 text-white" />
             </div>
             <button 
               type="button" 
@@ -108,16 +118,37 @@ export const PublicMenuHeader = ({
         )}
       </header>
 
-      <SearchDialog 
-        isOpen={isSearchOpen} 
-        onClose={() => {
-          setIsSearchOpen(false);
-          setSearchQuery("");
-        }} 
-        menuItems={menuItems} 
-        formatPrice={formatPrice}
-        initialSearchQuery={searchQuery}
-      />
-    </>
+      {/* Results panel that shows below the search bar */}
+      {isSearchBarVisible && filteredItems.length > 0 && (
+        <div className="bg-black/90 backdrop-blur-[15px] max-h-[70vh] overflow-y-auto border-x border-b border-gray-800 rounded-b-2xl">
+          <div className="p-3">
+            {filteredItems.map((item) => (
+              <div key={item.id} className="mb-4">
+                <div className="flex gap-3">
+                  {item.image_url && (
+                    <img
+                      src={item.image_url}
+                      alt={item.name}
+                      className="w-24 h-24 object-cover rounded-lg"
+                    />
+                  )}
+                  <div className="flex-1">
+                    <h3 className="text-white font-medium">{item.name}</h3>
+                    <p className="text-white font-medium">
+                      {formatPrice(item.price)}
+                    </p>
+                    {item.description && (
+                      <p className="text-gray-400 text-sm line-clamp-2">
+                        {item.description}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
