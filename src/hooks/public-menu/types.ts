@@ -1,16 +1,4 @@
 
-export interface Restaurant {
-  id: string;
-  restaurant_name: string;
-  logo_url: string | null;
-}
-
-export interface Category {
-  id: string;
-  name: string;
-  image_url: string | null;
-}
-
 export interface MenuItem {
   id: string;
   name: string;
@@ -19,19 +7,20 @@ export interface MenuItem {
   image_url: string | null;
   category_id: string;
   is_featured: boolean;
+  restaurant_id: string;
 }
 
-export interface PublicMenuState {
-  restaurant: Restaurant | null;
-  categories: Category[];
-  menuItems: MenuItem[];
-  featuredItems: MenuItem[];
-  isLoading: boolean;
-  error: string | null;
-  debugInfo: any;
+export interface Category {
+  id: string;
+  name: string;
+  image_url: string | null;
 }
 
-export interface RestaurantSearchParams {
-  restaurantName: string | undefined;
-  formattedName: string;
+export interface Restaurant {
+  id: string;
+  restaurant_name: string;
+  logo_url: string | null;
+  owner_name: string | null;
+  owner_number: string | null;
+  about: string | null;
 }

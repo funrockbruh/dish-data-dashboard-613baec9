@@ -1,14 +1,17 @@
 
 import { useState, useEffect } from "react";
-import { Search, Menu, X } from "lucide-react";
+import { Search, Menu, X, Edit, Phone, MessageSquare, Info, Settings } from "lucide-react";
 import { MenuItem } from "@/hooks/public-menu/types";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { MenuItemDetailDialog } from "./MenuItemDetailDialog";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { supabase } from "@/lib/supabase";
 
 interface Restaurant {
   id: string;
   restaurant_name: string;
   logo_url: string | null;
+  owner_number?: string | null;
 }
 
 interface PublicMenuHeaderProps {
@@ -28,6 +31,26 @@ export const PublicMenuHeader = ({
   const [filteredItems, setFilteredItems] = useState<MenuItem[]>([]);
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Check if user is authenticated
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data } = await supabase.auth.getSession();
+      setIsAuthenticated(!!data.session);
+    };
+
+    checkAuth();
+
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setIsAuthenticated(!!session);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   // Filter menu items based on search query
   useEffect(() => {
@@ -83,9 +106,80 @@ export const PublicMenuHeader = ({
                 </div>}
             </div>
             
-            <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="rounded-full bg-white/10 p-2">
-              <Menu className="h-6 w-6 text-white" />
-            </button>
+            <Sheet>
+              <SheetTrigger asChild>
+                <button className="rounded-full bg-white/10 p-2">
+                  <Menu className="h-6 w-6 text-white" />
+                </button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[300px] p-0 bg-black text-white border-gray-800">
+                {isAuthenticated ? (
+                  <div className="flex flex-col h-full">
+                    <div className="p-6 border-b border-gray-800 flex flex-col items-center space-y-4">
+                      {restaurant?.logo_url ? (
+                        <img 
+                          src={restaurant.logo_url} 
+                          alt={restaurant.restaurant_name || "Restaurant logo"} 
+                          className="h-24 w-24 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="bg-green-100 rounded-full h-24 w-24 flex items-center justify-center border-4 border-green-300">
+                          <span className="text-gray-700 text-sm font-bold">
+                            {restaurant?.restaurant_name || "Menu"}
+                          </span>
+                        </div>
+                      )}
+                      <h2 className="text-2xl font-bold text-center">{restaurant?.restaurant_name}</h2>
+                      {restaurant?.owner_number && (
+                        <div className="flex items-center space-x-2">
+                          <Phone className="h-4 w-4" />
+                          <span>{restaurant.owner_number}</span>
+                        </div>
+                      )}
+                    </div>
+                    <nav className="flex-1">
+                      <ul className="py-4">
+                        <li className="px-6 py-3 hover:bg-white/10 cursor-pointer flex items-center space-x-3">
+                          <MessageSquare className="h-5 w-5" />
+                          <span>Contact us</span>
+                        </li>
+                        <li className="px-6 py-3 hover:bg-white/10 cursor-pointer flex items-center space-x-3">
+                          <Info className="h-5 w-5" />
+                          <span>About us</span>
+                        </li>
+                        <li className="px-6 py-3 hover:bg-white/10 cursor-pointer flex items-center space-x-3">
+                          <Edit className="h-5 w-5" />
+                          <span>Edit Prices</span>
+                        </li>
+                        <li className="px-6 py-3 hover:bg-white/10 cursor-pointer flex items-center space-x-3">
+                          <Settings className="h-5 w-5" />
+                          <span>Settings</span>
+                        </li>
+                      </ul>
+                    </nav>
+                    <div className="p-6 border-t border-gray-800">
+                      <button 
+                        className="w-full py-2 px-4 rounded-lg bg-red-600 hover:bg-red-700 text-white"
+                        onClick={() => supabase.auth.signOut()}
+                      >
+                        Sign Out
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col h-full justify-center items-center p-6">
+                    <h2 className="text-xl font-semibold mb-6">Restaurant Account</h2>
+                    <p className="text-white/70 mb-8 text-center">Sign in to access your restaurant dashboard</p>
+                    <button className="w-full py-2 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white mb-4">
+                      Sign In
+                    </button>
+                    <button className="w-full py-2 px-4 rounded-lg border border-white/30 hover:bg-white/10 text-white">
+                      Create Account
+                    </button>
+                  </div>
+                )}
+              </SheetContent>
+            </Sheet>
           </div> : <form onSubmit={handleSearchSubmit} className="flex items-center gap-2">
             <div className="flex-1 flex items-center gap-2 bg-gray-800/80 rounded-full px-3 py-2">
               <input type="text" placeholder="Search" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="flex-1 bg-transparent text-white border-none outline-none" autoFocus />
