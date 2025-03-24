@@ -99,7 +99,7 @@ const Settings = () => {
           <Button 
             variant="outline" 
             className="w-full justify-start h-14 text-lg border-2 rounded-xl" 
-            onClick={() => navigateTo("/menu")}
+            onClick={() => navigateTo("/menu", { from: 'settings' })}
           >
             <Tag className="mr-3 h-5 w-5" />
             Edit Prices
@@ -108,7 +108,7 @@ const Settings = () => {
           <Button 
             variant="outline" 
             className="w-full justify-start h-14 text-lg border-2 rounded-xl" 
-            onClick={() => navigateTo("/categories")}
+            onClick={() => navigateTo("/categories", { from: 'settings' })}
           >
             <List className="mr-3 h-5 w-5" />
             Edit Category
@@ -117,7 +117,7 @@ const Settings = () => {
           <Button 
             variant="outline" 
             className="w-full justify-start h-14 text-lg border-2 rounded-xl" 
-            onClick={() => navigateTo("/featured")}
+            onClick={() => navigateTo("/featured", { from: 'settings' })}
           >
             <Star className="mr-3 h-5 w-5" />
             Featured

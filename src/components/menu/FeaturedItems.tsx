@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { AddFeaturedDialog } from "./AddFeaturedDialog";
@@ -13,6 +13,9 @@ import { toast } from "sonner";
 
 export const FeaturedItems = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const isFromSettings = location.state?.from === 'settings';
+  
   const { 
     items, 
     featuredItems, 
@@ -35,9 +38,12 @@ export const FeaturedItems = () => {
   const handleSaveAndContinue = async () => {
     await saveFeatured();
     
-    if (profile.restaurant_name) {
+    if (isFromSettings) {
+      // If coming from settings, go back to settings
+      navigate('/settings');
+    } else if (profile.restaurant_name) {
+      // For initial setup, continue to the public menu
       // Convert restaurant name to URL-friendly format
-      // This ensures we handle special characters and spaces properly
       const restaurantSlug = profile.restaurant_name
         .toLowerCase()
         .replace(/[^\w\s-]/g, '') // Remove special characters except spaces and hyphens
@@ -90,7 +96,7 @@ export const FeaturedItems = () => {
           disabled={isLoading}
           className="px-6 py-6 rounded-xl bg-[#23c55e]"
         >
-          {isLoading ? "Saving..." : "Save & Continue"}
+          {isLoading ? "Saving..." : isFromSettings ? "Save" : "Save & Continue"}
         </Button>
       </div>
 

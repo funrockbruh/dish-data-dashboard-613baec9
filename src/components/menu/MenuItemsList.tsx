@@ -1,8 +1,8 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { AddMenuItemDialog } from "./AddMenuItemDialog";
 import { RestaurantHeader } from "./RestaurantHeader";
 import { MenuSearchBar } from "./MenuSearchBar";
@@ -27,6 +27,8 @@ export const MenuItemsList = () => {
   
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isFromSettings = location.state?.from === 'settings';
 
   const handleEdit = (item: MenuItem) => {
     setSelectedItem(item);
@@ -53,8 +55,13 @@ export const MenuItemsList = () => {
       });
       setHasUnsavedChanges(false);
       
-      // Navigate to featured items page after saving
-      navigate('/featured');
+      // Navigate based on where the user came from
+      if (isFromSettings) {
+        navigate('/settings');
+      } else {
+        // Navigate to featured items page after saving during initial setup
+        navigate('/featured');
+      }
     } catch (error) {
       console.error('Error saving items:', error);
       toast({
@@ -98,7 +105,7 @@ export const MenuItemsList = () => {
           disabled={isLoading || isSaving}
           className="px-6 py-6 rounded-xl bg-[#23c55e]"
         >
-          {isSaving ? "Saving..." : "Save & Continue"}
+          {isSaving ? "Saving..." : isFromSettings ? "Save" : "Save & Continue"}
         </Button>
       </div>
 
