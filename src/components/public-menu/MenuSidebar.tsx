@@ -1,11 +1,11 @@
-
 import { Edit, Info, MessageSquare, Phone, Settings } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
 import type { Restaurant } from "@/hooks/public-menu/types";
-import { Facebook, Instagram, TikTok, Smartphone } from "lucide-react";
+import { Facebook, Instagram, Smartphone } from "lucide-react";
+import { TikTokIcon } from "@/components/icons/TikTokIcon";
 
 interface MenuSidebarProps {
   restaurant: Restaurant | null;
@@ -25,14 +25,9 @@ export const MenuSidebar = ({ restaurant, isAuthenticated }: MenuSidebarProps) =
 
   const handleContactClick = () => {
     if (restaurant?.social_whatsapp) {
-      // Format the phone number to ensure it's in the correct format for WhatsApp
-      // Remove any spaces, dashes, or other non-digit characters
       const formattedNumber = restaurant.social_whatsapp.replace(/\D/g, '');
-      
-      // Open WhatsApp with the formatted number
       window.open(`https://wa.me/${formattedNumber}`, '_blank');
     } else if (restaurant?.owner_number) {
-      // Fall back to owner_number if WhatsApp not set
       const formattedNumber = restaurant.owner_number.replace(/\D/g, '');
       window.open(`https://wa.me/${formattedNumber}`, '_blank');
     }
@@ -52,13 +47,11 @@ export const MenuSidebar = ({ restaurant, isAuthenticated }: MenuSidebarProps) =
 
   const handleSocialClick = (url: string | null | undefined) => {
     if (url) {
-      // Add https:// if not present
       const formattedUrl = url.startsWith('http') ? url : `https://${url}`;
       window.open(formattedUrl, '_blank');
     }
   };
 
-  // Function to check if any social media link exists
   const hasSocialMedia = () => {
     return !!(
       restaurant?.social_instagram || 
@@ -132,7 +125,6 @@ export const MenuSidebar = ({ restaurant, isAuthenticated }: MenuSidebarProps) =
             </ul>
           </nav>
           
-          {/* Social Media Icons */}
           {hasSocialMedia() && (
             <div className="flex justify-center gap-4 py-4 border-t border-gray-800">
               {restaurant?.social_facebook && (
@@ -149,7 +141,7 @@ export const MenuSidebar = ({ restaurant, isAuthenticated }: MenuSidebarProps) =
                   onClick={() => handleSocialClick(restaurant.social_tiktok)}
                   className="bg-white rounded-full p-2 w-10 h-10 flex items-center justify-center hover:bg-gray-200 transition-colors"
                 >
-                  <TikTok className="h-5 w-5 text-black" />
+                  <TikTokIcon className="h-5 w-5 text-black" />
                 </button>
               )}
               
