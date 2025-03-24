@@ -16,11 +16,6 @@ export interface Category {
   image_url: string | null;
 }
 
-export interface ThemeSettings {
-  isLightTheme?: boolean;
-  template?: string;
-}
-
 export interface Restaurant {
   id: string;
   restaurant_name: string;
@@ -28,7 +23,6 @@ export interface Restaurant {
   owner_name: string | null;
   owner_number: string | null;
   about: string | null;
-  theme_settings?: ThemeSettings;
 }
 
 export interface PublicMenuState {

@@ -108,7 +108,6 @@ export type Database = {
           owner_name: string | null
           owner_number: string | null
           restaurant_name: string | null
-          theme: Json | null
           updated_at: string
         }
         Insert: {
@@ -120,7 +119,6 @@ export type Database = {
           owner_name?: string | null
           owner_number?: string | null
           restaurant_name?: string | null
-          theme?: Json | null
           updated_at?: string
         }
         Update: {
@@ -132,7 +130,6 @@ export type Database = {
           owner_name?: string | null
           owner_number?: string | null
           restaurant_name?: string | null
-          theme?: Json | null
           updated_at?: string
         }
         Relationships: []
