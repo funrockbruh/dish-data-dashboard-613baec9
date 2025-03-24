@@ -4,10 +4,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
-import { ThemeColorSelector } from "@/components/theme/ThemeColorSelector";
 import { ThemeTemplateSelector } from "@/components/theme/ThemeTemplateSelector";
 
 const Theme = () => {
@@ -117,20 +115,6 @@ const Theme = () => {
                 onCheckedChange={setIsLightTheme}
               />
             </div>
-
-            <ThemeColorSelector 
-              title="Background" 
-              description="Choose a background color or image"
-              type="background"
-            />
-            
-            <div className="h-4"></div>
-            
-            <ThemeColorSelector 
-              title="Pop up" 
-              description="Choose a color or image for popups"
-              type="popup"
-            />
             
             <div className="h-6"></div>
             
