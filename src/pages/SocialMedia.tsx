@@ -32,7 +32,7 @@ const countryCodes = [
   { code: "+20", country: "Egypt" },
   { code: "+212", country: "Morocco" },
   { code: "+216", country: "Tunisia" },
-  { code: "+972", country: "Israel" },
+  { code: "+970", country: "Palestine" },
   { code: "+962", country: "Jordan" },
   { code: "+963", country: "Syria" },
 ];
