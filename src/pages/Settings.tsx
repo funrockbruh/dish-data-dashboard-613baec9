@@ -126,7 +126,7 @@ const Settings = () => {
           <Button 
             variant="outline" 
             className="w-full justify-start h-14 text-lg border-2 rounded-xl" 
-            onClick={() => toast.info("Social media links coming soon")}
+            onClick={() => navigateTo("/social-media")}
           >
             <LinkIcon className="mr-3 h-5 w-5" />
             Social Media Links

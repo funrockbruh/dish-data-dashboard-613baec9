@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import Verify from "./pages/Verify";
 import Settings from "./pages/Settings";
 import Theme from "./pages/Theme";
+import SocialMedia from "./pages/SocialMedia";
 import { RestaurantSetup } from "./components/RestaurantSetup";
 import { CategorySetup } from "./components/CategorySetup";
 import { MenuItemsList } from "./components/menu/MenuItemsList";
@@ -33,6 +34,7 @@ const App = () => (
           <Route path="/menu/:restaurantName" element={<PublicMenu />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/theme" element={<Theme />} />
+          <Route path="/social-media" element={<SocialMedia />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>

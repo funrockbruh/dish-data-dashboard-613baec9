@@ -23,6 +23,11 @@ export interface Restaurant {
   owner_name: string | null;
   owner_number: string | null;
   about: string | null;
+  whatsapp?: string | null;
+  instagram?: string | null;
+  facebook?: string | null;
+  tiktok?: string | null;
+  email?: string | null;
 }
 
 export interface PublicMenuState {
