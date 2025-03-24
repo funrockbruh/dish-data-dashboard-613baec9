@@ -1,16 +1,21 @@
+
 import { useState, useEffect } from "react";
 import { Search, Menu, X } from "lucide-react";
 import { MenuItem } from "@/hooks/public-menu/types";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
+
 interface Restaurant {
   id: string;
   restaurant_name: string;
   logo_url: string | null;
 }
+
 interface PublicMenuHeaderProps {
   restaurant: Restaurant | null;
   menuItems: MenuItem[];
   formatPrice: (price: number) => string;
 }
+
 export const PublicMenuHeader = ({
   restaurant,
   menuItems,
@@ -31,6 +36,7 @@ export const PublicMenuHeader = ({
     const results = menuItems.filter(item => item.name.toLowerCase().includes(query) || item.description && item.description.toLowerCase().includes(query));
     setFilteredItems(results);
   }, [searchQuery, menuItems]);
+
   const handleSearchClick = () => {
     if (isSearchBarVisible) {
       // Clear search and hide search bar
@@ -42,10 +48,12 @@ export const PublicMenuHeader = ({
       setIsSearchBarVisible(true);
     }
   };
+
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Just prevent default form submission, results already showing
   };
+
   return <div className={`sticky top-[5px] z-50 ${filteredItems.length > 0 ? "rounded-t-2xl" : "rounded-2xl"}`}>
       <header className="bg-black/50 backdrop-blur-[15px] p-4 border border-gray-800 py-[5px] rounded-2xl">
         {!isSearchBarVisible ? <div className="flex items-center justify-between">
@@ -78,20 +86,33 @@ export const PublicMenuHeader = ({
       {/* Results panel that shows below the search bar */}
       {isSearchBarVisible && filteredItems.length > 0 && <div className="bg-black/90 backdrop-blur-[15px] max-h-[70vh] overflow-y-auto border-x border-b border-gray-800 rounded-b-2xl">
           <div className="p-3">
-            {filteredItems.map(item => <div key={item.id} className="mb-4">
-                <div className="flex gap-3">
-                  {item.image_url && <img src={item.image_url} alt={item.name} className="w-24 h-24 object-cover rounded-lg" />}
-                  <div className="flex-1">
-                    <h3 className="text-white font-medium">{item.name}</h3>
-                    <p className="text-white font-medium">
-                      {formatPrice(item.price)}
-                    </p>
-                    {item.description && <p className="text-gray-400 text-sm line-clamp-2">
-                        {item.description}
-                      </p>}
+            <div className="grid grid-cols-2 gap-3">
+              {filteredItems.map(item => (
+                <div key={item.id} className="overflow-hidden rounded-lg">
+                  <div className="relative w-full">
+                    <AspectRatio ratio={16/9}>
+                      {item.image_url ? (
+                        <img 
+                          src={item.image_url} 
+                          alt={item.name} 
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gray-800 flex items-center justify-center">
+                          <span className="text-gray-400 text-xs">No image</span>
+                        </div>
+                      )}
+                    </AspectRatio>
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-2 pt-6">
+                      <p className="text-white text-sm font-medium truncate">{item.name}</p>
+                      <p className="text-white text-xs">
+                        {formatPrice(item.price)}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>)}
+              ))}
+            </div>
           </div>
         </div>}
     </div>;
