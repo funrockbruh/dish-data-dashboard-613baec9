@@ -3,11 +3,13 @@ import { Card } from "@/components/ui/card";
 import type { MenuItem } from "@/hooks/public-menu/types";
 import { Category } from "@/hooks/public-menu/types";
 import { MenuItemDetailDialog } from "./MenuItemDetailDialog";
+
 interface MenuItemsSectionProps {
   menuItems: MenuItem[];
   categories: Category[];
   formatPrice: (price: number) => string;
 }
+
 export const MenuItemsSection = ({
   menuItems,
   categories,
@@ -71,6 +73,7 @@ export const MenuItemsSection = ({
         <MenuItemDetailDialog isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} item={selectedItem} formatPrice={formatPrice} />
       </section>;
   }
+  
   return <section>
       {categories.map(category => {
       const categoryItems = itemsByCategory[category.id] || [];
@@ -94,18 +97,20 @@ export const MenuItemsSection = ({
       <MenuItemDetailDialog isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} item={selectedItem} formatPrice={formatPrice} />
     </section>;
 };
+
 interface MenuItemProps {
   item: MenuItem;
   formatPrice: (price: number) => string;
   onClick: () => void;
 }
+
 const MenuItemComponent = ({
   item,
   formatPrice,
   onClick
 }: MenuItemProps) => {
-  return <div className="mb-4 cursor-pointer" onClick={onClick}>
-      <div className="relative rounded-lg overflow-hidden">
+  return <div className="mb-4 cursor-pointer active:scale-95 transition-transform" onClick={onClick}>
+      <div className="relative rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
         <img src={item.image_url || "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9"} alt={item.name} className="w-full aspect-[4/3] object-cover rounded-[10px]" />
         <div className="p-2 bg-black">
           <div className="flex justify-between items-center">

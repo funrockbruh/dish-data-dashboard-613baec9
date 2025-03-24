@@ -89,7 +89,7 @@ export const SearchDialog = ({ isOpen, onClose, menuItems, formatPrice }: Search
                 {filteredItems.map((item) => (
                   <div 
                     key={item.id} 
-                    className="mb-4 cursor-pointer hover:bg-gray-900 rounded-lg p-2"
+                    className="mb-4 cursor-pointer hover:bg-gray-900 active:bg-gray-800 rounded-lg p-2 transition-colors"
                     onClick={() => openItemDetail(item)}
                   >
                     <div className="flex gap-3">
@@ -107,7 +107,6 @@ export const SearchDialog = ({ isOpen, onClose, menuItems, formatPrice }: Search
                             {formatPrice(item.price)}
                           </p>
                         </div>
-                        {/* Description removed from search results */}
                       </div>
                     </div>
                   </div>
