@@ -19,6 +19,17 @@ export const MenuSidebar = ({ restaurant, isAuthenticated }: MenuSidebarProps) =
     window.location.href = "/";
   };
 
+  const handleContactClick = () => {
+    if (restaurant?.owner_number) {
+      // Format the phone number to ensure it's in the correct format for WhatsApp
+      // Remove any spaces, dashes, or other non-digit characters
+      const formattedNumber = restaurant.owner_number.replace(/\D/g, '');
+      
+      // Open WhatsApp with the formatted number
+      window.open(`https://wa.me/${formattedNumber}`, '_blank');
+    }
+  };
+
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -53,7 +64,10 @@ export const MenuSidebar = ({ restaurant, isAuthenticated }: MenuSidebarProps) =
           
           <nav className="flex-1">
             <ul className="py-4">
-              <li className="px-6 py-3 hover:bg-white/10 cursor-pointer flex items-center space-x-3">
+              <li 
+                className="px-6 py-3 hover:bg-white/10 cursor-pointer flex items-center space-x-3"
+                onClick={handleContactClick}
+              >
                 <MessageSquare className="h-5 w-5" />
                 <span>Contact us</span>
               </li>
