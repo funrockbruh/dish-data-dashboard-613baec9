@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Verify from "./pages/Verify";
+import Settings from "./pages/Settings";
 import { RestaurantSetup } from "./components/RestaurantSetup";
 import { CategorySetup } from "./components/CategorySetup";
 import { MenuItemsList } from "./components/menu/MenuItemsList";
@@ -29,6 +30,7 @@ const App = () => (
           <Route path="/menu" element={<MenuItemsList />} />
           <Route path="/featured" element={<FeaturedItems />} />
           <Route path="/menu/:restaurantName" element={<PublicMenu />} />
+          <Route path="/settings" element={<Settings />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>

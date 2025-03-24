@@ -3,6 +3,7 @@ import { Edit, Info, MessageSquare, Phone, Settings } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { useNavigate } from "react-router-dom";
 import type { Restaurant } from "@/hooks/public-menu/types";
 
 interface MenuSidebarProps {
@@ -11,6 +12,8 @@ interface MenuSidebarProps {
 }
 
 export const MenuSidebar = ({ restaurant, isAuthenticated }: MenuSidebarProps) => {
+  const navigate = useNavigate();
+  
   const handleSignOut = async () => {
     await supabase.auth.signOut();
   };
@@ -28,6 +31,10 @@ export const MenuSidebar = ({ restaurant, isAuthenticated }: MenuSidebarProps) =
       // Open WhatsApp with the formatted number
       window.open(`https://wa.me/${formattedNumber}`, '_blank');
     }
+  };
+  
+  const handleSettingsClick = () => {
+    navigate('/settings');
   };
 
   return (
@@ -82,7 +89,10 @@ export const MenuSidebar = ({ restaurant, isAuthenticated }: MenuSidebarProps) =
                     <Edit className="h-5 w-5" />
                     <span>Edit Prices</span>
                   </li>
-                  <li className="px-6 py-3 hover:bg-white/10 cursor-pointer flex items-center space-x-3">
+                  <li 
+                    className="px-6 py-3 hover:bg-white/10 cursor-pointer flex items-center space-x-3"
+                    onClick={handleSettingsClick}
+                  >
                     <Settings className="h-5 w-5" />
                     <span>Settings</span>
                   </li>
