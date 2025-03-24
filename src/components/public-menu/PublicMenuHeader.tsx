@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { Search, Menu, X } from "lucide-react";
 import { MenuItem } from "@/hooks/public-menu/types";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { MenuItemDetailDialog } from "./MenuItemDetailDialog";
 
 interface Restaurant {
   id: string;
@@ -25,6 +26,8 @@ export const PublicMenuHeader = ({
   const [isSearchBarVisible, setIsSearchBarVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredItems, setFilteredItems] = useState<MenuItem[]>([]);
+  const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
 
   // Filter menu items based on search query
   useEffect(() => {
@@ -54,7 +57,18 @@ export const PublicMenuHeader = ({
     // Just prevent default form submission, results already showing
   };
 
-  return <div className={`sticky top-[5px] z-50 ${filteredItems.length > 0 ? "rounded-t-2xl" : "rounded-2xl"}`}>
+  const handleItemClick = (item: MenuItem) => {
+    setSelectedItem(item);
+    setIsDetailDialogOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setIsDetailDialogOpen(false);
+    setSelectedItem(null);
+  };
+
+  return (
+    <div className={`sticky top-[5px] z-50 ${filteredItems.length > 0 ? "rounded-t-2xl" : "rounded-2xl"}`}>
       <header className="bg-black/50 backdrop-blur-[15px] p-4 border border-gray-800 py-[5px] rounded-2xl">
         {!isSearchBarVisible ? <div className="flex items-center justify-between">
             <div className="rounded-full bg-white/10 p-2 cursor-pointer" onClick={handleSearchClick}>
@@ -88,7 +102,11 @@ export const PublicMenuHeader = ({
           <div className="p-3">
             <div className="grid grid-cols-2 gap-3">
               {filteredItems.map(item => (
-                <div key={item.id} className="overflow-hidden rounded-lg">
+                <div 
+                  key={item.id} 
+                  className="overflow-hidden rounded-lg cursor-pointer"
+                  onClick={() => handleItemClick(item)}
+                >
                   <div className="relative w-full">
                     <AspectRatio ratio={4/3}>
                       {item.image_url ? (
@@ -117,5 +135,14 @@ export const PublicMenuHeader = ({
             </div>
           </div>
         </div>}
-    </div>;
+
+      {/* Item Detail Dialog */}
+      <MenuItemDetailDialog
+        isOpen={isDetailDialogOpen}
+        onClose={handleCloseDialog}
+        item={selectedItem}
+        formatPrice={formatPrice}
+      />
+    </div>
+  );
 };
