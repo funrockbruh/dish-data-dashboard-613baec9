@@ -26,23 +26,40 @@ const Theme = () => {
         return;
       }
       
-      // Fetch restaurant profile and theme settings
-      const { data: profileData } = await supabase
-        .from('restaurant_profiles')
-        .select('restaurant_name, theme_settings')
-        .eq('id', data.session.user.id)
-        .single();
-        
-      if (profileData) {
-        setRestaurantName(profileData.restaurant_name);
-        
-        // Initialize theme settings if available
-        if (profileData.theme_settings) {
-          setIsLightTheme(profileData.theme_settings.isLightTheme !== false);
-          if (profileData.theme_settings.template) {
-            setSelectedTemplate(profileData.theme_settings.template);
+      try {
+        // Fetch restaurant profile
+        const { data: profileData, error: profileError } = await supabase
+          .from('restaurant_profiles')
+          .select('restaurant_name, theme')
+          .eq('id', data.session.user.id)
+          .single();
+          
+        if (profileError) {
+          console.error("Error fetching profile:", profileError);
+          return;
+        }
+          
+        if (profileData) {
+          setRestaurantName(profileData.restaurant_name);
+          
+          // Initialize theme settings if available
+          if (profileData.theme) {
+            try {
+              const themeData = typeof profileData.theme === 'string' 
+                ? JSON.parse(profileData.theme) 
+                : profileData.theme;
+                
+              setIsLightTheme(themeData.isLightTheme !== false);
+              if (themeData.template) {
+                setSelectedTemplate(themeData.template);
+              }
+            } catch (err) {
+              console.error("Error parsing theme data:", err);
+            }
           }
         }
+      } catch (error) {
+        console.error("Error in auth check:", error);
       }
     };
 
@@ -62,13 +79,15 @@ const Theme = () => {
         return;
       }
       
+      const themeSettings = JSON.stringify({
+        isLightTheme,
+        template: selectedTemplate
+      });
+      
       const { error } = await supabase
         .from('restaurant_profiles')
         .update({
-          theme_settings: {
-            isLightTheme,
-            template: selectedTemplate
-          }
+          theme: themeSettings
         })
         .eq('id', sessionData.session.user.id);
         
@@ -78,6 +97,8 @@ const Theme = () => {
       
       if (fromSettings) {
         navigate('/settings');
+      } else {
+        navigate('/featured');
       }
     } catch (error) {
       console.error("Error saving theme settings:", error);
