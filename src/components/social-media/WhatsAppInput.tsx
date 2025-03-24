@@ -18,14 +18,14 @@ export const WhatsAppInput = ({
 }: WhatsAppInputProps) => {
   return (
     <div className="space-y-2">
-      <Label htmlFor="whatsapp">WhatsApp:</Label>
+      <Label htmlFor="whatsapp" className="text-lg font-medium">WhatsApp:</Label>
       <div className="flex">
         <CountryCodeSelect value={countryCode} onChange={onCountryCodeChange} />
         <Input
           id="whatsapp"
           type="text"
           placeholder="Phone Number"
-          className="rounded-l-none"
+          className="rounded-l-none bg-gray-100"
           value={value}
           onChange={(e) => onValueChange(e.target.value)}
         />

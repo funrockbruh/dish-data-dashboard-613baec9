@@ -24,7 +24,7 @@ export const SocialMediaInput = ({
 }: SocialMediaInputProps) => {
   return (
     <div className="space-y-2">
-      <Label htmlFor={id}>{label}:</Label>
+      <Label htmlFor={id} className="text-lg font-medium">{label}:</Label>
       <div className="flex items-center relative">
         <Input
           id={id}
@@ -32,7 +32,7 @@ export const SocialMediaInput = ({
           placeholder={placeholder}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="pl-10"
+          className="pl-10 bg-gray-100"
         />
         <div className="h-4 w-4 text-gray-500 absolute left-3">
           {icon}

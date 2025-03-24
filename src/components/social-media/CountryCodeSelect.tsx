@@ -36,7 +36,7 @@ interface CountryCodeSelectProps {
 export const CountryCodeSelect = ({ value, onChange }: CountryCodeSelectProps) => {
   return (
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="rounded-r-none w-[120px]">
+      <SelectTrigger className="rounded-r-none w-[120px] bg-gray-100 border-r-0">
         <SelectValue placeholder="Code" />
       </SelectTrigger>
       <SelectContent>
