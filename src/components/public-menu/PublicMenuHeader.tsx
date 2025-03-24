@@ -1,17 +1,21 @@
+
 import { useState } from "react";
-import { Search, Menu } from "lucide-react";
+import { Search, Menu, X } from "lucide-react";
 import { SearchDialog } from "./SearchDialog";
 import { MenuItem } from "@/hooks/public-menu/types";
+
 interface Restaurant {
   id: string;
   restaurant_name: string;
   logo_url: string | null;
 }
+
 interface PublicMenuHeaderProps {
   restaurant: Restaurant | null;
   menuItems: MenuItem[];
   formatPrice: (price: number) => string;
 }
+
 export const PublicMenuHeader = ({
   restaurant,
   menuItems,
@@ -19,25 +23,101 @@ export const PublicMenuHeader = ({
 }: PublicMenuHeaderProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  return <>
+  const [isSearchBarVisible, setIsSearchBarVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const handleSearchClick = () => {
+    if (isSearchBarVisible) {
+      // If search bar is already visible and has query, open search dialog
+      if (searchQuery.trim()) {
+        setIsSearchOpen(true);
+      }
+      setIsSearchBarVisible(false);
+      setSearchQuery("");
+    } else {
+      // Show search bar
+      setIsSearchBarVisible(true);
+    }
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      setIsSearchOpen(true);
+    }
+  };
+
+  return (
+    <>
       <header className="sticky top-[5px] z-50 bg-black/50 backdrop-blur-[15px] p-4 border border-gray-800 py-[5px] rounded-2xl">
-        <div className="flex items-center justify-between">
-          <div className="rounded-full bg-white/10 p-2" onClick={() => setIsSearchOpen(true)}>
-            <Search className="h-6 w-6 text-white" />
+        {!isSearchBarVisible ? (
+          <div className="flex items-center justify-between">
+            <div 
+              className="rounded-full bg-white/10 p-2" 
+              onClick={handleSearchClick}
+            >
+              <Search className="h-6 w-6 text-white" />
+            </div>
+            
+            <div className="flex items-center justify-center">
+              {restaurant?.logo_url ? (
+                <img 
+                  src={restaurant.logo_url} 
+                  alt={restaurant.restaurant_name || "Restaurant logo"} 
+                  className="h-16 w-16 rounded-full" 
+                />
+              ) : (
+                <div className="bg-green-100 rounded-full h-16 w-16 flex items-center justify-center border-4 border-green-300">
+                  <span className="text-gray-700 text-sm font-bold">
+                    {restaurant?.restaurant_name || "Menu"}
+                  </span>
+                </div>
+              )}
+            </div>
+            
+            <button 
+              onClick={() => setIsMenuOpen(!isMenuOpen)} 
+              className="rounded-full bg-white/10 p-2"
+            >
+              <Menu className="h-6 w-6 text-white" />
+            </button>
           </div>
-          
-          <div className="flex items-center justify-center">
-            {restaurant?.logo_url ? <img src={restaurant.logo_url} alt={restaurant.restaurant_name || "Restaurant logo"} className="h-16 w-16 rounded-full" /> : <div className="bg-green-100 rounded-full h-16 w-16 flex items-center justify-center border-4 border-green-300">
-                <span className="text-gray-700 text-sm font-bold">{restaurant?.restaurant_name || "Menu"}</span>
-              </div>}
-          </div>
-          
-          <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="rounded-full bg-white/10 p-2">
-            <Menu className="h-6 w-6 text-white" />
-          </button>
-        </div>
+        ) : (
+          <form onSubmit={handleSearchSubmit} className="flex items-center gap-2">
+            <div className="flex-1 flex items-center gap-2 bg-gray-800/80 rounded-full px-3 py-2">
+              <input
+                type="text"
+                placeholder="Search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="flex-1 bg-transparent text-white border-none outline-none"
+                autoFocus
+              />
+              <button type="submit">
+                <Search className="h-6 w-6 text-white" />
+              </button>
+            </div>
+            <button 
+              type="button" 
+              onClick={handleSearchClick} 
+              className="rounded-full bg-white/10 p-2"
+            >
+              <X className="h-6 w-6 text-white" />
+            </button>
+          </form>
+        )}
       </header>
 
-      <SearchDialog isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} menuItems={menuItems} formatPrice={formatPrice} />
-    </>;
+      <SearchDialog 
+        isOpen={isSearchOpen} 
+        onClose={() => {
+          setIsSearchOpen(false);
+          setSearchQuery("");
+        }} 
+        menuItems={menuItems} 
+        formatPrice={formatPrice}
+        initialSearchQuery={searchQuery}
+      />
+    </>
+  );
 };

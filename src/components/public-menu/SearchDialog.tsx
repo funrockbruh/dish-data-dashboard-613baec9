@@ -11,10 +11,17 @@ interface SearchDialogProps {
   onClose: () => void;
   menuItems: MenuItem[];
   formatPrice: (price: number) => string;
+  initialSearchQuery?: string;
 }
 
-export const SearchDialog = ({ isOpen, onClose, menuItems, formatPrice }: SearchDialogProps) => {
-  const [searchQuery, setSearchQuery] = useState("");
+export const SearchDialog = ({ 
+  isOpen, 
+  onClose, 
+  menuItems, 
+  formatPrice,
+  initialSearchQuery = ""
+}: SearchDialogProps) => {
+  const [searchQuery, setSearchQuery] = useState(initialSearchQuery);
   const [filteredItems, setFilteredItems] = useState<MenuItem[]>([]);
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -23,6 +30,13 @@ export const SearchDialog = ({ isOpen, onClose, menuItems, formatPrice }: Search
     setSelectedItem(item);
     setIsDetailOpen(true);
   };
+
+  useEffect(() => {
+    // Update searchQuery when initialSearchQuery changes or dialog opens
+    if (isOpen && initialSearchQuery) {
+      setSearchQuery(initialSearchQuery);
+    }
+  }, [isOpen, initialSearchQuery]);
 
   useEffect(() => {
     if (searchQuery.trim() === "") {
