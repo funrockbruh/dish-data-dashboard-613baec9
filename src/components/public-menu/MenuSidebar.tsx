@@ -9,9 +9,10 @@ import type { Restaurant } from "@/hooks/public-menu/types";
 interface MenuSidebarProps {
   restaurant: Restaurant | null;
   isAuthenticated: boolean;
+  isLightTheme?: boolean;
 }
 
-export const MenuSidebar = ({ restaurant, isAuthenticated }: MenuSidebarProps) => {
+export const MenuSidebar = ({ restaurant, isAuthenticated, isLightTheme = true }: MenuSidebarProps) => {
   const navigate = useNavigate();
   
   const handleSignOut = async () => {
@@ -40,13 +41,13 @@ export const MenuSidebar = ({ restaurant, isAuthenticated }: MenuSidebarProps) =
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <button className="rounded-full bg-white/10 p-2">
-          <Menu className="h-6 w-6 text-white" />
+        <button className={`rounded-full ${isLightTheme ? 'bg-gray-200/80' : 'bg-white/10'} p-2`}>
+          <Menu className={`h-6 w-6 ${isLightTheme ? 'text-gray-700' : 'text-white'}`} />
         </button>
       </SheetTrigger>
-      <SheetContent side="right" className="w-[300px] p-0 bg-black text-white border-gray-800">
+      <SheetContent side="right" className={`w-[300px] p-0 ${isLightTheme ? 'bg-white text-gray-800 border-gray-200' : 'bg-black text-white border-gray-800'}`}>
         <div className="flex flex-col h-full">
-          <div className="p-6 border-b border-gray-800 flex flex-col items-center space-y-4">
+          <div className={`p-6 border-b ${isLightTheme ? 'border-gray-200' : 'border-gray-800'} flex flex-col items-center space-y-4`}>
             {restaurant?.logo_url ? (
               <img 
                 src={restaurant.logo_url} 
@@ -54,8 +55,10 @@ export const MenuSidebar = ({ restaurant, isAuthenticated }: MenuSidebarProps) =
                 className="h-24 w-24 rounded-full object-cover"
               />
             ) : (
-              <div className="bg-green-100 rounded-full h-24 w-24 flex items-center justify-center border-4 border-green-300">
-                <span className="text-gray-700 text-sm font-bold">
+              <div className={`rounded-full h-24 w-24 flex items-center justify-center border-4 ${
+                isLightTheme ? "bg-green-100 border-green-300 text-gray-700" : "bg-green-900 border-green-700 text-white"
+              }`}>
+                <span className="text-sm font-bold">
                   {restaurant?.restaurant_name || "Menu"}
                 </span>
               </div>
@@ -72,25 +75,25 @@ export const MenuSidebar = ({ restaurant, isAuthenticated }: MenuSidebarProps) =
           <nav className="flex-1">
             <ul className="py-4">
               <li 
-                className="px-6 py-3 hover:bg-white/10 cursor-pointer flex items-center space-x-3"
+                className={`px-6 py-3 hover:${isLightTheme ? 'bg-gray-100' : 'bg-white/10'} cursor-pointer flex items-center space-x-3`}
                 onClick={handleContactClick}
               >
                 <MessageSquare className="h-5 w-5" />
                 <span>Contact us</span>
               </li>
-              <li className="px-6 py-3 hover:bg-white/10 cursor-pointer flex items-center space-x-3">
+              <li className={`px-6 py-3 hover:${isLightTheme ? 'bg-gray-100' : 'bg-white/10'} cursor-pointer flex items-center space-x-3`}>
                 <Info className="h-5 w-5" />
                 <span>About us</span>
               </li>
               
               {isAuthenticated && (
                 <>
-                  <li className="px-6 py-3 hover:bg-white/10 cursor-pointer flex items-center space-x-3">
+                  <li className={`px-6 py-3 hover:${isLightTheme ? 'bg-gray-100' : 'bg-white/10'} cursor-pointer flex items-center space-x-3`}>
                     <Edit className="h-5 w-5" />
                     <span>Edit Prices</span>
                   </li>
                   <li 
-                    className="px-6 py-3 hover:bg-white/10 cursor-pointer flex items-center space-x-3"
+                    className={`px-6 py-3 hover:${isLightTheme ? 'bg-gray-100' : 'bg-white/10'} cursor-pointer flex items-center space-x-3`}
                     onClick={handleSettingsClick}
                   >
                     <Settings className="h-5 w-5" />
@@ -101,7 +104,7 @@ export const MenuSidebar = ({ restaurant, isAuthenticated }: MenuSidebarProps) =
             </ul>
           </nav>
           
-          <div className="p-6 border-t border-gray-800">
+          <div className={`p-6 border-t ${isLightTheme ? 'border-gray-200' : 'border-gray-800'}`}>
             {isAuthenticated ? (
               <button 
                 className="w-full py-2 px-4 rounded-lg bg-red-600 hover:bg-red-700 text-white"

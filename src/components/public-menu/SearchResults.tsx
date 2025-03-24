@@ -8,6 +8,7 @@ interface SearchResultsProps {
   items: MenuItem[];
   formatPrice: (price: number) => string;
   onItemClick: (item: MenuItem) => void;
+  isLightTheme?: boolean;
 }
 
 export const SearchResults = ({
@@ -15,14 +16,15 @@ export const SearchResults = ({
   searchQuery,
   items,
   formatPrice,
-  onItemClick
+  onItemClick,
+  isLightTheme = true
 }: SearchResultsProps) => {
   if (!isVisible || items.length === 0 || searchQuery.trim() === "") {
     return null;
   }
 
   return (
-    <div className="bg-black/90 backdrop-blur-[15px] max-h-[70vh] overflow-y-auto border-x border-b border-gray-800 rounded-b-2xl">
+    <div className={`${isLightTheme ? 'bg-white/90 border-gray-200' : 'bg-black/90 border-gray-800'} backdrop-blur-[15px] max-h-[70vh] overflow-y-auto border-x border-b rounded-b-2xl`}>
       <div className="p-3">
         <div className="grid grid-cols-2 gap-3">
           {items.map(item => (
@@ -40,8 +42,8 @@ export const SearchResults = ({
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full bg-gray-800 flex items-center justify-center">
-                      <span className="text-gray-400 text-xs">No image</span>
+                    <div className={`w-full h-full ${isLightTheme ? 'bg-gray-200' : 'bg-gray-800'} flex items-center justify-center`}>
+                      <span className={`${isLightTheme ? 'text-gray-600' : 'text-gray-400'} text-xs`}>No image</span>
                     </div>
                   )}
                 </AspectRatio>
