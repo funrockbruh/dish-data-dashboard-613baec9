@@ -108,6 +108,11 @@ export type Database = {
           owner_name: string | null
           owner_number: string | null
           restaurant_name: string | null
+          social_email: string | null
+          social_facebook: string | null
+          social_instagram: string | null
+          social_tiktok: string | null
+          social_whatsapp: string | null
           theme: Json | null
           updated_at: string
         }
@@ -120,6 +125,11 @@ export type Database = {
           owner_name?: string | null
           owner_number?: string | null
           restaurant_name?: string | null
+          social_email?: string | null
+          social_facebook?: string | null
+          social_instagram?: string | null
+          social_tiktok?: string | null
+          social_whatsapp?: string | null
           theme?: Json | null
           updated_at?: string
         }
@@ -132,6 +142,11 @@ export type Database = {
           owner_name?: string | null
           owner_number?: string | null
           restaurant_name?: string | null
+          social_email?: string | null
+          social_facebook?: string | null
+          social_instagram?: string | null
+          social_tiktok?: string | null
+          social_whatsapp?: string | null
           theme?: Json | null
           updated_at?: string
         }

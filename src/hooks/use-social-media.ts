@@ -42,7 +42,7 @@ export function useSocialMedia() {
       // Fetch restaurant profile
       const { data: profileData, error } = await supabase
         .from('restaurant_profiles')
-        .select('whatsapp, instagram, facebook, tiktok, email')
+        .select('social_whatsapp, social_instagram, social_facebook, social_tiktok, social_email')
         .eq('id', session.session.user.id)
         .single();
         
@@ -50,7 +50,7 @@ export function useSocialMedia() {
       
       if (profileData) {
         // Parse whatsapp to extract country code and number
-        let whatsappNumber = profileData.whatsapp || "";
+        let whatsappNumber = profileData.social_whatsapp || "";
         let detectedCountryCode = "+961"; // Default
         
         // Check if whatsapp starts with a country code
@@ -68,10 +68,10 @@ export function useSocialMedia() {
         
         setSocialLinks({
           whatsapp: whatsappNumber,
-          instagram: profileData.instagram || "",
-          facebook: profileData.facebook || "",
-          tiktok: profileData.tiktok || "",
-          email: profileData.email || "",
+          instagram: profileData.social_instagram || "",
+          facebook: profileData.social_facebook || "",
+          tiktok: profileData.social_tiktok || "",
+          email: profileData.social_email || "",
         });
       }
     } catch (error) {
@@ -98,11 +98,11 @@ export function useSocialMedia() {
       const { error } = await supabase
         .from('restaurant_profiles')
         .update({
-          whatsapp: fullWhatsappNumber,
-          instagram: socialLinks.instagram,
-          facebook: socialLinks.facebook,
-          tiktok: socialLinks.tiktok,
-          email: socialLinks.email,
+          social_whatsapp: fullWhatsappNumber,
+          social_instagram: socialLinks.instagram,
+          social_facebook: socialLinks.facebook,
+          social_tiktok: socialLinks.tiktok,
+          social_email: socialLinks.email,
         })
         .eq('id', session.session.user.id);
         
