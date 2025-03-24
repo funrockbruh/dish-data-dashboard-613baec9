@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from "react";
 import { Menu } from "lucide-react";
-import { MenuItem, Restaurant } from "@/hooks/public-menu/types";
+import { MenuItem, Restaurant, ThemeSettings } from "@/hooks/public-menu/types";
 import { MenuItemDetailDialog } from "./MenuItemDetailDialog";
 import { supabase } from "@/lib/supabase";
 import { SearchBar } from "./SearchBar";
@@ -12,12 +11,14 @@ interface PublicMenuHeaderProps {
   restaurant: Restaurant | null;
   menuItems: MenuItem[];
   formatPrice: (price: number) => string;
+  themeSettings?: ThemeSettings;
 }
 
 export const PublicMenuHeader = ({
   restaurant,
   menuItems,
-  formatPrice
+  formatPrice,
+  themeSettings
 }: PublicMenuHeaderProps) => {
   const [isSearchBarVisible, setIsSearchBarVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -25,6 +26,28 @@ export const PublicMenuHeader = ({
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Get theme settings
+  const isLightTheme = themeSettings?.isLightTheme !== false;
+  const template = themeSettings?.template || "template1";
+
+  // Header styles based on theme
+  const getHeaderStyle = () => {
+    const baseStyle = "sticky top-[5px] z-50";
+    const roundedStyle = filteredItems.length > 0 ? "rounded-t-2xl" : "rounded-2xl";
+    
+    return `${baseStyle} ${roundedStyle}`;
+  };
+
+  const getHeaderBgStyle = () => {
+    const baseStyle = "backdrop-blur-[15px] p-4 border py-[5px] rounded-2xl";
+    
+    if (isLightTheme) {
+      return `${baseStyle} bg-white/50 border-gray-200`;
+    } else {
+      return `${baseStyle} bg-black/50 border-gray-800`;
+    }
+  };
 
   // Check if user is authenticated
   useEffect(() => {
@@ -87,8 +110,8 @@ export const PublicMenuHeader = ({
   };
 
   return (
-    <div className={`sticky top-[5px] z-50 ${filteredItems.length > 0 ? "rounded-t-2xl" : "rounded-2xl"}`}>
-      <header className="bg-black/50 backdrop-blur-[15px] p-4 border border-gray-800 py-[5px] rounded-2xl">
+    <div className={getHeaderStyle()}>
+      <header className={getHeaderBgStyle()}>
         <div className="flex items-center justify-between">
           <SearchBar 
             isVisible={isSearchBarVisible}
@@ -96,6 +119,7 @@ export const PublicMenuHeader = ({
             onSearchChange={setSearchQuery}
             onToggleVisibility={handleSearchClick}
             onSubmit={handleSearchSubmit}
+            isLightTheme={isLightTheme}
           />
           
           <div className="flex items-center justify-center">
@@ -106,8 +130,10 @@ export const PublicMenuHeader = ({
                 className="h-16 w-16 rounded-full"
               />
             ) : (
-              <div className="bg-green-100 rounded-full h-16 w-16 flex items-center justify-center border-4 border-green-300">
-                <span className="text-gray-700 text-sm font-bold">
+              <div className={`rounded-full h-16 w-16 flex items-center justify-center border-4 ${
+                isLightTheme ? "bg-green-100 border-green-300 text-gray-700" : "bg-green-900 border-green-700 text-white"
+              }`}>
+                <span className="text-sm font-bold">
                   {restaurant?.restaurant_name || "Menu"}
                 </span>
               </div>
@@ -116,7 +142,8 @@ export const PublicMenuHeader = ({
           
           <MenuSidebar 
             restaurant={restaurant} 
-            isAuthenticated={isAuthenticated} 
+            isAuthenticated={isAuthenticated}
+            isLightTheme={isLightTheme}
           />
         </div>
       </header>
@@ -128,6 +155,7 @@ export const PublicMenuHeader = ({
         items={filteredItems}
         formatPrice={formatPrice}
         onItemClick={handleItemClick}
+        isLightTheme={isLightTheme}
       />
 
       {/* Item Detail Dialog */}
@@ -136,6 +164,7 @@ export const PublicMenuHeader = ({
         onClose={handleCloseDialog}
         item={selectedItem}
         formatPrice={formatPrice}
+        themeSettings={themeSettings}
       />
     </div>
   );

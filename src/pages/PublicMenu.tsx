@@ -28,6 +28,7 @@ const PublicMenu = () => {
       menuItems: menuItems.length,
       categories: categories.length,
       featuredItems: featuredItems.length,
+      themeSettings: restaurant?.theme_settings,
       error
     });
     
@@ -40,16 +41,25 @@ const PublicMenu = () => {
     }
   }, [restaurant, menuItems, categories, featuredItems, error, debugInfo]);
 
+  // Get theme settings
+  const themeSettings = restaurant?.theme_settings;
+  const isLightTheme = themeSettings?.isLightTheme !== false;
+  const template = themeSettings?.template || "template1";
+
+  // Background color based on light/dark theme
+  const bgClass = isLightTheme ? "bg-gray-100 text-gray-900" : "bg-black text-white";
+
   if (isLoading) {
     return (
-      <div className="bg-black min-h-screen text-white">
+      <div className={bgClass + " min-h-screen"}>
         <PublicMenuHeader 
           restaurant={null} 
           menuItems={[]}
           formatPrice={formatPrice}
+          themeSettings={themeSettings}
         />
         <div className="p-4 flex justify-center items-center h-[80vh]">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-white"></div>
+          <div className={`animate-spin rounded-full h-12 w-12 border-t-2 ${isLightTheme ? 'border-gray-900' : 'border-white'}`}></div>
         </div>
       </div>
     );
@@ -57,11 +67,12 @@ const PublicMenu = () => {
 
   if (error || (!isLoading && !restaurant)) {
     return (
-      <div className="bg-black min-h-screen text-white">
+      <div className={bgClass + " min-h-screen"}>
         <PublicMenuHeader 
           restaurant={null} 
           menuItems={[]}
           formatPrice={formatPrice}
+          themeSettings={themeSettings}
         />
         <div className="container mx-auto p-4">
           <EmptyMenuState 
@@ -75,29 +86,35 @@ const PublicMenu = () => {
   }
 
   return (
-    <div className="bg-black text-white min-h-screen">
+    <div className={`${bgClass} min-h-screen`}>
       <PublicMenuHeader 
         restaurant={restaurant} 
         menuItems={menuItems}
-        formatPrice={formatPrice} 
+        formatPrice={formatPrice}
+        themeSettings={themeSettings}
       />
       
       <main className="container mx-auto p-4 pb-20">
         {featuredItems.length > 0 && (
           <FeaturedSection 
             featuredItems={featuredItems} 
-            formatPrice={formatPrice} 
+            formatPrice={formatPrice}
+            themeSettings={themeSettings}
           />
         )}
         
         {categories.length > 0 && (
-          <CategoriesSection categories={categories} />
+          <CategoriesSection 
+            categories={categories}
+            themeSettings={themeSettings}
+          />
         )}
         
         <MenuItemsSection 
           menuItems={menuItems} 
           categories={categories}
-          formatPrice={formatPrice} 
+          formatPrice={formatPrice}
+          themeSettings={themeSettings}
         />
       </main>
     </div>

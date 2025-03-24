@@ -12,6 +12,7 @@ const Theme = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isLightTheme, setIsLightTheme] = useState(true);
+  const [selectedTemplate, setSelectedTemplate] = useState<string>("template1");
   const [loading, setLoading] = useState(false);
   const [restaurantName, setRestaurantName] = useState<string | null>(null);
   const fromSettings = location.state?.from === 'settings';
@@ -38,12 +39,19 @@ const Theme = () => {
         // Initialize theme settings if available
         if (profileData.theme_settings) {
           setIsLightTheme(profileData.theme_settings.isLightTheme !== false);
+          if (profileData.theme_settings.template) {
+            setSelectedTemplate(profileData.theme_settings.template);
+          }
         }
       }
     };
 
     checkAuth();
   }, [navigate]);
+
+  const handleTemplateChange = (template: string) => {
+    setSelectedTemplate(template);
+  };
 
   const handleSave = async () => {
     setLoading(true);
@@ -59,7 +67,7 @@ const Theme = () => {
         .update({
           theme_settings: {
             isLightTheme,
-            // Add other theme settings here
+            template: selectedTemplate
           }
         })
         .eq('id', sessionData.session.user.id);
@@ -118,7 +126,10 @@ const Theme = () => {
             
             <div className="h-6"></div>
             
-            <ThemeTemplateSelector />
+            <ThemeTemplateSelector 
+              initialTemplate={selectedTemplate}
+              onTemplateChange={handleTemplateChange}
+            />
           </div>
           
           <Button 

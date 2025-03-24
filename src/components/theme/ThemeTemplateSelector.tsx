@@ -1,8 +1,14 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-export const ThemeTemplateSelector = () => {
-  const [selectedTemplate, setSelectedTemplate] = useState<string | null>("template1");
+export const ThemeTemplateSelector = ({ 
+  initialTemplate, 
+  onTemplateChange 
+}: { 
+  initialTemplate?: string | null, 
+  onTemplateChange?: (template: string) => void 
+}) => {
+  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(initialTemplate || "template1");
 
   const templates = [
     { id: "template1", name: "Classic Menu", description: "Traditional menu layout with items in a list" },
@@ -11,6 +17,19 @@ export const ThemeTemplateSelector = () => {
     { id: "template4", name: "Card View", description: "Each item displayed as a card with details" },
     { id: "template5", name: "Compact Layout", description: "Space-efficient design for many items" }
   ];
+
+  useEffect(() => {
+    if (initialTemplate && initialTemplate !== selectedTemplate) {
+      setSelectedTemplate(initialTemplate);
+    }
+  }, [initialTemplate]);
+
+  const handleTemplateSelect = (templateId: string) => {
+    setSelectedTemplate(templateId);
+    if (onTemplateChange) {
+      onTemplateChange(templateId);
+    }
+  };
 
   return (
     <div className="py-4">
@@ -26,7 +45,7 @@ export const ThemeTemplateSelector = () => {
             className={`relative rounded-lg overflow-hidden border-2 p-4 cursor-pointer ${
               selectedTemplate === template.id ? "border-blue-500 bg-blue-50" : "border-gray-200"
             }`}
-            onClick={() => setSelectedTemplate(template.id)}
+            onClick={() => handleTemplateSelect(template.id)}
           >
             <div className="flex flex-col">
               <h4 className="font-medium text-lg">{template.name}</h4>
