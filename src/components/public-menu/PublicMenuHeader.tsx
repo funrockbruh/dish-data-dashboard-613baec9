@@ -27,7 +27,7 @@ export const PublicMenuHeader = ({
           </div>
           
           <div className="flex items-center justify-center">
-            {restaurant?.logo_url ? <img src={restaurant.logo_url} alt={restaurant.restaurant_name || "Restaurant logo"} className="h-12 w-12 rounded-full" /> : <div className="bg-green-100 rounded-full h-16 w-16 flex items-center justify-center border-4 border-green-300">
+            {restaurant?.logo_url ? <img src={restaurant.logo_url} alt={restaurant.restaurant_name || "Restaurant logo"} className="h-16 w-16 rounded-full" /> : <div className="bg-green-100 rounded-full h-16 w-16 flex items-center justify-center border-4 border-green-300">
                 <span className="text-gray-700 text-sm font-bold">{restaurant?.restaurant_name || "Menu"}</span>
               </div>}
           </div>
