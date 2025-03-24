@@ -1,36 +1,24 @@
-
 import { X } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import type { MenuItem } from "@/hooks/public-menu/types";
-
 interface MenuItemDetailDialogProps {
   isOpen: boolean;
   onClose: () => void;
   item: MenuItem | null;
   formatPrice: (price: number) => string;
-  themeSettings?: any; // Added themeSettings prop
 }
-
 export const MenuItemDetailDialog = ({
   isOpen,
   onClose,
   item,
-  formatPrice,
-  themeSettings = {} // Default to empty object
+  formatPrice
 }: MenuItemDetailDialogProps) => {
   if (!item) return null;
-
-  // Determine text color based on theme settings
-  const textColor = themeSettings?.isLightTheme ? 'text-black' : 'text-white';
-  const bgColor = themeSettings?.isLightTheme ? 'bg-white' : 'bg-black';
-  const borderColor = themeSettings?.isLightTheme ? 'border-gray-300' : 'border-gray-800';
-
-  return (
-    <Dialog open={isOpen} onOpenChange={open => !open && onClose()}>
-      <DialogContent className={`p-0 gap-0 ${bgColor} sm:rounded-xl overflow-hidden border ${borderColor} max-w-md rounded-3xl`}>
+  return <Dialog open={isOpen} onOpenChange={open => !open && onClose()}>
+      <DialogContent className="p-0 gap-0 bg-black sm:rounded-xl overflow-hidden border border-gray-800 max-w-md rounded-3xl">
         {/* Close button positioned at the top right */}
-        <button onClick={onClose} className="absolute right-3 top-3 z-10 rounded-full bg-transparent" aria-label="Close dialog">
-          <X size={32} strokeWidth={2.5} className={textColor} />
+        <button onClick={onClose} className="absolute right-3 top-3 z-10 rounded-full bg-transparent text-white" aria-label="Close dialog">
+          <X size={32} strokeWidth={2.5} className="text-white" />
         </button>
         
         {/* Product image with rounded corners */}
@@ -38,33 +26,30 @@ export const MenuItemDetailDialog = ({
           {item.image_url && <img src={item.image_url} alt={item.name} className="w-full aspect-[4/3] object-cover rounded-[10px]" />}
         </div>
         
-        {/* Content section with background based on theme and proper padding */}
-        <div className={`p-4 ${bgColor}`}>
+        {/* Content section with black background and proper padding */}
+        <div className="p-4 bg-black">
           {/* Product name row with RTL support */}
           <div className="flex justify-between items-center mb-2">
-            <h2 className={`text-2xl font-bold ${textColor}`}>{item.name}</h2>
+            <h2 className="text-2xl font-bold text-white">{item.name}</h2>
             
             {/* RTL name if available */}
-            <span className={`text-xl ${themeSettings?.isLightTheme ? 'text-gray-700' : 'text-gray-200'} font-medium text-right`}>
+            <span className="text-xl text-gray-200 font-medium text-right">
               {/* This is where RTL text would go */}
             </span>
           </div>
           
           {/* Description with proper font size and spacing */}
-          {item.description && (
-            <p className={`${textColor} text-lg mb-4 leading-tight`}>
+          {item.description && <p className="text-white text-lg mb-4 leading-tight">
               {item.description.split('\n').join(' / ')}
-            </p>
-          )}
+            </p>}
           
           {/* Price in large format at the bottom right */}
           <div className="flex justify-end mt-4">
-            <p className={`font-bold ${textColor} text-2xl`}>
+            <p className="font-bold text-white text-2xl">
               {formatPrice(item.price)}
             </p>
           </div>
         </div>
       </DialogContent>
-    </Dialog>
-  );
+    </Dialog>;
 };

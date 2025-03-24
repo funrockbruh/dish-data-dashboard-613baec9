@@ -6,7 +6,7 @@ import { FeaturedSection } from "@/components/public-menu/FeaturedSection";
 import { CategoriesSection } from "@/components/public-menu/CategoriesSection";
 import { MenuItemsSection } from "@/components/public-menu/MenuItemsSection";
 import { EmptyMenuState } from "@/components/menu/EmptyMenuState";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 const PublicMenu = () => {
   const { restaurantName } = useParams<{ restaurantName: string }>();
@@ -20,28 +20,6 @@ const PublicMenu = () => {
     debugInfo,
     formatPrice 
   } = usePublicMenu(restaurantName);
-  
-  const [themeSettings, setThemeSettings] = useState<any>({});
-  
-  // Load theme settings
-  useEffect(() => {
-    const loadThemeSettings = () => {
-      try {
-        const settings = JSON.parse(localStorage.getItem('theme') || '{}');
-        setThemeSettings(settings);
-      } catch (err) {
-        console.error("Error loading theme settings:", err);
-      }
-    };
-    
-    loadThemeSettings();
-    
-    // Check for theme settings when restaurant data loads
-    if (restaurant?.theme_settings) {
-      localStorage.setItem('theme', JSON.stringify(restaurant.theme_settings));
-      setThemeSettings(restaurant.theme_settings);
-    }
-  }, [restaurant]);
 
   // Log the state for debugging
   useEffect(() => {
@@ -50,8 +28,7 @@ const PublicMenu = () => {
       menuItems: menuItems.length,
       categories: categories.length,
       featuredItems: featuredItems.length,
-      error,
-      themeSettings
+      error
     });
     
     if (menuItems.length > 0) {
@@ -61,37 +38,18 @@ const PublicMenu = () => {
     if (debugInfo) {
       console.log("Debug info:", debugInfo);
     }
-  }, [restaurant, menuItems, categories, featuredItems, error, debugInfo, themeSettings]);
-
-  // Determine background style based on theme settings
-  const getBackgroundStyle = () => {
-    if (themeSettings.backgroundImage) {
-      return {
-        backgroundImage: `url(${themeSettings.backgroundImage})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center'
-      };
-    } else if (themeSettings.backgroundColor) {
-      return { backgroundColor: themeSettings.backgroundColor };
-    }
-    return { backgroundColor: themeSettings.isLightTheme ? '#ffffff' : '#000000' };
-  };
-
-  // Base text color based on theme
-  const textColor = themeSettings.isLightTheme ? 'text-black' : 'text-white';
-  const bgClass = themeSettings.isLightTheme ? 'bg-white' : 'bg-black';
+  }, [restaurant, menuItems, categories, featuredItems, error, debugInfo]);
 
   if (isLoading) {
     return (
-      <div className={`${bgClass} min-h-screen ${textColor}`} style={getBackgroundStyle()}>
+      <div className="bg-black min-h-screen text-white">
         <PublicMenuHeader 
           restaurant={null} 
           menuItems={[]}
           formatPrice={formatPrice}
-          themeSettings={themeSettings}
         />
         <div className="p-4 flex justify-center items-center h-[80vh]">
-          <div className={`animate-spin rounded-full h-12 w-12 border-t-2 ${themeSettings.isLightTheme ? 'border-black' : 'border-white'}`}></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-white"></div>
         </div>
       </div>
     );
@@ -99,12 +57,11 @@ const PublicMenu = () => {
 
   if (error || (!isLoading && !restaurant)) {
     return (
-      <div className={`${bgClass} min-h-screen ${textColor}`} style={getBackgroundStyle()}>
+      <div className="bg-black min-h-screen text-white">
         <PublicMenuHeader 
           restaurant={null} 
           menuItems={[]}
           formatPrice={formatPrice}
-          themeSettings={themeSettings}
         />
         <div className="container mx-auto p-4">
           <EmptyMenuState 
@@ -118,12 +75,11 @@ const PublicMenu = () => {
   }
 
   return (
-    <div className={`${bgClass} ${textColor} min-h-screen`} style={getBackgroundStyle()}>
+    <div className="bg-black text-white min-h-screen">
       <PublicMenuHeader 
         restaurant={restaurant} 
         menuItems={menuItems}
-        formatPrice={formatPrice}
-        themeSettings={themeSettings}
+        formatPrice={formatPrice} 
       />
       
       <main className="container mx-auto p-4 pb-20">
