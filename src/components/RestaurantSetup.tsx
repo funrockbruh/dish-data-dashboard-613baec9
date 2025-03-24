@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
@@ -6,14 +7,18 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Pencil } from "lucide-react";
+
 export const RestaurantSetup = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [logo, setLogo] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+  const location = useLocation();
+  const { toast } = useToast();
+  
   const [formData, setFormData] = useState({
     owner_name: "",
     restaurant_name: "",
@@ -21,9 +26,10 @@ export const RestaurantSetup = () => {
     owner_email: "",
     about: ""
   });
-  const {
-    toast
-  } = useToast();
+  
+  // Check if we have a return path in the location state
+  const returnPath = location.state?.returnTo || '/categories';
+  
   useEffect(() => {
     const loadProfile = async () => {
       const {
@@ -68,6 +74,7 @@ export const RestaurantSetup = () => {
       subscription.unsubscribe();
     };
   }, [navigate]);
+  
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -79,9 +86,11 @@ export const RestaurantSetup = () => {
       reader.readAsDataURL(file);
     }
   };
+  
   const handleUploadClick = () => {
     fileInputRef.current?.click();
   };
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -94,6 +103,7 @@ export const RestaurantSetup = () => {
       } = await supabase.auth.getSession();
       if (sessionError) throw new Error("Authentication error");
       if (!session?.user) throw new Error("Not authenticated");
+      
       let logo_url = logoPreview;
       if (logo) {
         const fileExt = logo.name.split('.').pop();
@@ -112,6 +122,7 @@ export const RestaurantSetup = () => {
         } = supabase.storage.from('restaurant-logos').getPublicUrl(filePath);
         logo_url = publicUrl;
       }
+      
       const {
         error: updateError
       } = await supabase.from('restaurant_profiles').upsert({
@@ -119,14 +130,16 @@ export const RestaurantSetup = () => {
         ...formData,
         logo_url
       });
+      
       if (updateError) throw updateError;
+      
       toast({
         title: "Success",
         description: "Restaurant profile updated successfully"
       });
 
-      // Navigate to categories setup after successful save
-      navigate('/categories');
+      // Navigate to the return path after successful save
+      navigate(returnPath);
     } catch (error) {
       console.error('Profile update error:', error);
       toast({
@@ -138,6 +151,7 @@ export const RestaurantSetup = () => {
       setIsLoading(false);
     }
   };
+  
   return <Card className="max-w-2xl mx-auto p-6">
       <h2 className="text-2xl font-bold mb-6">Restaurant Profile Setup</h2>
       <form onSubmit={handleSubmit} className="space-y-6">
