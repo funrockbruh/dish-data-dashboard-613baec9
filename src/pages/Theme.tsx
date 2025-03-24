@@ -4,7 +4,6 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { ThemeColorSelector } from "@/components/theme/ThemeColorSelector";
@@ -40,6 +39,9 @@ const Theme = () => {
         // Initialize theme settings if available
         if (profileData.theme_settings) {
           setIsLightTheme(profileData.theme_settings.isLightTheme !== false);
+          
+          // Load theme settings to localStorage for the PublicMenu to use
+          localStorage.setItem('theme', JSON.stringify(profileData.theme_settings));
         }
       }
     };
@@ -56,12 +58,19 @@ const Theme = () => {
         return;
       }
       
+      // Get theme settings from localStorage
+      const themeSettings = JSON.parse(localStorage.getItem('theme') || '{}');
+      
       const { error } = await supabase
         .from('restaurant_profiles')
         .update({
           theme_settings: {
             isLightTheme,
-            // Add other theme settings here
+            backgroundImage: themeSettings.backgroundImage || null,
+            backgroundColor: themeSettings.backgroundColor || null,
+            popupImage: themeSettings.popupImage || null,
+            popupColor: themeSettings.popupColor || null,
+            template: themeSettings.template || "template1"
           }
         })
         .eq('id', sessionData.session.user.id);
@@ -114,7 +123,14 @@ const Theme = () => {
               </div>
               <Switch
                 checked={isLightTheme}
-                onCheckedChange={setIsLightTheme}
+                onCheckedChange={(value) => {
+                  setIsLightTheme(value);
+                  const currentTheme = JSON.parse(localStorage.getItem('theme') || '{}');
+                  localStorage.setItem('theme', JSON.stringify({
+                    ...currentTheme,
+                    isLightTheme: value
+                  }));
+                }}
               />
             </div>
 

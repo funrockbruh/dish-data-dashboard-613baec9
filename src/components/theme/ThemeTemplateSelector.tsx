@@ -1,8 +1,39 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export const ThemeTemplateSelector = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<string | null>("template1");
+
+  useEffect(() => {
+    // Load selected template from localStorage
+    const loadTheme = () => {
+      try {
+        const theme = JSON.parse(localStorage.getItem('theme') || '{}');
+        if (theme.template) {
+          setSelectedTemplate(theme.template);
+        }
+      } catch (error) {
+        console.error("Error loading theme template:", error);
+      }
+    };
+    
+    loadTheme();
+  }, []);
+
+  const handleTemplateSelect = (templateId: string) => {
+    setSelectedTemplate(templateId);
+    
+    // Save template selection to localStorage
+    try {
+      const currentTheme = JSON.parse(localStorage.getItem('theme') || '{}');
+      localStorage.setItem('theme', JSON.stringify({
+        ...currentTheme,
+        template: templateId
+      }));
+    } catch (error) {
+      console.error("Error saving theme template:", error);
+    }
+  };
 
   const templates = [
     { id: "template1", name: "Classic Menu" },
@@ -19,10 +50,10 @@ export const ThemeTemplateSelector = () => {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
         <div 
-          className={`relative rounded-lg overflow-hidden border-2 ${
+          className={`relative rounded-lg overflow-hidden border-2 cursor-pointer ${
             selectedTemplate === "template1" ? "border-blue-500" : "border-gray-200"
           }`}
-          onClick={() => setSelectedTemplate("template1")}
+          onClick={() => handleTemplateSelect("template1")}
         >
           <img 
             src="/lovable-uploads/a21e7b7a-0288-4bbf-917c-03d0f537cecf.png" 
