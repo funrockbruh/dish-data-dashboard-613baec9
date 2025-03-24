@@ -20,48 +20,48 @@ export const MenuItemDetailDialog = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="p-0 gap-0 bg-black sm:rounded-xl max-w-md overflow-hidden border border-gray-800">
-        {/* Close button placed at the top right corner with a larger hit area */}
+      <DialogContent className="p-0 gap-0 bg-black sm:rounded-xl overflow-hidden border border-gray-800 max-w-md">
+        {/* Close button positioned at the top right */}
         <button 
           onClick={onClose}
-          className="absolute right-4 top-4 z-10 p-1 rounded-full bg-black/60 hover:bg-black/80 transition-colors"
+          className="absolute right-3 top-3 z-10 rounded-full bg-transparent text-white"
           aria-label="Close dialog"
         >
-          <X size={28} className="text-white" />
+          <X size={32} strokeWidth={2.5} className="text-white" />
         </button>
         
-        {/* Product image */}
-        <div className="relative w-full">
+        {/* Product image with rounded corners */}
+        <div className="w-full px-4 pt-4">
           {item.image_url && (
             <img
               src={item.image_url}
               alt={item.name}
-              className="w-full aspect-[4/3] object-cover"
+              className="w-full aspect-[4/3] object-cover rounded-[10px]"
             />
           )}
         </div>
         
-        {/* Content section with dark background */}
-        <div className="p-6 bg-black">
-          {/* Product name with potential RTL support */}
-          <div className="flex justify-between items-start mb-1">
+        {/* Content section with black background and proper padding */}
+        <div className="p-4 bg-black">
+          {/* Product name row with RTL support */}
+          <div className="flex justify-between items-center mb-2">
             <h2 className="text-2xl font-bold text-white">{item.name}</h2>
             
-            {/* This would be the RTL text if available */}
-            <span className="text-xl text-gray-300 font-medium">
-              {/* If we had RTL name it would go here */}
+            {/* RTL name if available */}
+            <span className="text-xl text-gray-200 font-medium text-right">
+              {/* This is where RTL text would go */}
             </span>
           </div>
           
-          {/* Description styled as in the image */}
+          {/* Description with proper font size and spacing */}
           {item.description && (
-            <p className="text-gray-300 text-lg font-medium mb-4 leading-relaxed">
+            <p className="text-white text-lg mb-4 leading-tight">
               {item.description.split('\n').join(' / ')}
             </p>
           )}
           
           {/* Price in large format at the bottom right */}
-          <div className="flex justify-end mt-2">
+          <div className="flex justify-end mt-4">
             <p className="text-4xl font-bold text-white">
               {formatPrice(item.price)}
             </p>
