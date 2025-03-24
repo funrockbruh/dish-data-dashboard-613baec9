@@ -41,7 +41,7 @@ export const CategoriesSection = ({ categories }: CategoriesSectionProps) => {
                 alt={category.name}
                 className="w-full h-full object-cover"
               />
-              <div className="absolute inset-0 bg-black/40"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
               <div className="absolute bottom-0 left-0 right-0 p-2 text-center">
                 <h3 className="text-white text-lg font-medium">{category.name}</h3>
               </div>

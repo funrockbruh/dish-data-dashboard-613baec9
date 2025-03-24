@@ -1,3 +1,4 @@
+
 import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
 interface MenuItem {
   id: string;
@@ -28,8 +29,8 @@ export const FeaturedSection = ({
                   FEATURED
                 </div>
                 
-                <div className="absolute bottom-0 left-0 w-full p-6 text-white">
-                  <h3 className="text-3xl font-bold text-center">{item.name}</h3>
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent">
+                  <h3 className="text-3xl font-bold text-white absolute bottom-4 left-0 w-full text-center">{item.name}</h3>
                 </div>
               </div>
             </CarouselItem>)}
