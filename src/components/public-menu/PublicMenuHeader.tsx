@@ -1,20 +1,12 @@
 
 import { useState, useEffect } from "react";
 import { Menu } from "lucide-react";
-import { MenuItem } from "@/hooks/public-menu/types";
+import { MenuItem, Restaurant } from "@/hooks/public-menu/types";
 import { MenuItemDetailDialog } from "./MenuItemDetailDialog";
 import { supabase } from "@/lib/supabase";
 import { SearchBar } from "./SearchBar";
 import { SearchResults } from "./SearchResults";
 import { MenuSidebar } from "./MenuSidebar";
-
-interface Restaurant {
-  id: string;
-  restaurant_name: string;
-  logo_url: string | null;
-  owner_number?: string | null;
-  about?: string | null;
-}
 
 interface PublicMenuHeaderProps {
   restaurant: Restaurant | null;
