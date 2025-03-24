@@ -24,7 +24,7 @@ export const FeaturedSection = ({
               <div className="overflow-hidden rounded-lg">
                 <img src={item.image_url || "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9"} alt={item.name} className="w-full aspect-[16/9] object-cover" />
                 
-                <div className="absolute top-0 left-0 px-6 py-1 font-bold tracking-widest bg-black">
+                <div className="absolute top-0 left-0 px-6 py-1 font-bold tracking-widest bg-black/20 shadow-[0_4px_10px_rgba(255,255,255,0.5)]  backdrop-blur-[10px] rounded-tl-[15px] rounded-br-[150px] ">
                   FEATURED
                 </div>
                 
