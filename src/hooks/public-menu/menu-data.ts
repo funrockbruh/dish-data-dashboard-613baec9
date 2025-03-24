@@ -82,3 +82,63 @@ export function usePublicMenu(restaurantSlug: string | undefined) {
 
   return { restaurant, categories, menuItems, featuredItems, loading, error };
 }
+
+// Add the loadMenuData function that is imported in index.ts
+export async function loadMenuData(restaurantId: string, restaurantName: string) {
+  try {
+    // Fetch menu categories
+    const { data: categoriesData, error: categoriesError } = await supabase
+      .from('menu_categories')
+      .select('id, name, image_url')
+      .eq('restaurant_id', restaurantId)
+      .order('name');
+
+    if (categoriesError) {
+      throw categoriesError;
+    }
+
+    // Fetch menu items
+    const { data: itemsData, error: itemsError } = await supabase
+      .from('menu_items')
+      .select('id, name, description, price, category_id, image_url, is_featured')
+      .eq('restaurant_id', restaurantId)
+      .order('name');
+
+    if (itemsError) {
+      throw itemsError;
+    }
+
+    // Process featured items
+    const featuredItems = itemsData.filter(item => item.is_featured);
+
+    // Process categories with items
+    const categoriesWithItems = categoriesData.map((category: any) => ({
+      ...category,
+      items: itemsData.filter((item: any) => item.category_id === category.id)
+    }));
+
+    return {
+      categories: categoriesWithItems,
+      menuItems: itemsData,
+      featuredItems,
+      debugInfo: {
+        restaurantId,
+        restaurantName,
+        categoriesCount: categoriesData.length,
+        itemsCount: itemsData.length
+      }
+    };
+  } catch (err: any) {
+    console.error('Error loading menu data:', err);
+    return {
+      categories: [],
+      menuItems: [],
+      featuredItems: [],
+      debugInfo: {
+        error: err.message,
+        restaurantId,
+        restaurantName
+      }
+    };
+  }
+}

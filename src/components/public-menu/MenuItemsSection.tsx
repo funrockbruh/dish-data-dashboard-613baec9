@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import type { MenuItem, Category } from "@/hooks/public-menu/types";
@@ -38,8 +37,7 @@ export const MenuItemsSection = ({
       price: 1299,
       image_url: "https://images.unsplash.com/photo-1521305916504-4a1121188589?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
       category_id: "1",
-      is_featured: false,
-      restaurant_id: "sample"
+      is_featured: false
     }, {
       id: "2",
       name: "Classic Burger",
@@ -47,8 +45,7 @@ export const MenuItemsSection = ({
       price: 1499,
       image_url: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
       category_id: "2",
-      is_featured: false,
-      restaurant_id: "sample"
+      is_featured: false
     }, {
       id: "3",
       name: "Mediterranean Salad",
@@ -56,8 +53,7 @@ export const MenuItemsSection = ({
       price: 1099,
       image_url: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
       category_id: "3",
-      is_featured: false,
-      restaurant_id: "sample"
+      is_featured: false
     }, {
       id: "4",
       name: "Chocolate Brownie",
@@ -65,8 +61,7 @@ export const MenuItemsSection = ({
       price: 899,
       image_url: "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
       category_id: "4",
-      is_featured: false,
-      restaurant_id: "sample"
+      is_featured: false
     }];
     return <section>
         <h2 className="text-2xl font-bold mb-4">Sample Menu</h2>
