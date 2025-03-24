@@ -49,8 +49,8 @@ const Settings = () => {
     }
   };
 
-  const navigateTo = (path: string, state?: any) => {
-    navigate(path, { state });
+  const navigateTo = (path: string) => {
+    navigate(path);
   };
 
   return (
@@ -81,7 +81,7 @@ const Settings = () => {
           <Button 
             variant="outline" 
             className="w-full justify-start h-14 text-lg border-2 rounded-xl" 
-            onClick={() => navigateTo("/setup", { returnTo: "/settings" })}
+            onClick={() => navigateTo("/setup")}
           >
             <User className="mr-3 h-5 w-5" />
             Edit Profile
