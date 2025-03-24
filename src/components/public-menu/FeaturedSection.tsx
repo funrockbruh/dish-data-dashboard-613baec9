@@ -2,16 +2,7 @@
 import { useState } from "react";
 import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
 import { MenuItemDetailDialog } from "./MenuItemDetailDialog";
-
-interface MenuItem {
-  id: string;
-  name: string;
-  description: string | null;
-  price: number;
-  image_url: string | null;
-  category_id: string;
-  is_featured: boolean;
-}
+import { MenuItem } from "@/hooks/public-menu/types";
 
 interface FeaturedSectionProps {
   featuredItems: MenuItem[];

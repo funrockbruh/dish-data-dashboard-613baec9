@@ -15,7 +15,7 @@ export const findRestaurantByName = async (
   // Fetch all restaurant profiles
   const { data: restaurantData, error: restaurantError } = await supabase
     .from("restaurant_profiles")
-    .select("id, restaurant_name, logo_url");
+    .select("id, restaurant_name, logo_url, owner_name, owner_number, about");
 
   if (restaurantError) {
     console.error("Restaurant query error:", restaurantError);

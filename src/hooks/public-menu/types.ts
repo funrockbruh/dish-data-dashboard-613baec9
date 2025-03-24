@@ -24,3 +24,18 @@ export interface Restaurant {
   owner_number: string | null;
   about: string | null;
 }
+
+export interface PublicMenuState {
+  restaurant: Restaurant | null;
+  categories: Category[];
+  menuItems: MenuItem[];
+  featuredItems: MenuItem[];
+  isLoading: boolean;
+  error: string | null;
+  debugInfo: any;
+}
+
+export interface RestaurantSearchParams {
+  restaurantName: string | undefined;
+  formattedName: string;
+}
