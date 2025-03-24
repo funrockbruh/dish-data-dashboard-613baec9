@@ -4,48 +4,17 @@ import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ReactNode, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { useRestaurantProfile } from "@/hooks/use-restaurant-profile";
 
 interface SocialMediaLayoutProps {
   children: ReactNode;
-  title?: string;
 }
 
 export const SocialMediaLayout = ({ 
-  children, 
-  title = "Social Media Links" 
+  children
 }: SocialMediaLayoutProps) => {
   const navigate = useNavigate();
-  const [profile, setProfile] = useState<{
-    restaurant_name: string | null;
-    owner_name: string | null;
-    logo_url: string | null;
-  }>({
-    restaurant_name: "",
-    owner_name: "",
-    logo_url: null
-  });
-  
-  useEffect(() => {
-    const loadProfile = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) {
-        navigate('/');
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from('restaurant_profiles')
-        .select('restaurant_name, owner_name, logo_url')
-        .eq('id', session.user.id)
-        .single();
-
-      if (data && !error) {
-        setProfile(data);
-      }
-    };
-
-    loadProfile();
-  }, [navigate]);
+  const { profile } = useRestaurantProfile();
   
   return (
     <div className="min-h-screen bg-gray-50 pb-10">
@@ -59,7 +28,19 @@ export const SocialMediaLayout = ({
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-xl font-bold">{title}</h1>
+          <div className="flex items-center gap-3">
+            {profile.logo_url && (
+              <img 
+                src={profile.logo_url} 
+                alt="Restaurant logo" 
+                className="w-10 h-10 rounded-full object-cover border-2 border-gray-100"
+              />
+            )}
+            <div className="-space-y-0.5">
+              <h1 className="text-lg font-bold">{profile.restaurant_name || "Restaurant"}</h1>
+              <p className="text-sm text-gray-500">by {profile.owner_name || "Owner"}</p>
+            </div>
+          </div>
         </div>
       </div>
 
