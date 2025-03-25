@@ -137,6 +137,15 @@ export const MenuSidebar = ({ restaurant, isAuthenticated }: MenuSidebarProps) =
                 </button>
               )}
               
+              {restaurant.social_instagram && (
+                <button
+                  onClick={() => handleSocialClick(restaurant.social_instagram)}
+                  className="bg-white rounded-full p-2 w-10 h-10 flex items-center justify-center hover:bg-gray-200 transition-colors"
+                >
+                  <Instagram className="h-5 w-5 text-black" />
+                </button>
+              )}
+              
               {restaurant.social_tiktok && (
                 <button
                   onClick={() => handleSocialClick(restaurant.social_tiktok)}
@@ -152,15 +161,6 @@ export const MenuSidebar = ({ restaurant, isAuthenticated }: MenuSidebarProps) =
                   className="bg-white rounded-full p-2 w-10 h-10 flex items-center justify-center hover:bg-gray-200 transition-colors"
                 >
                   <Smartphone className="h-5 w-5 text-black" />
-                </button>
-              )}
-              
-              {restaurant.social_instagram && (
-                <button
-                  onClick={() => handleSocialClick(restaurant.social_instagram)}
-                  className="bg-white rounded-full p-2 w-10 h-10 flex items-center justify-center hover:bg-gray-200 transition-colors"
-                >
-                  <Instagram className="h-5 w-5 text-black" />
                 </button>
               )}
             </div>
