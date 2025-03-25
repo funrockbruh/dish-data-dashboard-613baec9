@@ -5,7 +5,7 @@ import { Menu } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
 import type { Restaurant } from "@/hooks/public-menu/types";
-import { Facebook, Instagram, Smartphone } from "lucide-react";
+import { Facebook, Instagram, Smartphone, ExternalLink } from "lucide-react";
 import { TikTokIcon } from "@/components/icons/TikTokIcon";
 import { useEffect, useState } from "react";
 
@@ -136,43 +136,45 @@ export const MenuSidebar = ({
           </nav>
           
           {/* Social media icons section */}
-          <div className="flex justify-center gap-4 py-4 border-t border-gray-800">
-            {restaurant?.social_instagram && (
-              <button 
-                onClick={() => handleSocialClick(restaurant.social_instagram)} 
-                className="bg-white rounded-full p-2 w-10 h-10 flex items-center justify-center hover:bg-gray-200 transition-colors"
-              >
-                <Instagram className="h-5 w-5 text-black" />
-              </button>
-            )}
-            
-            {restaurant?.social_facebook && (
-              <button 
-                onClick={() => handleSocialClick(restaurant.social_facebook)} 
-                className="bg-white rounded-full p-2 w-10 h-10 flex items-center justify-center hover:bg-gray-200 transition-colors"
-              >
-                <Facebook className="h-5 w-5 text-black" />
-              </button>
-            )}
-            
-            {restaurant?.social_tiktok && (
-              <button 
-                onClick={() => handleSocialClick(restaurant.social_tiktok)} 
-                className="bg-white rounded-full p-2 w-10 h-10 flex items-center justify-center hover:bg-gray-200 transition-colors"
-              >
-                <TikTokIcon className="h-5 w-5 text-black" />
-              </button>
-            )}
-            
-            {restaurant?.social_whatsapp && (
-              <button 
-                onClick={handleContactClick} 
-                className="bg-white rounded-full p-2 w-10 h-10 flex items-center justify-center hover:bg-gray-200 transition-colors"
-              >
-                <Smartphone className="h-5 w-5 text-black" />
-              </button>
-            )}
-          </div>
+          {(socialMedia.instagram || socialMedia.facebook || socialMedia.tiktok || socialMedia.whatsapp) && (
+            <div className="flex justify-center gap-4 py-4 border-t border-gray-800">
+              {restaurant?.social_instagram && (
+                <button 
+                  onClick={() => handleSocialClick(restaurant.social_instagram)} 
+                  className="rounded-full p-2 w-10 h-10 flex items-center justify-center border border-white/30 hover:bg-white/10 transition-colors"
+                >
+                  <Instagram className="h-5 w-5 text-white" />
+                </button>
+              )}
+              
+              {restaurant?.social_facebook && (
+                <button 
+                  onClick={() => handleSocialClick(restaurant.social_facebook)} 
+                  className="rounded-full p-2 w-10 h-10 flex items-center justify-center border border-white/30 hover:bg-white/10 transition-colors"
+                >
+                  <Facebook className="h-5 w-5 text-white" />
+                </button>
+              )}
+              
+              {restaurant?.social_tiktok && (
+                <button 
+                  onClick={() => handleSocialClick(restaurant.social_tiktok)} 
+                  className="rounded-full p-2 w-10 h-10 flex items-center justify-center border border-white/30 hover:bg-white/10 transition-colors"
+                >
+                  <TikTokIcon className="h-5 w-5 text-white" />
+                </button>
+              )}
+              
+              {restaurant?.social_whatsapp && (
+                <button 
+                  onClick={handleContactClick} 
+                  className="rounded-full p-2 w-10 h-10 flex items-center justify-center border border-white/30 hover:bg-white/10 transition-colors"
+                >
+                  <Smartphone className="h-5 w-5 text-white" />
+                </button>
+              )}
+            </div>
+          )}
           
           <div className="p-6 border-t border-gray-800 rounded-2xl">
             {isAuthenticated ? <button className="w-full py-2 px-4 rounded-lg bg-red-600 hover:bg-red-700 text-white" onClick={handleSignOut}>
