@@ -1,3 +1,4 @@
+
 import { Edit, Info, MessageSquare, Phone, Settings } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
@@ -125,9 +126,9 @@ export const MenuSidebar = ({ restaurant, isAuthenticated }: MenuSidebarProps) =
             </ul>
           </nav>
           
-          {hasSocialMedia() && (
+          {restaurant && hasSocialMedia() && (
             <div className="flex justify-center gap-4 py-4 border-t border-gray-800">
-              {restaurant?.social_facebook && (
+              {restaurant.social_facebook && (
                 <button
                   onClick={() => handleSocialClick(restaurant.social_facebook)}
                   className="bg-white rounded-full p-2 w-10 h-10 flex items-center justify-center hover:bg-gray-200 transition-colors"
@@ -136,7 +137,7 @@ export const MenuSidebar = ({ restaurant, isAuthenticated }: MenuSidebarProps) =
                 </button>
               )}
               
-              {restaurant?.social_tiktok && (
+              {restaurant.social_tiktok && (
                 <button
                   onClick={() => handleSocialClick(restaurant.social_tiktok)}
                   className="bg-white rounded-full p-2 w-10 h-10 flex items-center justify-center hover:bg-gray-200 transition-colors"
@@ -145,7 +146,7 @@ export const MenuSidebar = ({ restaurant, isAuthenticated }: MenuSidebarProps) =
                 </button>
               )}
               
-              {restaurant?.social_whatsapp && (
+              {restaurant.social_whatsapp && (
                 <button
                   onClick={handleContactClick}
                   className="bg-white rounded-full p-2 w-10 h-10 flex items-center justify-center hover:bg-gray-200 transition-colors"
@@ -154,7 +155,7 @@ export const MenuSidebar = ({ restaurant, isAuthenticated }: MenuSidebarProps) =
                 </button>
               )}
               
-              {restaurant?.social_instagram && (
+              {restaurant.social_instagram && (
                 <button
                   onClick={() => handleSocialClick(restaurant.social_instagram)}
                   className="bg-white rounded-full p-2 w-10 h-10 flex items-center justify-center hover:bg-gray-200 transition-colors"
