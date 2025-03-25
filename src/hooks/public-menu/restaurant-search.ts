@@ -12,10 +12,10 @@ export const findRestaurantByName = async (
     return null;
   }
 
-  // Fetch all restaurant profiles
+  // Fetch all restaurant profiles with social media fields included
   const { data: restaurantData, error: restaurantError } = await supabase
     .from("restaurant_profiles")
-    .select("id, restaurant_name, logo_url, owner_name, owner_number, about");
+    .select("id, restaurant_name, logo_url, owner_name, owner_number, about, social_whatsapp, social_instagram, social_facebook, social_tiktok, social_email");
 
   if (restaurantError) {
     console.error("Restaurant query error:", restaurantError);
@@ -65,6 +65,17 @@ export const findRestaurantByName = async (
   // Try one more attempt - use the first restaurant if it's the only one
   if (!currentRestaurant && restaurantData.length === 1) {
     currentRestaurant = restaurantData[0];
+  }
+
+  // Log the found restaurant including social media data to help with debugging
+  if (currentRestaurant) {
+    console.log("Found restaurant with social media:", {
+      name: currentRestaurant.restaurant_name,
+      social_whatsapp: currentRestaurant.social_whatsapp,
+      social_instagram: currentRestaurant.social_instagram,
+      social_facebook: currentRestaurant.social_facebook,
+      social_tiktok: currentRestaurant.social_tiktok
+    });
   }
 
   return currentRestaurant || null;

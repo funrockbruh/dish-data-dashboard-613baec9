@@ -26,18 +26,9 @@ export const MenuSidebar = ({
     tiktok: false
   });
 
-  // Fetch the latest restaurant data to ensure we have up-to-date social media links
+  // Update social media state when restaurant data changes
   useEffect(() => {
-    if (restaurant?.id) {
-      checkSocialMediaLinks();
-    }
-  }, [restaurant]);
-
-  const checkSocialMediaLinks = async () => {
-    if (!restaurant?.id) return;
-    
-    try {
-      // Update social media state based on the restaurant props directly
+    if (restaurant) {
       setSocialMedia({
         whatsapp: !!restaurant.social_whatsapp,
         instagram: !!restaurant.social_instagram,
@@ -45,16 +36,22 @@ export const MenuSidebar = ({
         tiktok: !!restaurant.social_tiktok
       });
       
-      console.log('Social media updated from props:', {
+      // Detailed logging for debugging
+      console.log("Restaurant social media fields:", {
+        social_whatsapp: restaurant.social_whatsapp,
+        social_instagram: restaurant.social_instagram,
+        social_facebook: restaurant.social_facebook,
+        social_tiktok: restaurant.social_tiktok
+      });
+      
+      console.log("Updated social media state:", {
         whatsapp: !!restaurant.social_whatsapp,
         instagram: !!restaurant.social_instagram,
         facebook: !!restaurant.social_facebook,
         tiktok: !!restaurant.social_tiktok
       });
-    } catch (error) {
-      console.error('Error in checkSocialMediaLinks:', error);
     }
-  };
+  }, [restaurant]);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -92,18 +89,6 @@ export const MenuSidebar = ({
       window.open(formattedUrl, '_blank');
     }
   };
-
-  // Debug logging
-  useEffect(() => {
-    console.log("Restaurant data available:", restaurant);
-    console.log("Social media links:", {
-      whatsapp: restaurant?.social_whatsapp,
-      instagram: restaurant?.social_instagram,
-      facebook: restaurant?.social_facebook,
-      tiktok: restaurant?.social_tiktok
-    });
-    console.log("Social media state:", socialMedia);
-  }, [restaurant, socialMedia]);
 
   return <Sheet>
       <SheetTrigger asChild>
