@@ -37,27 +37,20 @@ export const MenuSidebar = ({
     if (!restaurant?.id) return;
     
     try {
-      // Fetch the latest restaurant profile data
-      const { data, error } = await supabase
-        .from('restaurant_profiles')
-        .select('social_whatsapp, social_instagram, social_facebook, social_tiktok')
-        .eq('id', restaurant.id)
-        .single();
-      
-      if (error) {
-        console.error('Error fetching social media links:', error);
-        return;
-      }
-      
-      // Update the social media state based on the presence of links
+      // Update social media state based on the restaurant props directly
       setSocialMedia({
-        whatsapp: !!data.social_whatsapp,
-        instagram: !!data.social_instagram,
-        facebook: !!data.social_facebook,
-        tiktok: !!data.social_tiktok
+        whatsapp: !!restaurant.social_whatsapp,
+        instagram: !!restaurant.social_instagram,
+        facebook: !!restaurant.social_facebook,
+        tiktok: !!restaurant.social_tiktok
       });
       
-      console.log('Social media data:', data);
+      console.log('Social media updated from props:', {
+        whatsapp: !!restaurant.social_whatsapp,
+        instagram: !!restaurant.social_instagram,
+        facebook: !!restaurant.social_facebook,
+        tiktok: !!restaurant.social_tiktok
+      });
     } catch (error) {
       console.error('Error in checkSocialMediaLinks:', error);
     }
@@ -100,20 +93,16 @@ export const MenuSidebar = ({
     }
   };
 
-  // Debug function to check what social media links are available
-  const logSocialMediaData = () => {
-    console.log("Restaurant social media data:", {
+  // Debug logging
+  useEffect(() => {
+    console.log("Restaurant data available:", restaurant);
+    console.log("Social media links:", {
       whatsapp: restaurant?.social_whatsapp,
       instagram: restaurant?.social_instagram,
       facebook: restaurant?.social_facebook,
-      tiktok: restaurant?.social_tiktok,
-      socialMediaState: socialMedia
+      tiktok: restaurant?.social_tiktok
     });
-  };
-
-  // Call this in development to debug social media links
-  useEffect(() => {
-    logSocialMediaData();
+    console.log("Social media state:", socialMedia);
   }, [restaurant, socialMedia]);
 
   return <Sheet>
@@ -161,7 +150,7 @@ export const MenuSidebar = ({
             </ul>
           </nav>
           
-          {/* Social media icons section - make this display regardless of hasSocialMedia check */}
+          {/* Social media icons section */}
           <div className="flex justify-center gap-4 py-4 border-t border-gray-800">
             {restaurant?.social_instagram && (
               <button 
