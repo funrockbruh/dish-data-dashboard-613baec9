@@ -1,3 +1,4 @@
+
 import { Edit, Info, MessageSquare, Phone, Settings } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
@@ -6,21 +7,70 @@ import { useNavigate } from "react-router-dom";
 import type { Restaurant } from "@/hooks/public-menu/types";
 import { Facebook, Instagram, Smartphone } from "lucide-react";
 import { TikTokIcon } from "@/components/icons/TikTokIcon";
+import { useEffect, useState } from "react";
+
 interface MenuSidebarProps {
   restaurant: Restaurant | null;
   isAuthenticated: boolean;
 }
+
 export const MenuSidebar = ({
   restaurant,
   isAuthenticated
 }: MenuSidebarProps) => {
   const navigate = useNavigate();
+  const [socialMedia, setSocialMedia] = useState({
+    whatsapp: false,
+    instagram: false,
+    facebook: false,
+    tiktok: false
+  });
+
+  // Fetch the latest restaurant data to ensure we have up-to-date social media links
+  useEffect(() => {
+    if (restaurant?.id) {
+      checkSocialMediaLinks();
+    }
+  }, [restaurant]);
+
+  const checkSocialMediaLinks = async () => {
+    if (!restaurant?.id) return;
+    
+    try {
+      // Fetch the latest restaurant profile data
+      const { data, error } = await supabase
+        .from('restaurant_profiles')
+        .select('social_whatsapp, social_instagram, social_facebook, social_tiktok')
+        .eq('id', restaurant.id)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching social media links:', error);
+        return;
+      }
+      
+      // Update the social media state based on the presence of links
+      setSocialMedia({
+        whatsapp: !!data.social_whatsapp,
+        instagram: !!data.social_instagram,
+        facebook: !!data.social_facebook,
+        tiktok: !!data.social_tiktok
+      });
+      
+      console.log('Social media data:', data);
+    } catch (error) {
+      console.error('Error in checkSocialMediaLinks:', error);
+    }
+  };
+
   const handleSignOut = async () => {
     await supabase.auth.signOut();
   };
+
   const handleSignIn = () => {
     window.location.href = "/";
   };
+
   const handleContactClick = () => {
     if (restaurant?.social_whatsapp) {
       const formattedNumber = restaurant.social_whatsapp.replace(/\D/g, '');
@@ -30,9 +80,11 @@ export const MenuSidebar = ({
       window.open(`https://wa.me/${formattedNumber}`, '_blank');
     }
   };
+
   const handleSettingsClick = () => {
     navigate('/settings');
   };
+
   const handleEmailClick = () => {
     if (restaurant?.social_email) {
       window.location.href = `mailto:${restaurant.social_email}`;
@@ -40,15 +92,30 @@ export const MenuSidebar = ({
       window.location.href = `mailto:${restaurant.owner_email}`;
     }
   };
+
   const handleSocialClick = (url: string | null | undefined) => {
     if (url) {
       const formattedUrl = url.startsWith('http') ? url : `https://${url}`;
       window.open(formattedUrl, '_blank');
     }
   };
-  const hasSocialMedia = () => {
-    return !!(restaurant?.social_instagram || restaurant?.social_facebook || restaurant?.social_tiktok || restaurant?.social_whatsapp);
+
+  // Debug function to check what social media links are available
+  const logSocialMediaData = () => {
+    console.log("Restaurant social media data:", {
+      whatsapp: restaurant?.social_whatsapp,
+      instagram: restaurant?.social_instagram,
+      facebook: restaurant?.social_facebook,
+      tiktok: restaurant?.social_tiktok,
+      socialMediaState: socialMedia
+    });
   };
+
+  // Call this in development to debug social media links
+  useEffect(() => {
+    logSocialMediaData();
+  }, [restaurant, socialMedia]);
+
   return <Sheet>
       <SheetTrigger asChild>
         <button className="rounded-full bg-white/10 p-2">
@@ -94,23 +161,44 @@ export const MenuSidebar = ({
             </ul>
           </nav>
           
-          {restaurant && hasSocialMedia() && <div className="flex justify-center gap-4 py-4 border-t border-gray-800">
-              {restaurant.social_facebook && <button onClick={() => handleSocialClick(restaurant.social_facebook)} className="bg-white rounded-full p-2 w-10 h-10 flex items-center justify-center hover:bg-gray-200 transition-colors">
-                  <Facebook className="h-5 w-5 text-black" />
-                </button>}
-              
-              {restaurant.social_instagram && <button onClick={() => handleSocialClick(restaurant.social_instagram)} className="bg-white rounded-full p-2 w-10 h-10 flex items-center justify-center hover:bg-gray-200 transition-colors">
-                  <Instagram className="h-5 w-5 text-black" />
-                </button>}
-              
-              {restaurant.social_tiktok && <button onClick={() => handleSocialClick(restaurant.social_tiktok)} className="bg-white rounded-full p-2 w-10 h-10 flex items-center justify-center hover:bg-gray-200 transition-colors">
-                  <TikTokIcon className="h-5 w-5 text-black" />
-                </button>}
-              
-              {restaurant.social_whatsapp && <button onClick={handleContactClick} className="bg-white rounded-full p-2 w-10 h-10 flex items-center justify-center hover:bg-gray-200 transition-colors">
-                  <Smartphone className="h-5 w-5 text-black" />
-                </button>}
-            </div>}
+          {/* Social media icons section - make this display regardless of hasSocialMedia check */}
+          <div className="flex justify-center gap-4 py-4 border-t border-gray-800">
+            {restaurant?.social_instagram && (
+              <button 
+                onClick={() => handleSocialClick(restaurant.social_instagram)} 
+                className="bg-white rounded-full p-2 w-10 h-10 flex items-center justify-center hover:bg-gray-200 transition-colors"
+              >
+                <Instagram className="h-5 w-5 text-black" />
+              </button>
+            )}
+            
+            {restaurant?.social_facebook && (
+              <button 
+                onClick={() => handleSocialClick(restaurant.social_facebook)} 
+                className="bg-white rounded-full p-2 w-10 h-10 flex items-center justify-center hover:bg-gray-200 transition-colors"
+              >
+                <Facebook className="h-5 w-5 text-black" />
+              </button>
+            )}
+            
+            {restaurant?.social_tiktok && (
+              <button 
+                onClick={() => handleSocialClick(restaurant.social_tiktok)} 
+                className="bg-white rounded-full p-2 w-10 h-10 flex items-center justify-center hover:bg-gray-200 transition-colors"
+              >
+                <TikTokIcon className="h-5 w-5 text-black" />
+              </button>
+            )}
+            
+            {restaurant?.social_whatsapp && (
+              <button 
+                onClick={handleContactClick} 
+                className="bg-white rounded-full p-2 w-10 h-10 flex items-center justify-center hover:bg-gray-200 transition-colors"
+              >
+                <Smartphone className="h-5 w-5 text-black" />
+              </button>
+            )}
+          </div>
           
           <div className="p-6 border-t border-gray-800 rounded-2xl">
             {isAuthenticated ? <button className="w-full py-2 px-4 rounded-lg bg-red-600 hover:bg-red-700 text-white" onClick={handleSignOut}>
