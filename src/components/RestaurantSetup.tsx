@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Pencil, ArrowLeft } from "lucide-react";
+import { Pencil, ArrowLeft, Loader2 } from "lucide-react";
 
 export const RestaurantSetup = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -16,6 +16,7 @@ export const RestaurantSetup = () => {
   const [logoPreview, setLogoPreview] = useState<string>("");
   const [isInitialSetup, setIsInitialSetup] = useState(true);
   const [subdomainError, setSubdomainError] = useState<string | null>(null);
+  const [isCheckingSubdomain, setIsCheckingSubdomain] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
@@ -117,6 +118,41 @@ export const RestaurantSetup = () => {
       restaurant_name: value,
       subdomain: prev.subdomain === generateSubdomain(prev.restaurant_name) ? newSubdomain : prev.subdomain
     }));
+
+    if (newSubdomain && prev.subdomain === generateSubdomain(prev.restaurant_name)) {
+      checkSubdomainAvailability(newSubdomain);
+    }
+  };
+
+  const checkSubdomainAvailability = async (subdomain: string) => {
+    if (!subdomain) {
+      setSubdomainError(null);
+      return;
+    }
+    
+    setIsCheckingSubdomain(true);
+    
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) return;
+      
+      const { data: existingSubdomain, error: subdomainError } = await supabase
+        .from('restaurant_profiles')
+        .select('id')
+        .eq('subdomain', subdomain)
+        .neq('id', session.user.id)
+        .maybeSingle();
+        
+      if (existingSubdomain) {
+        setSubdomainError("This subdomain is already taken. Please choose another one.");
+      } else {
+        setSubdomainError(null);
+      }
+    } catch (error) {
+      console.error('Error checking subdomain:', error);
+    } finally {
+      setIsCheckingSubdomain(false);
+    }
   };
 
   const handleSubdomainChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -127,22 +163,25 @@ export const RestaurantSetup = () => {
       ...prev,
       subdomain: sanitizedValue
     }));
-    setSubdomainError(null);
+    
+    if (sanitizedValue) {
+      checkSubdomainAvailability(sanitizedValue);
+    } else {
+      setSubdomainError(null);
+    }
   };
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    setSubdomainError(null);
     
-    try {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError) throw new Error("Authentication error");
-      if (!session?.user) throw new Error("Not authenticated");
+    // Check subdomain one more time before submission
+    if (formData.subdomain) {
+      setIsLoading(true);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.user) throw new Error("Not authenticated");
 
-      // Check if subdomain is already taken
-      if (formData.subdomain) {
-        const { data: existingSubdomain, error: subdomainError } = await supabase
+        const { data: existingSubdomain } = await supabase
           .from('restaurant_profiles')
           .select('id')
           .eq('subdomain', formData.subdomain)
@@ -154,7 +193,22 @@ export const RestaurantSetup = () => {
           setIsLoading(false);
           return;
         }
+      } catch (error) {
+        console.error('Subdomain check error:', error);
+        toast({
+          title: "Error",
+          description: "Failed to check subdomain availability",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
       }
+    }
+    
+    try {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw new Error("Authentication error");
+      if (!session?.user) throw new Error("Not authenticated");
 
       let logo_url = logoPreview;
       if (logo) {
@@ -274,13 +328,20 @@ export const RestaurantSetup = () => {
         <div className="space-y-2">
           <Label htmlFor="subdomain">Subdomain</Label>
           <div className="flex items-center">
-            <Input 
-              id="subdomain" 
-              value={formData.subdomain} 
-              onChange={handleSubdomainChange}
-              placeholder="your-restaurant" 
-              className={subdomainError ? "border-red-500" : ""}
-            />
+            <div className="relative flex-1">
+              <Input 
+                id="subdomain" 
+                value={formData.subdomain} 
+                onChange={handleSubdomainChange}
+                placeholder="your-restaurant" 
+                className={subdomainError ? "border-red-500 pr-10" : ""}
+              />
+              {isCheckingSubdomain && (
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                  <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                </div>
+              )}
+            </div>
             <span className="ml-2 text-gray-500">.yourmenu.com</span>
           </div>
           {subdomainError && <p className="text-sm text-red-500 mt-1">{subdomainError}</p>}
@@ -295,11 +356,14 @@ export const RestaurantSetup = () => {
         }))} placeholder="Tell us about your restaurant" className="h-32" />
         </div>
 
-        <Button type="submit" disabled={isLoading} className="w-full bg-green-600 hover:bg-green-500">
+        <Button 
+          type="submit" 
+          disabled={isLoading || !!subdomainError || isCheckingSubdomain} 
+          className="w-full bg-green-600 hover:bg-green-500"
+        >
           {isLoading ? "Saving..." : "Save Profile"}
         </Button>
       </form>
     </Card>
   );
 };
-
