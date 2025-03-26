@@ -113,13 +113,13 @@ export const RestaurantSetup = () => {
     const value = e.target.value;
     const newSubdomain = generateSubdomain(value);
     
-    setFormData(prev => ({
-      ...prev,
+    setFormData(prevFormData => ({
+      ...prevFormData,
       restaurant_name: value,
-      subdomain: prev.subdomain === generateSubdomain(prev.restaurant_name) ? newSubdomain : prev.subdomain
+      subdomain: prevFormData.subdomain === generateSubdomain(prevFormData.restaurant_name) ? newSubdomain : prevFormData.subdomain
     }));
 
-    if (newSubdomain && prev.subdomain === generateSubdomain(prev.restaurant_name)) {
+    if (newSubdomain && formData.subdomain === generateSubdomain(formData.restaurant_name)) {
       checkSubdomainAvailability(newSubdomain);
     }
   };
@@ -159,8 +159,8 @@ export const RestaurantSetup = () => {
     const value = e.target.value;
     const sanitizedValue = value.toLowerCase().replace(/[^a-z0-9-]/g, '');
     
-    setFormData(prev => ({
-      ...prev,
+    setFormData(prevFormData => ({
+      ...prevFormData,
       subdomain: sanitizedValue
     }));
     
