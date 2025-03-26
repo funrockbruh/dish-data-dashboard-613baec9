@@ -36,8 +36,8 @@ export const MenuItemsSection = ({
     if (!description) return "";
     
     if (isMobile) {
-      // For mobile, show approximately 12-15 characters
-      if (description.length > 15) {
+      // For mobile, show approximately 12 characters
+      if (description.length > 12) {
         return description.substring(0, 12) + "...";
       }
     }
@@ -149,7 +149,12 @@ const MenuItemComponent = ({
   
   return <div className="mb-4 cursor-pointer active:scale-95 transition-transform" onClick={onClick}>
       <div className="relative rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
-        <img src={item.image_url || "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9"} alt={item.name} className="w-full aspect-[4/3] object-cover rounded-[10px]" />
+        <img 
+          src={item.image_url || "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9"} 
+          alt={item.name} 
+          className="w-full aspect-[4/3] object-cover rounded-[10px]" 
+          loading="lazy" 
+        />
         <div className="p-2 bg-black">
           <div className="flex justify-between items-center">
             <h3 className="text-white font-medium truncate max-w-[70%]">{item.name}</h3>
@@ -158,7 +163,7 @@ const MenuItemComponent = ({
           {item.description && (
             <div className="relative">
               <p className="text-gray-300 text-xs truncate">{getDisplayDescription(item.description)}</p>
-              {isMobile && item.description.length > 15 && (
+              {isMobile && item.description.length > 12 && (
                 <div 
                   className="absolute right-0 top-0 h-full w-8 pointer-events-none" 
                   style={{ 
@@ -172,3 +177,4 @@ const MenuItemComponent = ({
       </div>
     </div>;
 };
+

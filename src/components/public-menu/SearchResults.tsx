@@ -38,6 +38,7 @@ export const SearchResults = ({
                       src={item.image_url} 
                       alt={item.name} 
                       className="w-full h-full object-cover"
+                      loading="lazy"
                     />
                   ) : (
                     <div className="w-full h-full bg-gray-800 flex items-center justify-center">
@@ -61,3 +62,4 @@ export const SearchResults = ({
     </div>
   );
 };
+

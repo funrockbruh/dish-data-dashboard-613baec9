@@ -28,7 +28,7 @@ export const MenuItemDetailDialog = ({
         
         {/* Product image with rounded corners */}
         <div className="w-full px-4 pt-14">
-          {item.image_url && <img src={item.image_url} alt={item.name} className="w-full aspect-[4/3] object-cover rounded-[10px]" />}
+          {item.image_url && <img src={item.image_url} alt={item.name} className="w-full aspect-[4/3] object-cover rounded-[10px]" loading="eager" />}
         </div>
         
         {/* Content section with black background and proper padding */}
@@ -61,3 +61,4 @@ export const MenuItemDetailDialog = ({
     </Dialog>
   );
 };
+

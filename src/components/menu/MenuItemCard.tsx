@@ -46,6 +46,7 @@ export const MenuItemCard = ({ item, categoryName, onEdit }: MenuItemCardProps) 
           src={item.image_url}
           alt={item.name}
           className="w-20 h-20 rounded-lg object-cover"
+          loading="lazy"
         />
       ) : (
         <div className="w-20 h-20 rounded-lg bg-gray-100 flex items-center justify-center">
@@ -87,3 +88,4 @@ export const MenuItemCard = ({ item, categoryName, onEdit }: MenuItemCardProps) 
     </Card>
   );
 };
+
