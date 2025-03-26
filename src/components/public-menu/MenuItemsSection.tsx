@@ -123,11 +123,13 @@ const MenuItemComponent = ({
             <p className="text-white">{formatPrice(item.price)}</p>
           </div>
           {item.description && (
-            <div className={`relative overflow-hidden ${isMobile ? 'max-h-6' : 'max-h-8'}`}>
-              <p className="text-gray-300 text-xs line-clamp-1">{item.description}</p>
+            <div className="relative overflow-hidden" style={{ maxHeight: isMobile ? '1.2em' : '2em' }}>
+              <p className="text-gray-300 text-xs">{item.description}</p>
               <div 
                 className="absolute bottom-0 left-0 right-0 h-full pointer-events-none" 
-                style={{ background: 'linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 80%)' }}
+                style={{ 
+                  background: 'linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0.8) 30%, rgba(0,0,0,0) 80%)' 
+                }}
               ></div>
             </div>
           )}

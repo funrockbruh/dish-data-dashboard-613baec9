@@ -49,11 +49,13 @@ export const MenuItemCard = ({ item, categoryName, onEdit }: MenuItemCardProps) 
           <p className="font-bold text-lg font-figtree whitespace-nowrap">{formattedPrice}</p>
         </div>
         {item.description && (
-          <div className={`relative mt-1 overflow-hidden ${isMobile ? 'max-h-6' : 'max-h-12'}`}>
-            <p className="text-gray-600 text-sm font-inter line-clamp-2">{item.description}</p>
+          <div className="relative mt-1 overflow-hidden" style={{ maxHeight: isMobile ? '1.5em' : '3em' }}>
+            <p className="text-gray-600 text-sm font-inter">{item.description}</p>
             <div 
               className="absolute bottom-0 left-0 right-0 h-full pointer-events-none" 
-              style={{ background: 'linear-gradient(to top, white 0%, rgba(255, 255, 255, 0) 80%)' }}
+              style={{ 
+                background: 'linear-gradient(to top, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.8) 30%, rgba(255, 255, 255, 0) 80%)' 
+              }}
             ></div>
           </div>
         )}
