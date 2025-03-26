@@ -117,7 +117,11 @@ const MenuItemComponent = ({
             <h3 className="text-white font-medium truncate max-w-[70%]">{item.name}</h3>
             <p className="text-white">{formatPrice(item.price)}</p>
           </div>
-          {/* Description removed from here, will be shown in the dialog */}
+          {item.description && (
+            <div className="relative overflow-hidden" style={{ maxHeight: '1.2em' }}>
+              <p className="text-gray-300 text-xs truncate">{item.description}</p>
+            </div>
+          )}
         </div>
       </div>
     </div>;
