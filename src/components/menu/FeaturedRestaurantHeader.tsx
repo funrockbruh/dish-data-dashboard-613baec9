@@ -1,3 +1,4 @@
+
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Card } from "@/components/ui/card";
@@ -17,7 +18,7 @@ export const FeaturedRestaurantHeader = ({
   
   const handleBack = () => {
     if (location.state?.from) {
-      navigate(location.state.from);
+      navigate(`/${location.state.from}`);
     } else {
       navigate(-1);
     }

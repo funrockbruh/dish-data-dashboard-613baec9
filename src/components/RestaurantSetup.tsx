@@ -66,7 +66,7 @@ export const RestaurantSetup = () => {
 
   const handleBack = () => {
     if (location.state?.from) {
-      navigate(location.state.from);
+      navigate(`/${location.state.from}`);
     } else {
       navigate(-1);
     }

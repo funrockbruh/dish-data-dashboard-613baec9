@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -42,7 +43,7 @@ export const Header = () => {
 
   const handleBack = () => {
     if (location.state?.from) {
-      navigate(location.state.from);
+      navigate(`/${location.state.from}`);
     } else {
       navigate(-1);
     }

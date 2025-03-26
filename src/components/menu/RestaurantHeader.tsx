@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -14,9 +15,8 @@ export const RestaurantHeader = ({ profile }: RestaurantHeaderProps) => {
   
   const handleBack = () => {
     // If there's state from a previous location, go back there
-    // Otherwise default to browser history
     if (location.state?.from) {
-      navigate(location.state.from);
+      navigate(`/${location.state.from}`);
     } else {
       navigate(-1); // Fallback to browser history
     }
