@@ -84,7 +84,13 @@ export const MenuItemsSection = ({
         <h2 className="text-2xl font-bold mb-4">Sample Menu</h2>
         <p className="text-gray-400 mb-6">This restaurant hasn't added their real menu items yet. Here are some samples of what could be on the menu.</p>
         <div className="grid grid-cols-2 gap-4">
-          {sampleItems.map(item => <MenuItemComponent key={item.id} item={item} formatPrice={formatPrice} onClick={() => openItemDetail(item)} />)}
+          {sampleItems.map(item => <MenuItemComponent 
+            key={item.id} 
+            item={item} 
+            formatPrice={formatPrice} 
+            onClick={() => openItemDetail(item)} 
+            getDisplayDescription={getDisplayDescription}
+          />)}
         </div>
         <MenuItemDetailDialog isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} item={selectedItem} formatPrice={formatPrice} />
       </section>;

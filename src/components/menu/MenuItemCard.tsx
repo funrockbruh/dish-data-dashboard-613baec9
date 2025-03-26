@@ -31,8 +31,8 @@ export const MenuItemCard = ({ item, categoryName, onEdit }: MenuItemCardProps) 
     if (!item.description) return "";
     
     if (isMobile) {
-      // For mobile, show approximately 12-15 characters
-      if (item.description.length > 15) {
+      // For mobile, show approximately 12 characters
+      if (item.description.length > 12) {
         return item.description.substring(0, 12) + "...";
       }
     }
@@ -64,7 +64,7 @@ export const MenuItemCard = ({ item, categoryName, onEdit }: MenuItemCardProps) 
         {item.description && (
           <div className="relative mt-1">
             <p className="text-gray-600 text-sm font-inter truncate">{getDisplayDescription()}</p>
-            {isMobile && item.description.length > 15 && (
+            {isMobile && item.description.length > 12 && (
               <div 
                 className="absolute right-0 top-0 h-full w-8 pointer-events-none" 
                 style={{ 
