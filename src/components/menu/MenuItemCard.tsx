@@ -26,6 +26,19 @@ export const MenuItemCard = ({ item, categoryName, onEdit }: MenuItemCardProps) 
     currency: 'USD'
   }).format(item.price / 100);
 
+  // Truncate the description for mobile view
+  const getDisplayDescription = () => {
+    if (!item.description) return "";
+    
+    if (isMobile) {
+      // For mobile, show approximately 12-15 characters
+      if (item.description.length > 15) {
+        return item.description.substring(0, 12) + "...";
+      }
+    }
+    return item.description;
+  };
+
   return (
     <Card className="p-4 flex gap-4 items-center bg-white border border-gray-200 rounded-xl hover:shadow-md transition-shadow">
       {item.image_url ? (
@@ -49,14 +62,16 @@ export const MenuItemCard = ({ item, categoryName, onEdit }: MenuItemCardProps) 
           <p className="font-bold text-lg font-figtree whitespace-nowrap">{formattedPrice}</p>
         </div>
         {item.description && (
-          <div className="relative mt-1 overflow-hidden" style={{ maxHeight: isMobile ? '1.5em' : '3em' }}>
-            <p className="text-gray-600 text-sm font-inter">{item.description}</p>
-            <div 
-              className="absolute bottom-0 left-0 right-0 h-full pointer-events-none" 
-              style={{ 
-                background: 'linear-gradient(to top, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.8) 30%, rgba(255, 255, 255, 0) 80%)' 
-              }}
-            ></div>
+          <div className="relative mt-1">
+            <p className="text-gray-600 text-sm font-inter truncate">{getDisplayDescription()}</p>
+            {isMobile && item.description.length > 15 && (
+              <div 
+                className="absolute right-0 top-0 h-full w-8 pointer-events-none" 
+                style={{ 
+                  background: 'linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 1) 100%)' 
+                }}
+              ></div>
+            )}
           </div>
         )}
       </div>

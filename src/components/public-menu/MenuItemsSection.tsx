@@ -31,6 +31,19 @@ export const MenuItemsSection = ({
     return acc;
   }, {} as Record<string, MenuItem[]>);
 
+  // Truncate description for mobile view
+  const getDisplayDescription = (description: string) => {
+    if (!description) return "";
+    
+    if (isMobile) {
+      // For mobile, show approximately 12-15 characters
+      if (description.length > 15) {
+        return description.substring(0, 12) + "...";
+      }
+    }
+    return description;
+  };
+
   // Handle case when no menu items exist
   if (menuItems.length === 0) {
     // Create sample menu items for demonstration
@@ -84,7 +97,13 @@ export const MenuItemsSection = ({
       return <div key={category.id} id={`category-${category.id}`} className="mb-8">
             <h2 className="text-2xl font-bold mb-4 border-b border-gray-800 pb-2">{category.name}</h2>
             <div className="grid grid-cols-2 gap-4">
-              {categoryItems.map(item => <MenuItemComponent key={item.id} item={item} formatPrice={formatPrice} onClick={() => openItemDetail(item)} />)}
+              {categoryItems.map(item => <MenuItemComponent 
+                key={item.id} 
+                item={item} 
+                formatPrice={formatPrice} 
+                onClick={() => openItemDetail(item)} 
+                getDisplayDescription={getDisplayDescription}
+              />)}
             </div>
           </div>;
     })}
@@ -93,7 +112,13 @@ export const MenuItemsSection = ({
       {menuItems.filter(item => !item.category_id || !categories.some(c => c.id === item.category_id)).length > 0 && <div className="mb-8">
           <h2 className="text-2xl font-bold mb-4 border-b border-gray-800 pb-2">Other Items</h2>
           <div className="grid grid-cols-2 gap-4">
-            {menuItems.filter(item => !item.category_id || !categories.some(c => c.id === item.category_id)).map(item => <MenuItemComponent key={item.id} item={item} formatPrice={formatPrice} onClick={() => openItemDetail(item)} />)}
+            {menuItems.filter(item => !item.category_id || !categories.some(c => c.id === item.category_id)).map(item => <MenuItemComponent 
+              key={item.id} 
+              item={item} 
+              formatPrice={formatPrice} 
+              onClick={() => openItemDetail(item)} 
+              getDisplayDescription={getDisplayDescription}
+            />)}
           </div>
         </div>}
 
@@ -105,12 +130,14 @@ interface MenuItemProps {
   item: MenuItem;
   formatPrice: (price: number) => string;
   onClick: () => void;
+  getDisplayDescription: (description: string) => string;
 }
 
 const MenuItemComponent = ({
   item,
   formatPrice,
-  onClick
+  onClick,
+  getDisplayDescription
 }: MenuItemProps) => {
   const isMobile = useIsMobile();
   
@@ -123,14 +150,16 @@ const MenuItemComponent = ({
             <p className="text-white">{formatPrice(item.price)}</p>
           </div>
           {item.description && (
-            <div className="relative overflow-hidden" style={{ maxHeight: isMobile ? '1.2em' : '2em' }}>
-              <p className="text-gray-300 text-xs">{item.description}</p>
-              <div 
-                className="absolute bottom-0 left-0 right-0 h-full pointer-events-none" 
-                style={{ 
-                  background: 'linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0.8) 30%, rgba(0,0,0,0) 80%)' 
-                }}
-              ></div>
+            <div className="relative">
+              <p className="text-gray-300 text-xs truncate">{getDisplayDescription(item.description)}</p>
+              {isMobile && item.description.length > 15 && (
+                <div 
+                  className="absolute right-0 top-0 h-full w-8 pointer-events-none" 
+                  style={{ 
+                    background: 'linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 100%)' 
+                  }}
+                ></div>
+              )}
             </div>
           )}
         </div>
