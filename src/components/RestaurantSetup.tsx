@@ -302,3 +302,4 @@ export const RestaurantSetup = () => {
     </Card>
   );
 };
+

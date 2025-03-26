@@ -113,6 +113,7 @@ export type Database = {
           social_instagram: string | null
           social_tiktok: string | null
           social_whatsapp: string | null
+          subdomain: string | null
           theme: Json | null
           updated_at: string
         }
@@ -130,6 +131,7 @@ export type Database = {
           social_instagram?: string | null
           social_tiktok?: string | null
           social_whatsapp?: string | null
+          subdomain?: string | null
           theme?: Json | null
           updated_at?: string
         }
@@ -147,6 +149,7 @@ export type Database = {
           social_instagram?: string | null
           social_tiktok?: string | null
           social_whatsapp?: string | null
+          subdomain?: string | null
           theme?: Json | null
           updated_at?: string
         }
