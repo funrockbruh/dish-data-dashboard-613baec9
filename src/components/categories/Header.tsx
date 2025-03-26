@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 
 export const Header = () => {
@@ -17,6 +16,7 @@ export const Header = () => {
     logo_url: null
   });
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -40,9 +40,17 @@ export const Header = () => {
     loadProfile();
   }, [navigate]);
 
+  const handleBack = () => {
+    if (location.state?.from) {
+      navigate(location.state.from);
+    } else {
+      navigate(-1);
+    }
+  };
+
   return (
     <Card className="flex items-center gap-4 mb-8 p-4 bg-white border border-gray-200 rounded-2xl">
-      <Button variant="ghost" size="icon" className="rounded-full">
+      <Button variant="ghost" size="icon" className="rounded-full" onClick={handleBack}>
         <ArrowLeft className="h-6 w-6" />
       </Button>
       <div className="flex items-center gap-3 flex-1">
