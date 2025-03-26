@@ -41,23 +41,16 @@ export const FeaturedItems = () => {
     if (isFromSettings) {
       // If coming from settings, go back to settings
       navigate('/settings');
-    } else if (profile.restaurant_name) {
-      // For initial setup, continue to the public menu
-      // Convert restaurant name to URL-friendly format
-      const restaurantSlug = profile.restaurant_name
-        .toLowerCase()
-        .replace(/[^\w\s-]/g, '') // Remove special characters except spaces and hyphens
-        .replace(/\s+/g, '-') // Replace spaces with hyphens
-        .replace(/-+/g, '-'); // Replace multiple hyphens with single hyphen
-      
+    } else if (profile.subdomain) {
+      // For initial setup, continue to the public menu using subdomain
       // Show toast with menu URL
       toast.success(
-        `Menu saved! Your customers can access it at /menu/${restaurantSlug}`,
+        `Menu saved! Your customers can access it at /menu/${profile.subdomain}`,
         { duration: 5000 }
       );
       
       // Navigate to the public menu
-      navigate(`/menu/${restaurantSlug}`);
+      navigate(`/menu/${profile.subdomain}`);
     }
   };
 

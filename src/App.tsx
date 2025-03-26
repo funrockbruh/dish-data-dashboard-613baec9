@@ -31,7 +31,7 @@ const App = () => (
           <Route path="/categories" element={<CategorySetup />} />
           <Route path="/menu" element={<MenuItemsList />} />
           <Route path="/featured" element={<FeaturedItems />} />
-          <Route path="/menu/:restaurantName" element={<PublicMenu />} />
+          <Route path="/menu/:subdomain" element={<PublicMenu />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/theme" element={<Theme />} />
           <Route path="/social-media" element={<SocialMedia />} />

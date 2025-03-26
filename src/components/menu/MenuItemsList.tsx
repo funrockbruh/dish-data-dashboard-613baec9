@@ -8,6 +8,7 @@ import { RestaurantHeader } from "./RestaurantHeader";
 import { MenuSearchBar } from "./MenuSearchBar";
 import { MenuItemsDisplay } from "./MenuItemsDisplay";
 import { useMenuData, MenuItem } from "@/hooks/use-menu-data";
+import { useRestaurantProfile } from "@/hooks/use-restaurant-profile";
 
 export const MenuItemsList = () => {
   const { 
@@ -16,10 +17,11 @@ export const MenuItemsList = () => {
     isLoading, 
     hasUnsavedChanges,
     setHasUnsavedChanges,
-    profile, 
+    profile: menuProfile, 
     refreshData 
   } = useMenuData();
   
+  const { profile } = useRestaurantProfile();
   const [searchQuery, setSearchQuery] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
@@ -82,7 +84,7 @@ export const MenuItemsList = () => {
 
   return (
     <div className="max-w-4xl mx-auto p-4 space-y-6">
-      <RestaurantHeader profile={profile} />
+      <RestaurantHeader profile={menuProfile} />
 
       <MenuSearchBar 
         searchQuery={searchQuery}

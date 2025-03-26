@@ -8,7 +8,7 @@ import { Category, MenuItem, PublicMenuState, Restaurant } from "./types";
 export { formatPrice };
 export type { Restaurant, Category, MenuItem };
 
-export function usePublicMenu(restaurantName: string | undefined) {
+export function usePublicMenu(subdomain: string | undefined) {
   const [state, setState] = useState<PublicMenuState>({
     restaurant: null,
     categories: [],
@@ -24,28 +24,28 @@ export function usePublicMenu(restaurantName: string | undefined) {
       try {
         setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
-        if (!restaurantName) {
+        if (!subdomain) {
           setState((prev) => ({
             ...prev,
-            error: "No restaurant name provided",
+            error: "No subdomain provided",
             isLoading: false,
           }));
           return;
         }
 
-        // Clean and format restaurant name for comparison
-        const formattedName = restaurantName.replace(/-/g, " ").toLowerCase().trim();
+        // Format the subdomain for comparison (removing hyphens)
+        const formattedName = subdomain.replace(/-/g, " ").toLowerCase().trim();
         
-        // Find restaurant by name
+        // Find restaurant by subdomain first, then by name as fallback
         const currentRestaurant = await findRestaurantByName({
-          restaurantName,
+          restaurantName: subdomain,
           formattedName,
         });
 
         if (!currentRestaurant) {
           setState((prev) => ({
             ...prev,
-            error: `Restaurant "${restaurantName}" not found`,
+            error: `Restaurant with subdomain "${subdomain}" not found`,
             isLoading: false,
           }));
           return;
@@ -75,10 +75,10 @@ export function usePublicMenu(restaurantName: string | undefined) {
       }
     };
 
-    if (restaurantName) {
+    if (subdomain) {
       fetchData();
     }
-  }, [restaurantName]);
+  }, [subdomain]);
 
   return {
     ...state,

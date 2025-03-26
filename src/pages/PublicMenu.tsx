@@ -9,7 +9,7 @@ import { EmptyMenuState } from "@/components/menu/EmptyMenuState";
 import { useEffect } from "react";
 
 const PublicMenu = () => {
-  const { restaurantName } = useParams<{ restaurantName: string }>();
+  const { subdomain } = useParams<{ subdomain: string }>();
   const { 
     restaurant, 
     categories, 
@@ -19,7 +19,7 @@ const PublicMenu = () => {
     error, 
     debugInfo,
     formatPrice 
-  } = usePublicMenu(restaurantName);
+  } = usePublicMenu(subdomain);
 
   // Log the state for debugging
   useEffect(() => {
@@ -66,7 +66,7 @@ const PublicMenu = () => {
         <div className="container mx-auto p-4">
           <EmptyMenuState 
             restaurantId={restaurant?.id || ''} 
-            restaurantName={restaurantName || ''} 
+            restaurantName={subdomain || ''} 
             debugInfo={debugInfo}
           />
         </div>

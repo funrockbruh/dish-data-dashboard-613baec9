@@ -6,16 +6,28 @@ export const findRestaurantByName = async (
   searchParams: RestaurantSearchParams
 ): Promise<Restaurant | null> => {
   const { restaurantName, formattedName } = searchParams;
-  console.log("Searching for restaurant:", restaurantName);
+  console.log("Searching for restaurant by subdomain:", restaurantName);
 
   if (!restaurantName) {
     return null;
   }
 
-  // Fetch all restaurant profiles with social media fields included
+  // First try to find by subdomain (exact match)
+  const { data: subdomainMatch, error: subdomainError } = await supabase
+    .from("restaurant_profiles")
+    .select("id, restaurant_name, logo_url, owner_name, owner_number, about, social_whatsapp, social_instagram, social_facebook, social_tiktok, social_email, subdomain")
+    .eq("subdomain", restaurantName)
+    .maybeSingle();
+
+  if (subdomainMatch) {
+    console.log("Found restaurant by subdomain:", subdomainMatch);
+    return subdomainMatch;
+  }
+
+  // If no match by subdomain, fetch all restaurant profiles
   const { data: restaurantData, error: restaurantError } = await supabase
     .from("restaurant_profiles")
-    .select("id, restaurant_name, logo_url, owner_name, owner_number, about, social_whatsapp, social_instagram, social_facebook, social_tiktok, social_email");
+    .select("id, restaurant_name, logo_url, owner_name, owner_number, about, social_whatsapp, social_instagram, social_facebook, social_tiktok, social_email, subdomain");
 
   if (restaurantError) {
     console.error("Restaurant query error:", restaurantError);
@@ -71,6 +83,7 @@ export const findRestaurantByName = async (
   if (currentRestaurant) {
     console.log("Found restaurant with social media:", {
       name: currentRestaurant.restaurant_name,
+      subdomain: currentRestaurant.subdomain,
       social_whatsapp: currentRestaurant.social_whatsapp,
       social_instagram: currentRestaurant.social_instagram,
       social_facebook: currentRestaurant.social_facebook,
