@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
@@ -8,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Pencil } from "lucide-react";
+import { Pencil, ArrowLeft } from "lucide-react";
 
 export const RestaurantSetup = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -54,12 +53,9 @@ export const RestaurantSetup = () => {
           setLogoPreview(data.logo_url);
         }
         
-        // If we already have restaurant data and are coming from settings, 
-        // this is not the initial setup
         if (location.state?.from === 'settings') {
           setIsInitialSetup(false);
         } else {
-          // Check if categories exist to determine if this is initial setup
           const { count } = await supabase
             .from('menu_categories')
             .select('*', { count: 'exact', head: true })
@@ -72,7 +68,6 @@ export const RestaurantSetup = () => {
     
     loadProfile();
 
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!session) {
         navigate('/');
@@ -144,7 +139,6 @@ export const RestaurantSetup = () => {
         description: "Restaurant profile updated successfully"
       });
 
-      // Navigate based on whether this is initial setup or an edit
       if (isInitialSetup) {
         navigate('/categories');
       } else {
@@ -162,9 +156,23 @@ export const RestaurantSetup = () => {
     }
   };
 
+  const handleBack = () => {
+    if (location.state?.from) {
+      navigate(location.state.from);
+    } else {
+      navigate(-1);
+    }
+  };
+
   return (
     <Card className="max-w-2xl mx-auto p-6">
-      <h2 className="text-2xl font-bold mb-6">Restaurant Profile Setup</h2>
+      <div className="flex items-center mb-4">
+        <Button variant="ghost" size="icon" className="rounded-full mr-2" onClick={handleBack}>
+          <ArrowLeft className="h-6 w-6" />
+        </Button>
+        <h2 className="text-2xl font-bold">Restaurant Profile Setup</h2>
+      </div>
+      
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="flex flex-col items-center mb-6">
           <div className="w-32 h-32 rounded-full overflow-hidden border-2 border-gray-200 mb-4 relative cursor-pointer group" onClick={handleUploadClick}>
