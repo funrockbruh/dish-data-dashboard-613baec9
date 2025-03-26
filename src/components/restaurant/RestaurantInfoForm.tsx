@@ -1,16 +1,10 @@
-
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { RestaurantFormData } from "@/hooks/use-restaurant-form";
 
 interface RestaurantInfoFormProps {
-  formData: {
-    owner_name: string;
-    restaurant_name: string;
-    owner_number: string;
-    owner_email: string;
-    about: string;
-  };
+  formData: RestaurantFormData;
   onFormChange: (field: string, value: string) => void;
   onRestaurantNameChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
