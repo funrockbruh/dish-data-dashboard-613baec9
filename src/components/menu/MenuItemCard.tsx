@@ -47,10 +47,7 @@ export const MenuItemCard = ({ item, categoryName, onEdit }: MenuItemCardProps) 
           <p className="font-bold text-lg font-figtree whitespace-nowrap">{formattedPrice}</p>
         </div>
         {item.description && (
-          <div className="relative max-h-12 overflow-hidden">
-            <p className="text-gray-600 text-sm mt-1 font-inter">{item.description}</p>
-            <div className="absolute bottom-0 left-0 w-full h-8 bg-gradient-to-t from-white to-transparent"></div>
-          </div>
+          <p className="text-gray-600 text-sm mt-1 font-inter line-clamp-2">{item.description}</p>
         )}
       </div>
 

@@ -1,15 +1,12 @@
-
 import { X } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import type { MenuItem } from "@/hooks/public-menu/types";
-
 interface MenuItemDetailDialogProps {
   isOpen: boolean;
   onClose: () => void;
   item: MenuItem | null;
   formatPrice: (price: number) => string;
 }
-
 export const MenuItemDetailDialog = ({
   isOpen,
   onClose,
@@ -17,9 +14,7 @@ export const MenuItemDetailDialog = ({
   formatPrice
 }: MenuItemDetailDialogProps) => {
   if (!item) return null;
-  
-  return (
-    <Dialog open={isOpen} onOpenChange={open => !open && onClose()}>
+  return <Dialog open={isOpen} onOpenChange={open => !open && onClose()}>
       <DialogContent className="p-0 gap-0 bg-black sm:rounded-xl overflow-hidden border border-gray-800 max-w-md rounded-3xl">
         {/* Close button positioned at the top right */}
         <button onClick={onClose} className="absolute right-3 top-3 z-10 rounded-full bg-transparent text-white" aria-label="Close dialog">
@@ -44,11 +39,9 @@ export const MenuItemDetailDialog = ({
           </div>
           
           {/* Description with proper font size and spacing */}
-          {item.description && (
-            <p className="text-white text-lg mb-4 leading-tight max-h-40 overflow-y-auto">
+          {item.description && <p className="text-white text-lg mb-4 leading-tight">
               {item.description.split('\n').join(' / ')}
-            </p>
-          )}
+            </p>}
           
           {/* Price in large format at the bottom right */}
           <div className="flex justify-end mt-4">
@@ -58,6 +51,5 @@ export const MenuItemDetailDialog = ({
           </div>
         </div>
       </DialogContent>
-    </Dialog>
-  );
+    </Dialog>;
 };
