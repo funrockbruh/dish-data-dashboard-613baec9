@@ -2,6 +2,7 @@
 import { Card } from "@/components/ui/card";
 import { MenuItemCard } from "./MenuItemCard";
 import { MenuItem, Category } from "@/hooks/use-menu-data";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface MenuItemsDisplayProps {
   isLoading: boolean;
@@ -19,6 +20,8 @@ export const MenuItemsDisplay = ({
   searchQuery, 
   onEdit 
 }: MenuItemsDisplayProps) => {
+  const isMobile = useIsMobile();
+  
   return (
     <Card className="p-6 bg-white border border-gray-200 rounded-2xl">
       <div className="grid gap-4">

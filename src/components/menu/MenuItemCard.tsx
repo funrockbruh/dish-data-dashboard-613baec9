@@ -2,6 +2,7 @@
 import { Pencil } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface MenuItem {
   id: string;
@@ -19,6 +20,7 @@ interface MenuItemCardProps {
 }
 
 export const MenuItemCard = ({ item, categoryName, onEdit }: MenuItemCardProps) => {
+  const isMobile = useIsMobile();
   const formattedPrice = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD'
@@ -47,9 +49,12 @@ export const MenuItemCard = ({ item, categoryName, onEdit }: MenuItemCardProps) 
           <p className="font-bold text-lg font-figtree whitespace-nowrap">{formattedPrice}</p>
         </div>
         {item.description && (
-          <div className="relative mt-1 overflow-hidden" style={{ maxHeight: '2.4em' }}>
+          <div className={`relative mt-1 overflow-hidden ${isMobile ? 'max-h-6' : 'max-h-12'}`}>
             <p className="text-gray-600 text-sm font-inter line-clamp-2">{item.description}</p>
-            <div className="absolute bottom-0 left-0 right-0 h-full bg-gradient-to-t from-white to-transparent pointer-events-none" style={{ background: 'linear-gradient(to top, white 0%, rgba(255, 255, 255, 0) 80%)' }}></div>
+            <div 
+              className="absolute bottom-0 left-0 right-0 h-full pointer-events-none" 
+              style={{ background: 'linear-gradient(to top, white 0%, rgba(255, 255, 255, 0) 80%)' }}
+            ></div>
           </div>
         )}
       </div>

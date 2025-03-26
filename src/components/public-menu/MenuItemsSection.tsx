@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import type { MenuItem, Category } from "@/hooks/public-menu/types";
 import { MenuItemDetailDialog } from "./MenuItemDetailDialog";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface MenuItemsSectionProps {
   menuItems: MenuItem[];
@@ -17,6 +18,8 @@ export const MenuItemsSection = ({
 }: MenuItemsSectionProps) => {
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const isMobile = useIsMobile();
+  
   const openItemDetail = (item: MenuItem) => {
     setSelectedItem(item);
     setIsDetailOpen(true);
@@ -109,6 +112,8 @@ const MenuItemComponent = ({
   formatPrice,
   onClick
 }: MenuItemProps) => {
+  const isMobile = useIsMobile();
+  
   return <div className="mb-4 cursor-pointer active:scale-95 transition-transform" onClick={onClick}>
       <div className="relative rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
         <img src={item.image_url || "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9"} alt={item.name} className="w-full aspect-[4/3] object-cover rounded-[10px]" />
@@ -118,8 +123,12 @@ const MenuItemComponent = ({
             <p className="text-white">{formatPrice(item.price)}</p>
           </div>
           {item.description && (
-            <div className="relative overflow-hidden" style={{ maxHeight: '1.2em' }}>
-              <p className="text-gray-300 text-xs truncate">{item.description}</p>
+            <div className={`relative overflow-hidden ${isMobile ? 'max-h-6' : 'max-h-8'}`}>
+              <p className="text-gray-300 text-xs line-clamp-1">{item.description}</p>
+              <div 
+                className="absolute bottom-0 left-0 right-0 h-full pointer-events-none" 
+                style={{ background: 'linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0) 80%)' }}
+              ></div>
             </div>
           )}
         </div>
