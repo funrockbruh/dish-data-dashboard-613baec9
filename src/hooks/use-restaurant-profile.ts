@@ -6,13 +6,15 @@ export interface RestaurantProfile {
   restaurant_name: string | null;
   owner_name: string | null;
   logo_url: string | null;
+  subdomain: string | null;
 }
 
 export function useRestaurantProfile() {
   const [profile, setProfile] = useState<RestaurantProfile>({
     restaurant_name: "",
     owner_name: "",
-    logo_url: null
+    logo_url: null,
+    subdomain: null
   });
 
   const loadProfile = async () => {
@@ -21,7 +23,7 @@ export function useRestaurantProfile() {
 
     const { data, error } = await supabase
       .from('restaurant_profiles')
-      .select('restaurant_name, owner_name, logo_url')
+      .select('restaurant_name, owner_name, logo_url, subdomain')
       .eq('id', session.user.id)
       .single();
 

@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
@@ -14,6 +15,7 @@ export const RestaurantSetup = () => {
   const [logo, setLogo] = useState<File | null>(null);
   const [logoPreview, setLogoPreview] = useState<string>("");
   const [isInitialSetup, setIsInitialSetup] = useState(true);
+  const [subdomainError, setSubdomainError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
@@ -22,7 +24,8 @@ export const RestaurantSetup = () => {
     restaurant_name: "",
     owner_number: "",
     owner_email: "",
-    about: ""
+    about: "",
+    subdomain: ""
   });
   const { toast } = useToast();
 
@@ -46,7 +49,8 @@ export const RestaurantSetup = () => {
           restaurant_name: data.restaurant_name || "",
           owner_number: data.owner_number || "",
           owner_email: data.owner_email || "",
-          about: data.about || ""
+          about: data.about || "",
+          subdomain: data.subdomain || ""
         });
         
         if (data.logo_url) {
@@ -94,15 +98,63 @@ export const RestaurantSetup = () => {
   const handleUploadClick = () => {
     fileInputRef.current?.click();
   };
+
+  const generateSubdomain = (restaurantName: string) => {
+    if (!restaurantName) return "";
+    return restaurantName
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '-')  // Replace non-alphanumeric with hyphens
+      .replace(/-+/g, '-')         // Replace multiple hyphens with a single one
+      .replace(/^-|-$/g, '');      // Remove hyphens at start and end
+  };
+
+  const handleRestaurantNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const newSubdomain = generateSubdomain(value);
+    
+    setFormData(prev => ({
+      ...prev,
+      restaurant_name: value,
+      subdomain: prev.subdomain === generateSubdomain(prev.restaurant_name) ? newSubdomain : prev.subdomain
+    }));
+  };
+
+  const handleSubdomainChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const sanitizedValue = value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+    
+    setFormData(prev => ({
+      ...prev,
+      subdomain: sanitizedValue
+    }));
+    setSubdomainError(null);
+  };
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setSubdomainError(null);
     
     try {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       if (sessionError) throw new Error("Authentication error");
       if (!session?.user) throw new Error("Not authenticated");
+
+      // Check if subdomain is already taken
+      if (formData.subdomain) {
+        const { data: existingSubdomain, error: subdomainError } = await supabase
+          .from('restaurant_profiles')
+          .select('id')
+          .eq('subdomain', formData.subdomain)
+          .neq('id', session.user.id)
+          .maybeSingle();
+          
+        if (existingSubdomain) {
+          setSubdomainError("This subdomain is already taken. Please choose another one.");
+          setIsLoading(false);
+          return;
+        }
+      }
 
       let logo_url = logoPreview;
       if (logo) {
@@ -199,10 +251,7 @@ export const RestaurantSetup = () => {
 
           <div className="space-y-2">
             <Label htmlFor="restaurant_name">Restaurant Name</Label>
-            <Input id="restaurant_name" value={formData.restaurant_name} onChange={e => setFormData(prev => ({
-            ...prev,
-            restaurant_name: e.target.value
-          }))} placeholder="Enter restaurant name" required />
+            <Input id="restaurant_name" value={formData.restaurant_name} onChange={handleRestaurantNameChange} placeholder="Enter restaurant name" required />
           </div>
 
           <div className="space-y-2">
@@ -220,6 +269,22 @@ export const RestaurantSetup = () => {
             owner_email: e.target.value
           }))} placeholder="Enter email" required />
           </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="subdomain">Subdomain</Label>
+          <div className="flex items-center">
+            <Input 
+              id="subdomain" 
+              value={formData.subdomain} 
+              onChange={handleSubdomainChange}
+              placeholder="your-restaurant" 
+              className={subdomainError ? "border-red-500" : ""}
+            />
+            <span className="ml-2 text-gray-500">.yourmenu.com</span>
+          </div>
+          {subdomainError && <p className="text-sm text-red-500 mt-1">{subdomainError}</p>}
+          <p className="text-xs text-gray-500 mt-1">This will be your unique URL for sharing your menu.</p>
         </div>
 
         <div className="space-y-2">
