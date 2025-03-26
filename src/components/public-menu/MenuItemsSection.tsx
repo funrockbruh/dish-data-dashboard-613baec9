@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import type { MenuItem, Category } from "@/hooks/public-menu/types";
@@ -113,7 +114,7 @@ const MenuItemComponent = ({
         <img src={item.image_url || "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9"} alt={item.name} className="w-full aspect-[4/3] object-cover rounded-[10px]" />
         <div className="p-2 bg-black">
           <div className="flex justify-between items-center">
-            <h3 className="text-white font-medium">{item.name}</h3>
+            <h3 className="text-white font-medium truncate max-w-[70%]">{item.name}</h3>
             <p className="text-white">{formatPrice(item.price)}</p>
           </div>
           {/* Description removed from here, will be shown in the dialog */}
