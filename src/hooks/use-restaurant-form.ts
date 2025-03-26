@@ -12,6 +12,7 @@ export interface RestaurantFormData {
   owner_email: string;
   about: string;
   subdomain: string;
+  country_code: string;
 }
 
 interface UseRestaurantFormProps {
@@ -33,7 +34,8 @@ export const useRestaurantForm = ({ initialSetup = true, returnPath }: UseRestau
     owner_number: "",
     owner_email: "",
     about: "",
-    subdomain: ""
+    subdomain: "",
+    country_code: "+961"
   });
 
   useEffect(() => {
@@ -52,13 +54,27 @@ export const useRestaurantForm = ({ initialSetup = true, returnPath }: UseRestau
           .maybeSingle();
           
         if (data && !error) {
+          // Extract country code from owner_number if available
+          let countryCode = "+961";
+          let phoneNumber = data.owner_number || "";
+          
+          // Check if owner_number starts with a country code
+          if (phoneNumber.startsWith('+')) {
+            const match = phoneNumber.match(/^\+\d+/);
+            if (match) {
+              countryCode = match[0];
+              phoneNumber = phoneNumber.substring(match[0].length);
+            }
+          }
+          
           setFormData({
             owner_name: data.owner_name || "",
             restaurant_name: data.restaurant_name || "",
-            owner_number: data.owner_number || "",
+            owner_number: phoneNumber,
             owner_email: data.owner_email || "",
             about: data.about || "",
-            subdomain: data.subdomain || ""
+            subdomain: data.subdomain || "",
+            country_code: countryCode
           });
           
           if (data.logo_url) {
@@ -197,11 +213,19 @@ export const useRestaurantForm = ({ initialSetup = true, returnPath }: UseRestau
         logo_url = publicUrl;
       }
 
+      // Combine country code with phone number
+      const fullPhoneNumber = formData.country_code + formData.owner_number;
+
       const { error: updateError } = await supabase
         .from('restaurant_profiles')
         .upsert({
           id: session.user.id,
-          ...formData,
+          owner_name: formData.owner_name,
+          restaurant_name: formData.restaurant_name,
+          owner_number: fullPhoneNumber,
+          owner_email: formData.owner_email,
+          about: formData.about,
+          subdomain: formData.subdomain,
           logo_url
         });
         

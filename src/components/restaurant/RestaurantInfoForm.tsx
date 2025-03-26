@@ -1,6 +1,8 @@
+
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { PhoneNumberInput } from "@/components/restaurant/PhoneNumberInput";
 import { RestaurantFormData } from "@/hooks/use-restaurant-form";
 
 interface RestaurantInfoFormProps {
@@ -39,16 +41,14 @@ export const RestaurantInfoForm = ({
           />
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="owner_number">Phone Number</Label>
-          <Input 
-            id="owner_number" 
-            value={formData.owner_number} 
-            onChange={e => onFormChange('owner_number', e.target.value)} 
-            placeholder="Enter phone number" 
-            required 
-          />
-        </div>
+        <PhoneNumberInput 
+          label="Phone Number"
+          countryCode={formData.country_code}
+          phoneNumber={formData.owner_number}
+          onCountryCodeChange={(code) => onFormChange('country_code', code)}
+          onPhoneNumberChange={(value) => onFormChange('owner_number', value)}
+          required
+        />
 
         <div className="space-y-2">
           <Label htmlFor="owner_email">Email</Label>
