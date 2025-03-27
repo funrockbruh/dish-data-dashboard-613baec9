@@ -1,111 +1,58 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { generateSubdomain } from "@/hooks/use-subdomain";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-
-export interface RestaurantFormData {
-  owner_name: string;
-  restaurant_name: string;
-  owner_number: string;
-  owner_email: string;
-  about: string;
-  subdomain: string;
-  country_code: string;
-}
+import { useLogoUpload } from "@/hooks/use-logo-upload";
+import { useSubdomainValidation } from "@/hooks/use-subdomain-validation";
+import { useRestaurantProfileManagement, RestaurantFormData } from "@/hooks/use-restaurant-profile-management";
 
 interface UseRestaurantFormProps {
   initialSetup?: boolean;
   returnPath?: string;
 }
 
+export type { RestaurantFormData };
+
 export const useRestaurantForm = ({ initialSetup = true, returnPath }: UseRestaurantFormProps = {}) => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [logo, setLogo] = useState<File | null>(null);
-  const [logoPreview, setLogoPreview] = useState<string>("");
-  const [subdomainError, setSubdomainError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const [formData, setFormData] = useState<RestaurantFormData>({
-    owner_name: "",
-    restaurant_name: "",
-    owner_number: "",
-    owner_email: "",
-    about: "",
-    subdomain: "",
-    country_code: "+961"
-  });
+  const { 
+    logo,
+    logoPreview, 
+    setLogoPreview, 
+    handleLogoChange, 
+    uploadLogo 
+  } = useLogoUpload();
+
+  const { 
+    subdomainError, 
+    setSubdomainError, 
+    isLoading, 
+    setIsLoading, 
+    checkSubdomainAvailability 
+  } = useSubdomainValidation();
+
+  const { 
+    formData, 
+    setFormData, 
+    loadProfile, 
+    saveProfile, 
+    handleFormChange 
+  } = useRestaurantProfileManagement();
 
   useEffect(() => {
-    const loadProfile = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.user) {
-          navigate('/');
-          return;
-        }
-        
-        const { data, error } = await supabase
-          .from('restaurant_profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .maybeSingle();
-          
-        if (data && !error) {
-          let countryCode = "+961";
-          let phoneNumber = data.owner_number || "";
-          
-          if (phoneNumber.startsWith('+')) {
-            const match = phoneNumber.match(/^\+\d+/);
-            if (match) {
-              countryCode = match[0];
-              phoneNumber = phoneNumber.substring(match[0].length);
-            }
-          }
-          
-          setFormData({
-            owner_name: data.owner_name || "",
-            restaurant_name: data.restaurant_name || "",
-            owner_number: phoneNumber,
-            owner_email: data.owner_email || "",
-            about: data.about || "",
-            subdomain: data.subdomain || "",
-            country_code: countryCode
-          });
-          
-          if (data.logo_url) {
-            setLogoPreview(data.logo_url);
-          }
-        }
-      } catch (error) {
-        console.error('Error loading profile:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load profile data",
-          variant: "destructive"
-        });
+    const initializeProfile = async () => {
+      const logoUrl = await loadProfile();
+      if (logoUrl) {
+        setLogoPreview(logoUrl);
       }
     };
     
-    loadProfile();
+    initializeProfile();
   }, [navigate, toast]);
-
-  const handleLogoChange = (file: File) => {
-    setLogo(file);
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setLogoPreview(reader.result as string);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleFormChange = (field: string, value: string) => {
-    setFormData(prevFormData => ({
-      ...prevFormData,
-      [field]: value
-    }));
-  };
 
   const handleRestaurantNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -137,43 +84,6 @@ export const useRestaurantForm = ({ initialSetup = true, returnPath }: UseRestau
     }
   };
 
-  const checkSubdomainAvailability = async (subdomain: string) => {
-    if (!subdomain) {
-      setSubdomainError(null);
-      return false;
-    }
-    
-    setIsLoading(true);
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) throw new Error("Not authenticated");
-      
-      const { data: existingSubdomain } = await supabase
-        .from('restaurant_profiles')
-        .select('id')
-        .eq('subdomain', subdomain)
-        .neq('id', session.user.id)
-        .maybeSingle();
-        
-      if (existingSubdomain) {
-        setSubdomainError("This subdomain is already taken. Please choose another one.");
-        return false;
-      }
-      setSubdomainError(null);
-      return true;
-    } catch (error) {
-      console.error('Subdomain check error:', error);
-      toast({
-        title: "Error",
-        description: "Failed to check subdomain availability",
-        variant: "destructive"
-      });
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -188,84 +98,25 @@ export const useRestaurantForm = ({ initialSetup = true, returnPath }: UseRestau
       if (sessionError) throw new Error("Authentication error");
       if (!session?.user) throw new Error("Not authenticated");
 
-      console.log('Current logo file:', logo);
-      console.log('Current logo preview:', logoPreview);
+      // Upload logo if changed and get URL
+      const logo_url = await uploadLogo(session.user.id);
       
-      let logo_url = logoPreview;
+      // Save profile data
+      const success = await saveProfile(logo_url, session.user.id, true);
       
-      if (logo) {
-        console.log('Uploading new logo file:', logo.name, logo.type, logo.size);
-        
-        const fileExt = logo.name.split('.').pop();
-        const fileName = `logo.${fileExt}`;
-        const filePath = `${session.user.id}/${fileName}`;
-        
-        try {
-          const { error: uploadError, data: uploadData } = await supabase.storage
-            .from('restaurant-logos')
-            .upload(filePath, logo, {
-              upsert: true,
-              contentType: logo.type,
-              cacheControl: '3600'
-            });
-            
-          if (uploadError) {
-            console.error('Logo upload error:', uploadError);
-            throw new Error(`Upload failed: ${uploadError.message}`);
-          }
-          
-          console.log('Logo upload successful:', uploadData);
-          
-          const timestamp = new Date().getTime();
-          const { data: { publicUrl } } = supabase.storage
-            .from('restaurant-logos')
-            .getPublicUrl(`${filePath}?t=${timestamp}`);
-            
-          console.log('Logo public URL:', publicUrl);
-          logo_url = publicUrl;
-        } catch (uploadErr) {
-          console.error('Error in logo upload process:', uploadErr);
-          toast({
-            title: "Upload Error",
-            description: "There was a problem uploading your logo image",
-            variant: "destructive"
-          });
-        }
-      }
-
-      const fullPhoneNumber = formData.country_code + formData.owner_number;
-
-      const { error: updateError } = await supabase
-        .from('restaurant_profiles')
-        .upsert({
-          id: session.user.id,
-          owner_name: formData.owner_name,
-          restaurant_name: formData.restaurant_name,
-          owner_number: fullPhoneNumber,
-          owner_email: formData.owner_email,
-          about: formData.about,
-          subdomain: formData.subdomain,
-          logo_url
+      if (success) {
+        toast({
+          title: "Success",
+          description: "Restaurant profile updated successfully"
         });
         
-      if (updateError) {
-        console.error('Profile update error:', updateError);
-        throw updateError;
-      }
-      
-      console.log('Profile updated successfully with logo_url:', logo_url);
-      
-      toast({
-        title: "Success",
-        description: "Restaurant profile updated successfully"
-      });
-      
-      if (initialSetup) {
-        navigate('/categories');
-      } else if (returnPath) {
-        navigate(`/${returnPath}`);
-      } else {
-        navigate('/settings');
+        if (initialSetup) {
+          navigate('/categories');
+        } else if (returnPath) {
+          navigate(`/${returnPath}`);
+        } else {
+          navigate('/settings');
+        }
       }
     } catch (error) {
       console.error('Profile update error:', error);
