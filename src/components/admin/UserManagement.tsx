@@ -12,7 +12,15 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { User, UserCheck, UserX, Loader } from "lucide-react";
+import { User, UserCheck, UserX, Loader, MoreHorizontal } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface UserProfile {
   id: string;
@@ -27,6 +35,7 @@ export const UserManagement = () => {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     fetchUsers();
@@ -78,18 +87,63 @@ export const UserManagement = () => {
     return new Date(dateString).toLocaleString();
   };
 
+  // Mobile Card View for each user
+  const MobileUserCard = ({ user }: { user: UserProfile }) => (
+    <Card className="mb-4">
+      <CardContent className="pt-6">
+        <div className="flex justify-between items-start mb-4">
+          <div className="flex-1">
+            <h3 className="font-medium text-sm break-all">{user.email}</h3>
+            <p className="text-xs text-muted-foreground mt-1">
+              {user.restaurant_name || "No restaurant set"}
+            </p>
+          </div>
+          <Badge variant={user.last_sign_in_at ? "success" : "warning"} className="flex items-center gap-1 w-fit ml-2">
+            {user.last_sign_in_at ? (
+              <>
+                <UserCheck className="h-3 w-3" />
+                Active
+              </>
+            ) : (
+              "Never logged in"
+            )}
+          </Badge>
+        </div>
+        
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          <div>
+            <p className="text-muted-foreground">Subdomain</p>
+            <p className="font-medium">{user.subdomain || "—"}</p>
+          </div>
+          <div>
+            <p className="text-muted-foreground">Created</p>
+            <p className="font-medium">{formatDate(user.created_at).split(',')[0]}</p>
+          </div>
+          <div>
+            <p className="text-muted-foreground">Last Sign In</p>
+            <p className="font-medium">{formatDate(user.last_sign_in_at).split(',')[0]}</p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   return (
-    <div className="bg-white rounded-lg shadow p-6">
+    <div className="bg-white rounded-lg shadow p-4 md:p-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold">User Management</h2>
-        <Button onClick={fetchUsers} variant="outline" disabled={loading}>
+        <h2 className="text-lg md:text-xl font-semibold">User Management</h2>
+        <Button onClick={fetchUsers} variant="outline" disabled={loading} size={isMobile ? "sm" : "default"}>
           {loading ? (
             <>
               <Loader className="mr-2 h-4 w-4 animate-spin" />
-              Loading...
+              <span className="md:inline hidden">Loading...</span>
+              <span className="md:hidden">Load</span>
             </>
           ) : (
-            "Refresh"
+            <>
+              <span className="md:inline hidden">Refresh</span>
+              <span className="md:hidden">Refresh</span>
+            </>
           )}
         </Button>
       </div>
@@ -116,43 +170,53 @@ export const UserManagement = () => {
       )}
 
       {!loading && !error && users.length > 0 && (
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Email</TableHead>
-                <TableHead>Restaurant</TableHead>
-                <TableHead>Subdomain</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead>Last Sign In</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell className="font-medium">{user.email}</TableCell>
-                  <TableCell>{user.restaurant_name || "—"}</TableCell>
-                  <TableCell>{user.subdomain || "—"}</TableCell>
-                  <TableCell>{formatDate(user.created_at)}</TableCell>
-                  <TableCell>{formatDate(user.last_sign_in_at)}</TableCell>
-                  <TableCell>
-                    {user.last_sign_in_at ? (
-                      <Badge variant="success" className="flex items-center gap-1 w-fit">
-                        <UserCheck className="h-3 w-3" />
-                        Active
-                      </Badge>
-                    ) : (
-                      <Badge variant="warning" className="flex items-center gap-1 w-fit">
-                        Never logged in
-                      </Badge>
-                    )}
-                  </TableCell>
+        <>
+          {/* Mobile View */}
+          <div className="md:hidden">
+            {users.map((user) => (
+              <MobileUserCard key={user.id} user={user} />
+            ))}
+          </div>
+
+          {/* Desktop View */}
+          <div className="hidden md:block overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Restaurant</TableHead>
+                  <TableHead>Subdomain</TableHead>
+                  <TableHead>Created</TableHead>
+                  <TableHead>Last Sign In</TableHead>
+                  <TableHead>Status</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+              </TableHeader>
+              <TableBody>
+                {users.map((user) => (
+                  <TableRow key={user.id}>
+                    <TableCell className="font-medium">{user.email}</TableCell>
+                    <TableCell>{user.restaurant_name || "—"}</TableCell>
+                    <TableCell>{user.subdomain || "—"}</TableCell>
+                    <TableCell>{formatDate(user.created_at)}</TableCell>
+                    <TableCell>{formatDate(user.last_sign_in_at)}</TableCell>
+                    <TableCell>
+                      {user.last_sign_in_at ? (
+                        <Badge variant="success" className="flex items-center gap-1 w-fit">
+                          <UserCheck className="h-3 w-3" />
+                          Active
+                        </Badge>
+                      ) : (
+                        <Badge variant="warning" className="flex items-center gap-1 w-fit">
+                          Never logged in
+                        </Badge>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </>
       )}
     </div>
   );
