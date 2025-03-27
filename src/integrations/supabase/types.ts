@@ -9,6 +9,68 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      admin_users: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      audit_logs: {
+        Row: {
+          action: string
+          admin_id: string | null
+          created_at: string
+          details: Json | null
+          id: string
+          resource_id: string | null
+          resource_type: string
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          admin_id?: string | null
+          created_at?: string
+          details?: Json | null
+          id?: string
+          resource_id?: string | null
+          resource_type: string
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          admin_id?: string | null
+          created_at?: string
+          details?: Json | null
+          id?: string
+          resource_id?: string | null
+          resource_type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       menu_categories: {
         Row: {
           created_at: string
@@ -98,6 +160,53 @@ export type Database = {
           },
         ]
       }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string
+          details: Json | null
+          id: string
+          payment_type: string
+          status: string
+          updated_at: string
+          user_id: string
+          verified: boolean
+          verified_by: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          details?: Json | null
+          id?: string
+          payment_type: string
+          status?: string
+          updated_at?: string
+          user_id: string
+          verified?: boolean
+          verified_by?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          details?: Json | null
+          id?: string
+          payment_type?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          verified?: boolean
+          verified_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_verified_by_fkey"
+            columns: ["verified_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       restaurant_profiles: {
         Row: {
           about: string | null
@@ -151,6 +260,80 @@ export type Database = {
           social_whatsapp?: string | null
           subdomain?: string | null
           theme?: Json | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          created_at: string
+          end_date: string
+          id: string
+          payment_id: string | null
+          plan: string
+          price: number
+          start_date: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          end_date: string
+          id?: string
+          payment_id?: string | null
+          plan: string
+          price: number
+          start_date?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string
+          id?: string
+          payment_id?: string | null
+          plan?: string
+          price?: number
+          start_date?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      system_status: {
+        Row: {
+          component: string
+          created_at: string
+          details: Json | null
+          id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          component: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          status: string
+          updated_at?: string
+        }
+        Update: {
+          component?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          status?: string
           updated_at?: string
         }
         Relationships: []

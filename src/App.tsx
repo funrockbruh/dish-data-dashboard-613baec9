@@ -15,6 +15,8 @@ import { CategorySetup } from "./components/CategorySetup";
 import { MenuItemsList } from "./components/menu/MenuItemsList";
 import { FeaturedItems } from "./components/menu/FeaturedItems";
 import PublicMenu from "./pages/PublicMenu";
+import AdminPanel from "./pages/AdminPanel";
+import AdminLogin from "./pages/AdminLogin";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +37,8 @@ const App = () => (
           <Route path="/settings" element={<Settings />} />
           <Route path="/theme" element={<Theme />} />
           <Route path="/social-media" element={<SocialMedia />} />
+          <Route path="/admin-panel" element={<AdminPanel />} />
+          <Route path="/admin-login" element={<AdminLogin />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
