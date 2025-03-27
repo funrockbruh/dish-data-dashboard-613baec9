@@ -44,8 +44,8 @@ export const QRCodeCarousel = () => {
   );
 
   return (
-    <section className="py-20 bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 overflow-hidden">
-      <div className="container mx-auto px-4">
+    <section className="py-24 px-4 bg-gradient-to-b from-blue-50/50 to-purple-50/50">
+      <div className="container mx-auto">
         <h2 className="text-3xl font-bold text-center mb-12 gradient-text">
           Delicious QR Code Styles
         </h2>
@@ -57,20 +57,14 @@ export const QRCodeCarousel = () => {
           plugins={[autoplayPlugin.current]}
           className="w-full max-w-6xl mx-auto"
         >
-          <CarouselContent className="-ml-2 md:-ml-4 [perspective:1500px] relative" 
-            style={{
-              transform: "rotateX(10deg)",
-            }}>
+          <CarouselContent className="-ml-2 md:-ml-4">
             {qrCodeItems.map((item, index) => (
               <CarouselItem 
                 key={index} 
-                className="pl-2 md:pl-4 md:basis-1/3 lg:basis-1/4 transition-all duration-500"
-                style={{
-                  transform: `rotateY(${index * 15}deg) translateZ(100px) translateX(${index * 5}px)`,
-                }}
+                className="pl-2 md:pl-4 basis-full md:basis-1/2 lg:basis-1/3"
               >
                 <div className="p-1">
-                  <Card className="glass-card p-4 h-[280px] flex flex-col items-center justify-center hover-lift group transform transition-all duration-300 hover:scale-105 hover:rotate-0">
+                  <Card className="glass-card p-4 h-[280px] flex flex-col items-center justify-center hover-lift group transition-all duration-300 hover:scale-105">
                     <div className={`w-36 h-36 mb-4 rounded-xl bg-gradient-to-br ${item.color} flex items-center justify-center relative overflow-hidden transition-transform group-hover:scale-105`}>
                       <div className={`absolute inset-0 ${item.pattern} opacity-70`}></div>
                       <div className="w-28 h-28 bg-white/90 rounded-lg flex items-center justify-center relative z-10">
@@ -84,8 +78,8 @@ export const QRCodeCarousel = () => {
               </CarouselItem>
             ))}
           </CarouselContent>
-          <CarouselPrevious className="hidden md:flex -left-12" />
-          <CarouselNext className="hidden md:flex -right-12" />
+          <CarouselPrevious className="hidden md:flex -left-4 lg:-left-12" />
+          <CarouselNext className="hidden md:flex -right-4 lg:-right-12" />
         </Carousel>
       </div>
     </section>
