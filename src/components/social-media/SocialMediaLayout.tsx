@@ -18,7 +18,7 @@ export const SocialMediaLayout = ({
   } = useRestaurantProfile();
   return <div className="min-h-screen bg-gray-50 pb-10">
       <div className="bg-gray-50 shadow-sm">
-        <Card className="flex items-center gap-3 mb-8 p-4 bg-white border border-gray-200 rounded-2xl mx-[14px] my-[12px]">
+        <Card className="flex items-center gap-2 mb-8 p-4 bg-white border border-gray-200 rounded-2xl mx-[14px] my-[12px]">
           <Button variant="ghost" size="icon" className="rounded-full mr-2" onClick={() => navigate(-1)}>
             <ArrowLeft className="h-6 w-6" />
           </Button>
