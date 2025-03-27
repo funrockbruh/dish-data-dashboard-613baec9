@@ -1,6 +1,7 @@
 
 import { useRef } from "react";
 import { Category } from "@/hooks/public-menu/types";
+import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton";
 
 interface CategoriesSectionProps {
   categories: Category[];
@@ -36,11 +37,11 @@ export const CategoriesSection = ({ categories }: CategoriesSectionProps) => {
             onClick={() => scrollToCategory(category.id)}
           >
             <div className="aspect-square rounded-lg overflow-hidden relative cursor-pointer">
-              <img
+              <ImageWithSkeleton
                 src={category.image_url || "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9"}
                 alt={category.name}
                 className="w-full h-full object-cover"
-                loading="lazy"
+                fallbackClassName="rounded-lg"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
               <div className="absolute bottom-0 left-0 right-0 p-2 text-center">
@@ -53,4 +54,3 @@ export const CategoriesSection = ({ categories }: CategoriesSectionProps) => {
     </section>
   );
 };
-

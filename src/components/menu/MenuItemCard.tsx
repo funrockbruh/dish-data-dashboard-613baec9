@@ -3,6 +3,7 @@ import { Pencil } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton";
 
 interface MenuItem {
   id: string;
@@ -41,18 +42,20 @@ export const MenuItemCard = ({ item, categoryName, onEdit }: MenuItemCardProps) 
 
   return (
     <Card className="p-4 flex gap-4 items-center bg-white border border-gray-200 rounded-xl hover:shadow-md transition-shadow">
-      {item.image_url ? (
-        <img
-          src={item.image_url}
-          alt={item.name}
-          className="w-20 h-20 rounded-lg object-cover"
-          loading="lazy"
-        />
-      ) : (
-        <div className="w-20 h-20 rounded-lg bg-gray-100 flex items-center justify-center">
-          <span className="text-gray-400">No image</span>
-        </div>
-      )}
+      <div className="w-20 h-20 rounded-lg overflow-hidden">
+        {item.image_url ? (
+          <ImageWithSkeleton
+            src={item.image_url}
+            alt={item.name}
+            className="w-full h-full object-cover"
+            fallbackClassName="bg-gray-100"
+          />
+        ) : (
+          <div className="w-full h-full rounded-lg bg-gray-100 flex items-center justify-center">
+            <span className="text-gray-400">No image</span>
+          </div>
+        )}
+      </div>
       
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-4">
@@ -88,4 +91,3 @@ export const MenuItemCard = ({ item, categoryName, onEdit }: MenuItemCardProps) 
     </Card>
   );
 };
-

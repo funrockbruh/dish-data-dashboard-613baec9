@@ -2,6 +2,7 @@
 import { X } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import type { MenuItem } from "@/hooks/public-menu/types";
+import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton";
 
 interface MenuItemDetailDialogProps {
   isOpen: boolean;
@@ -28,7 +29,16 @@ export const MenuItemDetailDialog = ({
         
         {/* Product image with rounded corners */}
         <div className="w-full px-4 pt-14">
-          {item.image_url && <img src={item.image_url} alt={item.name} className="w-full aspect-[4/3] object-cover rounded-[10px]" loading="eager" />}
+          <div className="w-full aspect-[4/3]">
+            {item.image_url && (
+              <ImageWithSkeleton 
+                src={item.image_url} 
+                alt={item.name} 
+                className="w-full h-full object-cover rounded-[10px]" 
+                loading="eager" // Load immediately for dialog
+              />
+            )}
+          </div>
         </div>
         
         {/* Content section with black background and proper padding */}
@@ -61,4 +71,3 @@ export const MenuItemDetailDialog = ({
     </Dialog>
   );
 };
-

@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import type { MenuItem, Category } from "@/hooks/public-menu/types";
 import { MenuItemDetailDialog } from "./MenuItemDetailDialog";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton";
 
 interface MenuItemsSectionProps {
   menuItems: MenuItem[];
@@ -149,12 +150,13 @@ const MenuItemComponent = ({
   
   return <div className="mb-4 cursor-pointer active:scale-95 transition-transform" onClick={onClick}>
       <div className="relative rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
-        <img 
-          src={item.image_url || "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9"} 
-          alt={item.name} 
-          className="w-full aspect-[4/3] object-cover rounded-[10px]" 
-          loading="lazy" 
-        />
+        <div className="w-full aspect-[4/3]">
+          <ImageWithSkeleton
+            src={item.image_url || "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9"} 
+            alt={item.name}
+            className="w-full h-full object-cover rounded-[10px]"
+          />
+        </div>
         <div className="p-2 bg-black">
           <div className="flex justify-between items-center">
             <h3 className="text-white font-medium truncate max-w-[70%]">{item.name}</h3>
@@ -177,4 +179,3 @@ const MenuItemComponent = ({
       </div>
     </div>;
 };
-

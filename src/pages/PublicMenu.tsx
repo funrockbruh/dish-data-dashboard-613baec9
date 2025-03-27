@@ -7,6 +7,7 @@ import { CategoriesSection } from "@/components/public-menu/CategoriesSection";
 import { MenuItemsSection } from "@/components/public-menu/MenuItemsSection";
 import { EmptyMenuState } from "@/components/menu/EmptyMenuState";
 import { useEffect } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const PublicMenu = () => {
   const { subdomain } = useParams<{ subdomain: string }>();
@@ -43,13 +44,36 @@ const PublicMenu = () => {
   if (isLoading) {
     return (
       <div className="bg-black min-h-screen text-white">
-        <PublicMenuHeader 
-          restaurant={null} 
-          menuItems={[]}
-          formatPrice={formatPrice}
-        />
-        <div className="p-4 flex justify-center items-center h-[80vh]">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-white"></div>
+        <div className="h-16 flex items-center justify-between px-4 border-b border-gray-800">
+          <Skeleton className="h-8 w-24 bg-gray-800" />
+          <Skeleton className="h-8 w-8 rounded-full bg-gray-800" />
+        </div>
+        <div className="container mx-auto p-4">
+          {/* Skeleton for Featured Section */}
+          <div className="mb-6">
+            <Skeleton className="w-full h-48 rounded-lg bg-gray-800" />
+          </div>
+          
+          {/* Skeleton for Categories */}
+          <div className="mb-4 flex overflow-x-auto gap-3 py-2">
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="flex-none w-24 h-24 rounded-lg bg-gray-800" />
+            ))}
+          </div>
+          
+          {/* Skeleton for Menu Items */}
+          <div className="mb-8">
+            <Skeleton className="w-1/2 h-8 mb-4 bg-gray-800" />
+            <div className="grid grid-cols-2 gap-4">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="mb-4">
+                  <Skeleton className="w-full h-32 rounded-lg mb-2 bg-gray-800" />
+                  <Skeleton className="w-3/4 h-4 mb-1 bg-gray-800" />
+                  <Skeleton className="w-1/2 h-3 bg-gray-800" />
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     );

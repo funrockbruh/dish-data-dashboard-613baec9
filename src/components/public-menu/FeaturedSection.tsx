@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
 import { MenuItemDetailDialog } from "./MenuItemDetailDialog";
 import { MenuItem } from "@/hooks/public-menu/types";
+import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton";
 
 interface FeaturedSectionProps {
   featuredItems: MenuItem[];
@@ -39,12 +40,13 @@ export const FeaturedSection = ({
               onClick={() => handleItemClick(item)}
             >
               <div className="overflow-hidden rounded-lg">
-                <img 
-                  src={item.image_url || "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9"} 
-                  alt={item.name} 
-                  className="w-full aspect-[16/9] object-cover" 
-                  loading="lazy"
-                />
+                <div className="w-full aspect-[16/9]">
+                  <ImageWithSkeleton 
+                    src={item.image_url || "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9"} 
+                    alt={item.name} 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
                 
                 <div className="absolute top-0 left-0 font-bold tracking-widest bg-black/20 shadow-[4px_4px_8px_rgba(255,255,255,0.5)] backdrop-blur-[10px] rounded-tl-[35px] rounded-br-[150px] py-[6px] my-0 px-[15px] mx-[16px]">
                   FEATURED
@@ -69,4 +71,3 @@ export const FeaturedSection = ({
     </section>
   );
 };
-

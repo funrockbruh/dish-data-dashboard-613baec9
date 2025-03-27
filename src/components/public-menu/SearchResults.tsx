@@ -1,6 +1,7 @@
 
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import type { MenuItem } from "@/hooks/public-menu/types";
+import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton";
 
 interface SearchResultsProps {
   isVisible: boolean;
@@ -33,18 +34,12 @@ export const SearchResults = ({
             >
               <div className="relative w-full">
                 <AspectRatio ratio={4/3}>
-                  {item.image_url ? (
-                    <img 
-                      src={item.image_url} 
-                      alt={item.name} 
-                      className="w-full h-full object-cover"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gray-800 flex items-center justify-center">
-                      <span className="text-gray-400 text-xs">No image</span>
-                    </div>
-                  )}
+                  <ImageWithSkeleton 
+                    src={item.image_url || "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9"} 
+                    alt={item.name} 
+                    className="w-full h-full object-cover"
+                    fallbackClassName="rounded-lg"
+                  />
                 </AspectRatio>
                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-2">
                   <div className="flex justify-between items-center">
@@ -62,4 +57,3 @@ export const SearchResults = ({
     </div>
   );
 };
-
