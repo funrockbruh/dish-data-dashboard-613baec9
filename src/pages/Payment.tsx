@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Check, CircleDot } from "lucide-react";
@@ -15,18 +14,15 @@ const Payment = () => {
   const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  // Check if user is authenticated and has a subscription
   useEffect(() => {
     const checkAuth = async () => {
       const { data: sessionData } = await supabase.auth.getSession();
       
       if (!sessionData.session) {
-        // Not authenticated, redirect to home
         navigate("/");
         return;
       }
 
-      // Check if user already has an active subscription
       const { data: subscriptionData } = await supabase
         .from("subscriptions")
         .select("*")
@@ -36,7 +32,6 @@ const Payment = () => {
 
       if (subscriptionData) {
         setHasSubscription(true);
-        // User already has subscription, redirect to setup
         toast.info("You already have an active subscription");
         navigate("/setup");
       }
@@ -45,14 +40,11 @@ const Payment = () => {
     checkAuth();
   }, [navigate]);
 
-  const handleSubscribe = async () => {
+  const handlePaymentSelect = async (method: string) => {
     try {
-      if (!paymentMethod) {
-        toast.error("Please select a payment method");
-        return;
-      }
-
       setIsLoading(true);
+      setPaymentMethod(method);
+      
       const { data: sessionData } = await supabase.auth.getSession();
       
       if (!sessionData.session) {
@@ -68,7 +60,7 @@ const Payment = () => {
         end_date: new Date(Date.now() + 2 * 60 * 1000).toISOString(), // 2 minutes from now
         status: "active",
         details: {
-          payment_method: paymentMethod,
+          payment_method: method,
           has_qr_code: hasQRCode
         }
       });
@@ -103,78 +95,78 @@ const Payment = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50/50 to-purple-50/50">
       <Navigation />
-      <main className="pt-24 pb-16 px-4">
-        <div className="container mx-auto max-w-md">
+      <main className="pt-20 pb-16 px-4">
+        <div className="container mx-auto max-w-4xl">
           <div className="text-center mb-10">
             <h1 className="text-3xl font-bold mb-2">Choose Your Plan</h1>
             <p className="text-muted-foreground">Select a subscription plan to continue</p>
           </div>
 
-          <Card className="p-6 mb-8 glass-card border-0 hover:shadow-lg transition-all duration-300">
-            <div className="flex justify-between items-start mb-2">
-              <h2 className="text-2xl font-bold">{plan.name}</h2>
-              <div>
-                <span className="text-3xl font-bold text-orange-500">${plan.price}</span>
-                <span className="text-sm text-muted-foreground">/{plan.duration}</span>
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
+            <div className="md:col-span-2">
+              <Card 
+                className="p-8 glass-card hover-lift fade-in border-0 hover:shadow-2xl transition-all duration-300 w-full"
+              >
+                <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
+                <div className="mb-4">
+                  <span className="text-4xl font-bold gradient-text">${plan.price}</span>
+                  <span className="text-muted-foreground">/{plan.duration}</span>
+                </div>
+                <p className="text-muted-foreground mb-6">{plan.description}</p>
+                <ul className="space-y-3 mb-8">
+                  {plan.features.map((feature, i) => (
+                    <li key={i} className="flex items-center">
+                      <div className="p-1 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 mr-2">
+                        <Check className="h-4 w-4 text-white" />
+                      </div>
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+                <Button 
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
+                  disabled={true}
+                >
+                  Selected
+                </Button>
+              </Card>
             </div>
-            
-            <p className="text-muted-foreground mb-4">{plan.description}</p>
-            
-            <ul className="space-y-2 mb-6">
-              {plan.features.map((feature, i) => (
-                <li key={i} className="flex items-center">
-                  <div className="p-1 rounded-full bg-blue-600 mr-2">
-                    <Check className="h-4 w-4 text-white" />
+
+            <div className="md:col-span-1">
+              <div className="sticky top-24">
+                <div className="bg-white/80 backdrop-blur-sm rounded-lg p-6 shadow-md mb-6">
+                  <div 
+                    className="flex items-center mb-6 cursor-pointer" 
+                    onClick={() => setHasQRCode(!hasQRCode)}
+                  >
+                    <div className={`h-6 w-6 rounded-full mr-3 border flex items-center justify-center ${hasQRCode ? 'border-indigo-600' : 'border-gray-300'}`}>
+                      {hasQRCode && <CircleDot className="h-4 w-4 text-indigo-600" />}
+                    </div>
+                    <span className="font-medium">Unique QR code</span>
                   </div>
-                  <span>{feature}</span>
-                </li>
-              ))}
-            </ul>
-            
-            <Button 
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white mb-6"
-              disabled={true}
-            >
-              Selected
-            </Button>
 
-            <div 
-              className="flex items-center mb-8 cursor-pointer" 
-              onClick={() => setHasQRCode(!hasQRCode)}
-            >
-              <div className={`h-6 w-6 rounded-full mr-3 border flex items-center justify-center ${hasQRCode ? 'border-indigo-600' : 'border-gray-300'}`}>
-                {hasQRCode && <CircleDot className="h-4 w-4 text-indigo-600" />}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium mb-2">Payment Methods</h3>
+                    <Button 
+                      className="w-full bg-green-500 hover:bg-green-600 text-white h-14"
+                      onClick={() => handlePaymentSelect('cash')}
+                      disabled={isLoading}
+                    >
+                      {isLoading && paymentMethod === 'cash' ? "Processing..." : "Pay in Cash"}
+                    </Button>
+                    
+                    <Button 
+                      className="w-full bg-pink-600 hover:bg-pink-700 text-white h-14"
+                      onClick={() => handlePaymentSelect('whish')}
+                      disabled={isLoading}
+                    >
+                      {isLoading && paymentMethod === 'whish' ? "Processing..." : <><span className="mr-2 font-bold">W</span> Whish Pay</>}
+                    </Button>
+                  </div>
+                </div>
               </div>
-              <span className="font-medium">Unique QR code</span>
             </div>
-
-            <div className="space-y-3">
-              <Button 
-                className="w-full bg-green-500 hover:bg-green-600 text-white h-14"
-                onClick={() => setPaymentMethod('cash')}
-                variant={paymentMethod === 'cash' ? 'default' : 'outline'}
-              >
-                Pay in Cash
-              </Button>
-              
-              <Button 
-                className="w-full bg-pink-600 hover:bg-pink-700 text-white h-14"
-                onClick={() => setPaymentMethod('whish')}
-                variant={paymentMethod === 'whish' ? 'default' : 'outline'}
-              >
-                <span className="mr-2 font-bold">W</span> Whish Pay
-              </Button>
-              
-              <Button 
-                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white mt-6 h-12"
-                onClick={handleSubscribe}
-                disabled={isLoading || !paymentMethod}
-              >
-                {isLoading ? "Processing..." : "Subscribe Now"}
-              </Button>
-            </div>
-          </Card>
+          </div>
         </div>
       </main>
     </div>
