@@ -192,24 +192,38 @@ export const useRestaurantForm = ({ initialSetup = true, returnPath }: UseRestau
       if (sessionError) throw new Error("Authentication error");
       if (!session?.user) throw new Error("Not authenticated");
 
+      // Log the current state of logo and logoPreview
+      console.log('Current logo file:', logo);
+      console.log('Current logo preview:', logoPreview);
+      
       let logo_url = logoPreview;
+      
+      // Only upload new logo if it has been changed
       if (logo) {
+        console.log('Uploading new logo file:', logo.name, logo.type, logo.size);
+        
         const fileExt = logo.name.split('.').pop();
         const filePath = `${session.user.id}/logo.${fileExt}`;
         
-        const { error: uploadError } = await supabase.storage
+        const { error: uploadError, data: uploadData } = await supabase.storage
           .from('restaurant-logos')
           .upload(filePath, logo, {
             upsert: true,
             cacheControl: '3600'
           });
           
-        if (uploadError) throw new Error(`Upload failed: ${uploadError.message}`);
+        if (uploadError) {
+          console.error('Logo upload error:', uploadError);
+          throw new Error(`Upload failed: ${uploadError.message}`);
+        }
+        
+        console.log('Logo upload successful:', uploadData);
         
         const { data: { publicUrl } } = supabase.storage
           .from('restaurant-logos')
           .getPublicUrl(filePath);
           
+        console.log('Logo public URL:', publicUrl);
         logo_url = publicUrl;
       }
 
@@ -229,7 +243,12 @@ export const useRestaurantForm = ({ initialSetup = true, returnPath }: UseRestau
           logo_url
         });
         
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('Profile update error:', updateError);
+        throw updateError;
+      }
+      
+      console.log('Profile updated successfully with logo_url:', logo_url);
       
       toast({
         title: "Success",
@@ -239,7 +258,7 @@ export const useRestaurantForm = ({ initialSetup = true, returnPath }: UseRestau
       if (initialSetup) {
         navigate('/categories');
       } else if (returnPath) {
-        navigate(returnPath);
+        navigate(`/${returnPath}`);
       } else {
         navigate('/settings');
       }
