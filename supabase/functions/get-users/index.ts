@@ -26,30 +26,23 @@ serve(async (req) => {
       }
     );
 
-    // This would be the code to fetch users but it won't work without the service role key
-    // Returning mock data for now
+    // Fetch users from Auth
+    const { data, error } = await supabaseAdmin.auth.admin.listUsers();
     
-    // In a production environment, we'd use this code:
-    // const { data, error } = await supabaseAdmin.auth.admin.listUsers();
-    // if (error) throw error;
-    
-    // For demonstration purposes, return mock data
-    const mockUsers = [
-      {
-        id: "00000000-0000-0000-0000-000000000001",
-        email: "user1@example.com",
-        created_at: new Date().toISOString(),
-        last_sign_in_at: new Date().toISOString(),
-      },
-      {
-        id: "00000000-0000-0000-0000-000000000002",
-        email: "user2@example.com",
-        created_at: new Date(Date.now() - 86400000).toISOString(),
-        last_sign_in_at: new Date(Date.now() - 3600000).toISOString(),
-      },
-    ];
+    if (error) {
+      console.error("Error fetching users:", error);
+      throw error;
+    }
 
-    return new Response(JSON.stringify(mockUsers), {
+    // Format the user data to include only what we need
+    const formattedUsers = data.users.map(user => ({
+      id: user.id,
+      email: user.email,
+      created_at: user.created_at,
+      last_sign_in_at: user.last_sign_in_at,
+    }));
+
+    return new Response(JSON.stringify(formattedUsers), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
