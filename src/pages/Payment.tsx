@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Check, CircleDot } from "lucide-react";
@@ -77,19 +78,22 @@ const Payment = () => {
     }
   };
 
+  // Modified features array - moving QR code as a selectable feature
+  const features = [
+    "Unlimited menu items",
+    "Advanced categories",
+    "Priority support",
+    "Mobile-friendly design",
+    "Real-time updates",
+    { label: "Custom branding", selectable: false },
+    { label: "Unique QR code", selectable: true, selected: hasQRCode, onToggle: () => setHasQRCode(!hasQRCode) }
+  ];
+
   const plan = {
     name: "Menu Plan",
     price: "100",
     duration: "2 minutes",
-    description: "Quick test plan for your restaurant menu",
-    features: [
-      "Unlimited menu items",
-      "Advanced categories",
-      "Priority support",
-      "Mobile-friendly design",
-      "Real-time updates",
-      "Custom branding",
-    ],
+    description: "Quick test plan for your restaurant menu"
   };
 
   return (
@@ -114,14 +118,39 @@ const Payment = () => {
                 </div>
                 <p className="text-muted-foreground mb-6">{plan.description}</p>
                 <ul className="space-y-3 mb-8">
-                  {plan.features.map((feature, i) => (
-                    <li key={i} className="flex items-center">
-                      <div className="p-1 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 mr-2">
-                        <Check className="h-4 w-4 text-white" />
-                      </div>
-                      <span>{feature}</span>
-                    </li>
-                  ))}
+                  {features.map((feature, i) => {
+                    // Check if feature is an object with selectable property
+                    if (typeof feature === 'object' && feature.selectable !== undefined) {
+                      return (
+                        <li key={i} className="flex items-center">
+                          <div className="p-1 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 mr-2">
+                            <Check className="h-4 w-4 text-white" />
+                          </div>
+                          <div 
+                            className="flex items-center cursor-pointer" 
+                            onClick={feature.onToggle}
+                          >
+                            <span>{feature.label}</span>
+                            {feature.selectable && (
+                              <div className={`h-5 w-5 rounded-full ml-2 border flex items-center justify-center ${feature.selected ? 'border-indigo-600' : 'border-gray-300'}`}>
+                                {feature.selected && <CircleDot className="h-3 w-3 text-indigo-600" />}
+                              </div>
+                            )}
+                          </div>
+                        </li>
+                      );
+                    } else {
+                      // Regular feature (string)
+                      return (
+                        <li key={i} className="flex items-center">
+                          <div className="p-1 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 mr-2">
+                            <Check className="h-4 w-4 text-white" />
+                          </div>
+                          <span>{feature}</span>
+                        </li>
+                      );
+                    }
+                  })}
                 </ul>
                 <Button 
                   className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
@@ -135,16 +164,6 @@ const Payment = () => {
             <div className="md:col-span-1">
               <div className="sticky top-24">
                 <div className="bg-white/80 backdrop-blur-sm rounded-lg p-6 shadow-md mb-6">
-                  <div 
-                    className="flex items-center mb-6 cursor-pointer" 
-                    onClick={() => setHasQRCode(!hasQRCode)}
-                  >
-                    <div className={`h-6 w-6 rounded-full mr-3 border flex items-center justify-center ${hasQRCode ? 'border-indigo-600' : 'border-gray-300'}`}>
-                      {hasQRCode && <CircleDot className="h-4 w-4 text-indigo-600" />}
-                    </div>
-                    <span className="font-medium">Unique QR code</span>
-                  </div>
-
                   <div className="space-y-4">
                     <h3 className="text-lg font-medium mb-2">Payment Methods</h3>
                     <Button 
