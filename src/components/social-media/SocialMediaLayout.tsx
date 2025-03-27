@@ -39,7 +39,7 @@ export const SocialMediaLayout = ({
       </div>
 
       <div className="max-w-xl mx-auto px-4 mt-6">
-        <div className="bg-white rounded-xl shadow-sm p-6 py-0">
+        <div className="bg-white rounded-xl shadow-sm p-6 mx-0 my-0 py-[16px]">
           {children}
         </div>
       </div>
