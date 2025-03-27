@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { generateSubdomain } from "@/hooks/use-subdomain";
@@ -54,11 +53,9 @@ export const useRestaurantForm = ({ initialSetup = true, returnPath }: UseRestau
           .maybeSingle();
           
         if (data && !error) {
-          // Extract country code from owner_number if available
           let countryCode = "+961";
           let phoneNumber = data.owner_number || "";
           
-          // Check if owner_number starts with a country code
           if (phoneNumber.startsWith('+')) {
             const match = phoneNumber.match(/^\+\d+/);
             if (match) {
@@ -180,7 +177,6 @@ export const useRestaurantForm = ({ initialSetup = true, returnPath }: UseRestau
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Check subdomain one more time before submission
     if (formData.subdomain) {
       const isSubdomainAvailable = await checkSubdomainAvailability(formData.subdomain);
       if (!isSubdomainAvailable) return;
@@ -192,42 +188,51 @@ export const useRestaurantForm = ({ initialSetup = true, returnPath }: UseRestau
       if (sessionError) throw new Error("Authentication error");
       if (!session?.user) throw new Error("Not authenticated");
 
-      // Log the current state of logo and logoPreview
       console.log('Current logo file:', logo);
       console.log('Current logo preview:', logoPreview);
       
       let logo_url = logoPreview;
       
-      // Only upload new logo if it has been changed
       if (logo) {
         console.log('Uploading new logo file:', logo.name, logo.type, logo.size);
         
         const fileExt = logo.name.split('.').pop();
-        const filePath = `${session.user.id}/logo.${fileExt}`;
+        const fileName = `logo.${fileExt}`;
+        const filePath = `${session.user.id}/${fileName}`;
         
-        const { error: uploadError, data: uploadData } = await supabase.storage
-          .from('restaurant-logos')
-          .upload(filePath, logo, {
-            upsert: true,
-            cacheControl: '3600'
+        try {
+          const { error: uploadError, data: uploadData } = await supabase.storage
+            .from('restaurant-logos')
+            .upload(filePath, logo, {
+              upsert: true,
+              contentType: logo.type,
+              cacheControl: '3600'
+            });
+            
+          if (uploadError) {
+            console.error('Logo upload error:', uploadError);
+            throw new Error(`Upload failed: ${uploadError.message}`);
+          }
+          
+          console.log('Logo upload successful:', uploadData);
+          
+          const timestamp = new Date().getTime();
+          const { data: { publicUrl } } = supabase.storage
+            .from('restaurant-logos')
+            .getPublicUrl(`${filePath}?t=${timestamp}`);
+            
+          console.log('Logo public URL:', publicUrl);
+          logo_url = publicUrl;
+        } catch (uploadErr) {
+          console.error('Error in logo upload process:', uploadErr);
+          toast({
+            title: "Upload Error",
+            description: "There was a problem uploading your logo image",
+            variant: "destructive"
           });
-          
-        if (uploadError) {
-          console.error('Logo upload error:', uploadError);
-          throw new Error(`Upload failed: ${uploadError.message}`);
         }
-        
-        console.log('Logo upload successful:', uploadData);
-        
-        const { data: { publicUrl } } = supabase.storage
-          .from('restaurant-logos')
-          .getPublicUrl(filePath);
-          
-        console.log('Logo public URL:', publicUrl);
-        logo_url = publicUrl;
       }
 
-      // Combine country code with phone number
       const fullPhoneNumber = formData.country_code + formData.owner_number;
 
       const { error: updateError } = await supabase
