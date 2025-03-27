@@ -17,6 +17,7 @@ import { FeaturedItems } from "./components/menu/FeaturedItems";
 import PublicMenu from "./pages/PublicMenu";
 import AdminPanel from "./pages/AdminPanel";
 import AdminLogin from "./pages/AdminLogin";
+import Payment from "./pages/Payment";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +30,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/verify" element={<Verify />} />
+          <Route path="/payment" element={<Payment />} />
           <Route path="/setup" element={<RestaurantSetup />} />
           <Route path="/categories" element={<CategorySetup />} />
           <Route path="/menu" element={<MenuItemsList />} />

@@ -36,7 +36,7 @@ const Verify = () => {
             title: "Email already verified",
             description: "Your email has already been verified. You can now sign in.",
           });
-          navigate("/");
+          navigate("/payment");
           return;
         }
 
@@ -51,7 +51,7 @@ const Verify = () => {
           title: "Email verified",
           description: "Your email has been verified successfully. You can now sign in.",
         });
-        navigate("/");
+        navigate("/payment");
 
       } catch (error: any) {
         console.error("Verification error:", error);

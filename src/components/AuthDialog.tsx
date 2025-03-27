@@ -1,3 +1,4 @@
+
 import {
   Dialog,
   DialogContent,
@@ -38,13 +39,16 @@ export const AuthDialog = ({ trigger }: { trigger: React.ReactNode }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
         setOpen(false);
+        
+        // Redirect to payment page instead of setup
+        navigate('/payment');
       }
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,8 +102,8 @@ export const AuthDialog = ({ trigger }: { trigger: React.ReactNode }) => {
           title: "Signed in successfully",
           description: "Welcome back!",
         });
-        setOpen(false);
-        navigate('/setup');
+        
+        // The redirect is now handled in onAuthStateChange event
       }
     } catch (error) {
       toast({
