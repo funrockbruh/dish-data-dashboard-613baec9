@@ -37,19 +37,27 @@ export const useRestaurantProfileManagement = () => {
       
       const { data, error } = await supabase
         .from('restaurant_profiles')
-        .select('*')
+        .select('restaurant_name, owner_name, logo_url, subdomain, owner_number, owner_email, about')
         .eq('id', session.user.id)
         .maybeSingle();
         
       if (data && !error) {
         let countryCode = "+961";
-        let phoneNumber = data.owner_number || "";
+        let phoneNumber = "";
         
-        if (phoneNumber.startsWith('+')) {
-          const match = phoneNumber.match(/^\+\d+/);
-          if (match) {
-            countryCode = match[0];
-            phoneNumber = phoneNumber.substring(match[0].length);
+        if (data.owner_number) {
+          // Extract country code and phone number
+          const countryCodes = ["+1", "+33", "+44", "+49", "+61", "+81", "+86", "+91", "+961", "+971", "+966", "+20", "+212", "+216", "+970", "+962", "+963"];
+          
+          // Find the matching country code
+          const matchingCode = countryCodes.find(code => data.owner_number.startsWith(code));
+          
+          if (matchingCode) {
+            countryCode = matchingCode;
+            phoneNumber = data.owner_number.substring(matchingCode.length);
+          } else {
+            // If no matching code found, default to the full number
+            phoneNumber = data.owner_number;
           }
         }
         
