@@ -18,13 +18,13 @@ export const SocialMediaLayout = ({
   } = useRestaurantProfile();
   return <div className="min-h-screen bg-gray-50 pb-10">
       <div className="bg-white shadow-sm">
-        <Card className="flex items-center gap-4 mb-0 p-4 mx-auto max-w-xl border border-gray-200 rounded-2xl">
+        <Card className="flex items-center gap-4 mb-8 p-4 bg-white border border-gray-200 rounded-2xl mx-[14px] my-[12px]">
           <Button variant="ghost" size="icon" className="rounded-full mr-2" onClick={() => navigate(-1)}>
             <ArrowLeft className="h-6 w-6" />
           </Button>
           <div className="flex items-center gap-3 flex-1">
             {profile.logo_url ? <div className="w-12 h-12 rounded-full overflow-hidden">
-                <ImageWithSkeleton src={profile.logo_url} alt="Restaurant logo" className="w-12 h-12 object-cover" fallbackClassName="w-12 h-12 rounded-full" />
+                <ImageWithSkeleton src={profile.logo_url} alt="Restaurant logo" fallbackClassName="w-12 h-12 rounded-full" className="w-12 h-12 rounded-full object-cover border-2 border-gray-100" />
               </div> : <div className="bg-green-100 rounded-full h-12 w-12 flex items-center justify-center border-2 border-green-300">
                 <span className="text-gray-700 text-sm font-bold">
                   {profile.restaurant_name?.charAt(0) || "R"}
@@ -39,7 +39,7 @@ export const SocialMediaLayout = ({
       </div>
 
       <div className="max-w-xl mx-auto px-4 mt-6">
-        <div className="bg-white rounded-xl shadow-sm p-6 py-[15px]">
+        <div className="bg-white rounded-xl shadow-sm p-6 py-0">
           {children}
         </div>
       </div>
