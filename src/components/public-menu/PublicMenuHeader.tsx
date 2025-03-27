@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Menu } from "lucide-react";
 import { MenuItem, Restaurant } from "@/hooks/public-menu/types";
@@ -7,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { SearchBar } from "./SearchBar";
 import { SearchResults } from "./SearchResults";
 import { MenuSidebar } from "./MenuSidebar";
+import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton";
 
 interface PublicMenuHeaderProps {
   restaurant: Restaurant | null;
@@ -26,7 +26,6 @@ export const PublicMenuHeader = ({
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Check if user is authenticated
   useEffect(() => {
     const checkAuth = async () => {
       const { data } = await supabase.auth.getSession();
@@ -35,7 +34,6 @@ export const PublicMenuHeader = ({
 
     checkAuth();
 
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setIsAuthenticated(!!session);
     });
@@ -45,7 +43,6 @@ export const PublicMenuHeader = ({
     };
   }, []);
 
-  // Filter menu items based on search query
   useEffect(() => {
     if (searchQuery.trim() === "") {
       setFilteredItems([]);
@@ -61,19 +58,16 @@ export const PublicMenuHeader = ({
 
   const handleSearchClick = () => {
     if (isSearchBarVisible) {
-      // Clear search and hide search bar
       setIsSearchBarVisible(false);
       setSearchQuery("");
       setFilteredItems([]);
     } else {
-      // Show search bar
       setIsSearchBarVisible(true);
     }
   };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Just prevent default form submission, results already showing
   };
 
   const handleItemClick = (item: MenuItem) => {
@@ -100,11 +94,14 @@ export const PublicMenuHeader = ({
           
           <div className="flex items-center justify-center">
             {restaurant?.logo_url ? (
-              <img 
-                src={restaurant.logo_url} 
-                alt={restaurant.restaurant_name || "Restaurant logo"} 
-                className="h-16 w-16 rounded-full"
-              />
+              <div className="h-16 w-16 rounded-full overflow-hidden">
+                <ImageWithSkeleton 
+                  src={restaurant.logo_url} 
+                  alt={restaurant.restaurant_name || "Restaurant logo"} 
+                  className="h-full w-full object-cover"
+                  fallbackClassName="rounded-full"
+                />
+              </div>
             ) : (
               <div className="bg-green-100 rounded-full h-16 w-16 flex items-center justify-center border-4 border-green-300">
                 <span className="text-gray-700 text-sm font-bold">
@@ -121,7 +118,6 @@ export const PublicMenuHeader = ({
         </div>
       </header>
 
-      {/* Search Results */}
       <SearchResults 
         isVisible={isSearchBarVisible}
         searchQuery={searchQuery}
@@ -130,7 +126,6 @@ export const PublicMenuHeader = ({
         onItemClick={handleItemClick}
       />
 
-      {/* Item Detail Dialog */}
       <MenuItemDetailDialog
         isOpen={isDetailDialogOpen}
         onClose={handleCloseDialog}

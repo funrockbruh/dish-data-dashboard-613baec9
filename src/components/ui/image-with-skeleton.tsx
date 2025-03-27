@@ -37,7 +37,10 @@ export const ImageWithSkeleton = ({
       )}
       
       {hasError ? (
-        <div className="absolute inset-0 bg-gray-800 flex items-center justify-center w-full h-full">
+        <div className={cn(
+          "absolute inset-0 bg-gray-800 flex items-center justify-center w-full h-full",
+          fallbackClassName
+        )}>
           <span className="text-gray-400 text-xs">No image</span>
         </div>
       ) : (
