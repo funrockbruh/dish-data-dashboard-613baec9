@@ -5,10 +5,13 @@ import { supabase } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
 import type { Restaurant } from "@/hooks/public-menu/types";
 import { useEffect, useState } from "react";
+import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton";
+
 interface MenuSidebarProps {
   restaurant: Restaurant | null;
   isAuthenticated: boolean;
 }
+
 export const MenuSidebar = ({
   restaurant,
   isAuthenticated
@@ -21,7 +24,6 @@ export const MenuSidebar = ({
     tiktok: false
   });
 
-  // Update social media state when restaurant data changes
   useEffect(() => {
     if (restaurant) {
       setSocialMedia({
@@ -31,7 +33,6 @@ export const MenuSidebar = ({
         tiktok: !!restaurant.social_tiktok
       });
 
-      // Detailed logging for debugging
       console.log("Restaurant social media fields:", {
         social_whatsapp: restaurant.social_whatsapp,
         social_instagram: restaurant.social_instagram,
@@ -47,20 +48,20 @@ export const MenuSidebar = ({
     }
   }, [restaurant]);
 
-  // Function to format phone number by removing country code
   const formatPhoneNumber = (phone: string | undefined | null): string => {
     if (!phone) return "";
 
-    // Remove the country code (typically starts with + followed by 1-3 digits)
-    // This regex matches a plus sign followed by 1-3 digits at the start of the string
     return phone.replace(/^\+\d{1,3}/, '');
   };
+
   const handleSignOut = async () => {
     await supabase.auth.signOut();
   };
+
   const handleSignIn = () => {
     window.location.href = "/";
   };
+
   const handleContactClick = () => {
     if (restaurant?.social_whatsapp) {
       const formattedNumber = restaurant.social_whatsapp.replace(/\D/g, '');
@@ -70,9 +71,11 @@ export const MenuSidebar = ({
       window.open(`https://wa.me/${formattedNumber}`, '_blank');
     }
   };
+
   const handleSettingsClick = () => {
     navigate('/settings');
   };
+
   const handleEmailClick = () => {
     if (restaurant?.social_email) {
       window.location.href = `mailto:${restaurant.social_email}`;
@@ -80,12 +83,14 @@ export const MenuSidebar = ({
       window.location.href = `mailto:${restaurant.owner_email}`;
     }
   };
+
   const handleSocialClick = (url: string | null | undefined) => {
     if (url) {
       const formattedUrl = url.startsWith('http') ? url : `https://${url}`;
       window.open(formattedUrl, '_blank');
     }
   };
+
   return <Sheet>
       <SheetTrigger asChild>
         <button className="rounded-full bg-white/10 p-2">
@@ -95,16 +100,29 @@ export const MenuSidebar = ({
       <SheetContent side="right" className="w-[300px] p-0 bg-black text-white border-gray-800">
         <div className="flex flex-col h-full rounded-2xl">
           <div className="p-6 border-b border-gray-800 flex flex-col items-center space-y-4 rounded-2xl">
-            {restaurant?.logo_url ? <img src={restaurant.logo_url} alt={restaurant.restaurant_name || "Restaurant logo"} className="h-24 w-24 rounded-full object-cover" /> : <div className="bg-green-100 rounded-full h-24 w-24 flex items-center justify-center border-4 border-green-300">
+            {restaurant?.logo_url ? (
+              <div className="h-24 w-24 rounded-full overflow-hidden">
+                <ImageWithSkeleton 
+                  src={restaurant.logo_url} 
+                  alt={restaurant.restaurant_name || "Restaurant logo"} 
+                  className="h-24 w-24 object-cover"
+                  fallbackClassName="h-24 w-24 rounded-full"
+                />
+              </div>
+            ) : (
+              <div className="bg-green-100 rounded-full h-24 w-24 flex items-center justify-center border-4 border-green-300">
                 <span className="text-gray-700 text-sm font-bold">
                   {restaurant?.restaurant_name || "Menu"}
                 </span>
-              </div>}
+              </div>
+            )}
             <h2 className="text-2xl font-bold text-center">{restaurant?.restaurant_name}</h2>
-            {(restaurant?.social_whatsapp || restaurant?.owner_number) && <div className="flex items-center space-x-2">
+            {(restaurant?.social_whatsapp || restaurant?.owner_number) && (
+              <div className="flex items-center space-x-2">
                 <Phone className="h-4 w-4" />
                 <span>{formatPhoneNumber(restaurant?.social_whatsapp || restaurant?.owner_number)}</span>
-              </div>}
+              </div>
+            )}
           </div>
           
           <nav className="flex-1 overflow-y-auto">
@@ -131,7 +149,6 @@ export const MenuSidebar = ({
             </ul>
           </nav>
           
-          {/* Social media icons section */}
           {(socialMedia.instagram || socialMedia.facebook || socialMedia.tiktok || socialMedia.whatsapp) && <div className="flex justify-center gap-4 py-4 border-t border-gray-800 rounded-t-2xl">
               {restaurant?.social_instagram && <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" className="h-10 w-10 text-white cursor-pointer hover:text-white/80 transition-colors" onClick={() => handleSocialClick(restaurant.social_instagram)}>
                   <path fill="currentColor" d="M17.34 5.46a1.2 1.2 0 1 0 1.2 1.2a1.2 1.2 0 0 0-1.2-1.2m4.6 2.42a7.6 7.6 0 0 0-.46-2.43a4.9 4.9 0 0 0-1.16-1.77a4.7 4.7 0 0 0-1.77-1.15a7.3 7.3 0 0 0-2.43-.47C15.06 2 14.72 2 12 2s-3.06 0-4.12.06a7.3 7.3 0 0 0-2.43.47a4.8 4.8 0 0 0-1.77 1.15a4.7 4.7 0 0 0-1.15 1.77a7.3 7.3 0 0 0-.47 2.43C2 8.94 2 9.28 2 12s0 3.06.06 4.12a7.3 7.3 0 0 0 .47 2.43a4.7 4.7 0 0 0 1.15 1.77a4.8 4.8 0 0 0 1.77 1.15a7.3 7.3 0 0 0 2.43.47C8.94 22 9.28 22 12 22s3.06 0 4.12-.06a7.3 7.3 0 0 0 2.43-.47a4.7 4.7 0 0 0 1.77-1.15a4.85 4.85 0 0 0 1.16-1.77a7.6 7.6 0 0 0 .46-2.43c0-1.06.06-1.4.06-4.12s0-3.06-.06-4.12M20.14 16a5.6 5.6 0 0 1-.34 1.86a3.06 3.06 0 0 1-.75 1.15a3.2 3.2 0 0 1-1.15.75a5.6 5.6 0 0 1-1.86.34c-1 .05-1.37.06-4 .06s-3 0-4-.06a5.7 5.7 0 0 1-1.94-.3a3.3 3.3 0 0 1-1.1-.75a3 3 0 0 1-.74-1.15a5.5 5.5 0 0 1-.4-1.9c0-1-.06-1.37-.06-4s0-3 .06-4a5.5 5.5 0 0 1 .35-1.9A3 3 0 0 1 5 5a3.1 3.1 0 0 1 1.1-.8A5.7 5.7 0 0 1 8 3.86c1 0 1.37-.06 4-.06s3 0 4 .06a5.6 5.6 0 0 1 1.86.34a3.06 3.06 0 0 1 1.19.8a3.1 3.1 0 0 1 .75 1.1a5.6 5.6 0 0 1 .34 1.9c.05 1 .06 1.37.06 4s-.01 3-.06 4M12 6.87A5.13 5.13 0 1 0 17.14 12A5.12 5.12 0 0 0 12 6.87m0 8.46A3.33 3.33 0 1 1 15.33 12A3.33 3.33 0 0 1 12 15.33" />

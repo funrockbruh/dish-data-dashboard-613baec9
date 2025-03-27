@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { SearchBar } from "./SearchBar";
 import { SearchResults } from "./SearchResults";
 import { MenuSidebar } from "./MenuSidebar";
+import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton";
 
 interface PublicMenuHeaderProps {
   restaurant: Restaurant | null;
@@ -100,11 +101,14 @@ export const PublicMenuHeader = ({
           
           <div className="flex items-center justify-center">
             {restaurant?.logo_url ? (
-              <img 
-                src={restaurant.logo_url} 
-                alt={restaurant.restaurant_name || "Restaurant logo"} 
-                className="h-16 w-16 rounded-full"
-              />
+              <div className="h-16 w-16 rounded-full overflow-hidden">
+                <ImageWithSkeleton 
+                  src={restaurant.logo_url} 
+                  alt={restaurant.restaurant_name || "Restaurant logo"} 
+                  className="h-16 w-16 object-cover"
+                  fallbackClassName="h-16 w-16 rounded-full"
+                />
+              </div>
             ) : (
               <div className="bg-green-100 rounded-full h-16 w-16 flex items-center justify-center border-4 border-green-300">
                 <span className="text-gray-700 text-sm font-bold">
