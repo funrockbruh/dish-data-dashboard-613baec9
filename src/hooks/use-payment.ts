@@ -41,6 +41,7 @@ export const usePayment = () => {
           console.log("Checking for active subscriptions...");
           console.log("Current user ID:", session.session.user.id);
           
+          // Modified query to avoid accessing users table directly
           const { data: subscriptionData, error: subscriptionError } = await supabase
             .from("subscriptions")
             .select("id, plan, status")
