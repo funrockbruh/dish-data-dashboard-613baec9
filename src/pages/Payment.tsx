@@ -29,20 +29,31 @@ const Payment = () => {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const {
-        data: sessionData
-      } = await supabase.auth.getSession();
-      if (!sessionData.session) {
-        navigate("/");
-        return;
-      }
-      const {
-        data: subscriptionData
-      } = await supabase.from("subscriptions").select("*").eq("user_id", sessionData.session.user.id).eq("status", "active").single();
-      if (subscriptionData) {
-        setHasSubscription(true);
-        toast.info("You already have an active subscription");
-        navigate("/setup");
+      try {
+        const {
+          data: sessionData
+        } = await supabase.auth.getSession();
+        if (!sessionData.session) {
+          navigate("/");
+          return;
+        }
+        const {
+          data: subscriptionData,
+          error
+        } = await supabase.from("subscriptions").select("*").eq("user_id", sessionData.session.user.id).eq("status", "active").single();
+        
+        if (error && error.code !== 'PGRST116') {
+          console.error("Subscription check error:", error);
+          return;
+        }
+        
+        if (subscriptionData) {
+          setHasSubscription(true);
+          toast.info("You already have an active subscription");
+          navigate("/setup");
+        }
+      } catch (error) {
+        console.error("Auth check error:", error);
       }
     };
     checkAuth();
@@ -68,6 +79,7 @@ const Payment = () => {
       } = await supabase.auth.getSession();
       if (!sessionData.session) {
         toast.error("Please sign in to subscribe");
+        setIsLoading(false);
         return;
       }
 
@@ -83,7 +95,12 @@ const Payment = () => {
         }
       }).select().single();
 
-      if (paymentError) throw paymentError;
+      if (paymentError) {
+        console.error("Payment creation error:", paymentError);
+        toast.error("Failed to create payment record");
+        setIsLoading(false);
+        return;
+      }
 
       // Then create a pending subscription
       const {
@@ -102,13 +119,16 @@ const Payment = () => {
         }
       });
       
-      if (subscriptionError) throw subscriptionError;
+      if (subscriptionError) {
+        console.error("Subscription creation error:", subscriptionError);
+        toast.error("Failed to create subscription");
+        setIsLoading(false);
+        return;
+      }
       
       toast.success("Payment submitted for verification!");
       setPaymentSubmitted(true);
       
-      // Don't navigate away immediately so user can see the confirmation
-      // navigate("/setup");
     } catch (error) {
       console.error("Payment error:", error);
       toast.error("Failed to process payment. Please try again.");
