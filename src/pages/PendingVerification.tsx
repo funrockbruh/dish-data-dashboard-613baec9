@@ -27,7 +27,21 @@ const PendingVerification = () => {
         
         const userId = sessionData.session.user.id;
         
-        // Check for active subscription first
+        // First check for verified payments
+        const { data: verifiedPayments } = await supabase
+          .from("payments")
+          .select("*")
+          .eq("user_id", userId)
+          .eq("status", "verified")
+          .limit(1);
+          
+        if (verifiedPayments && verifiedPayments.length > 0) {
+          // User has a verified payment, redirect to setup
+          navigate("/setup");
+          return;
+        }
+        
+        // Check for active subscription
         const { data: subscriptions } = await supabase
           .from("subscriptions")
           .select("*")
@@ -77,20 +91,10 @@ const PendingVerification = () => {
         },
         (payload) => {
           console.log('Payment status changed:', payload);
-          // If payment is verified, check subscription
+          // If payment is verified, redirect to setup page
           if (payload.new.status === 'verified') {
-            supabase
-              .from('subscriptions')
-              .select('*')
-              .eq('payment_id', payload.new.id)
-              .eq('status', 'active')
-              .limit(1)
-              .then(({ data }) => {
-                if (data && data.length > 0) {
-                  // Redirect to setup page
-                  navigate('/setup');
-                }
-              });
+            navigate('/setup');
+            return;
           }
           
           // Update the payment data

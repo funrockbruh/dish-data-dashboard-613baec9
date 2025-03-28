@@ -40,6 +40,34 @@ export const AuthDialog = ({ trigger }: { trigger: React.ReactNode }) => {
       if (event === 'SIGNED_IN' && session?.user) {
         setOpen(false);
         
+        // First check if user has a verified payment or active subscription
+        const { data: verifiedPayments } = await supabase
+          .from("payments")
+          .select("*")
+          .eq("user_id", session.user.id)
+          .eq("status", "verified")
+          .limit(1);
+          
+        if (verifiedPayments && verifiedPayments.length > 0) {
+          // User has a verified payment, redirect to setup
+          navigate('/setup');
+          return;
+        }
+          
+        // Check if user has an active subscription
+        const { data: activeSubscriptions } = await supabase
+          .from("subscriptions")
+          .select("*")
+          .eq("user_id", session.user.id)
+          .eq("status", "active")
+          .limit(1);
+          
+        if (activeSubscriptions && activeSubscriptions.length > 0) {
+          // User has an active subscription, redirect to setup
+          navigate('/setup');
+          return;
+        }
+        
         // Check if user has a pending payment
         const { data: pendingPayments } = await supabase
           .from("payments")
@@ -52,21 +80,9 @@ export const AuthDialog = ({ trigger }: { trigger: React.ReactNode }) => {
           // User has a pending payment, redirect to pending page
           navigate('/payment/pending');
         } else {
-          // Check if user has an active subscription
-          const { data: activeSubscriptions } = await supabase
-            .from("subscriptions")
-            .select("*")
-            .eq("user_id", session.user.id)
-            .eq("status", "active")
-            .limit(1);
-            
-          if (activeSubscriptions && activeSubscriptions.length > 0) {
-            // User has an active subscription, redirect to setup
-            navigate('/setup');
-          } else {
-            // No pending payment or active subscription, redirect to payment page
-            navigate('/payment');
-          }
+          // No verified payment, active subscription, or pending payment
+          // Redirect to payment page
+          navigate('/payment');
         }
       }
     });
