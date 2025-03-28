@@ -10,6 +10,7 @@ import Verify from "./pages/Verify";
 import Settings from "./pages/Settings";
 import Theme from "./pages/Theme";
 import SocialMedia from "./pages/SocialMedia";
+import PaymentManagement from "./pages/PaymentManagement";
 import { RestaurantSetup } from "./components/RestaurantSetup";
 import { CategorySetup } from "./components/CategorySetup";
 import { MenuItemsList } from "./components/menu/MenuItemsList";
@@ -44,6 +45,7 @@ const App = () => (
             <Route path="/settings" element={<Settings />} />
             <Route path="/theme" element={<Theme />} />
             <Route path="/social-media" element={<SocialMedia />} />
+            <Route path="/payment/manage" element={<PaymentManagement />} />
           </Route>
           
           {/* Public routes */}
