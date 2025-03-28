@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Check, CircleDot } from "lucide-react";
@@ -7,6 +6,13 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { Navigation } from "@/components/Navigation";
+
+type Feature = string | {
+  label: string;
+  selectable: boolean;
+  selected?: boolean;
+  onToggle?: () => void;
+};
 
 const Payment = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -78,8 +84,7 @@ const Payment = () => {
     }
   };
 
-  // Modified features array - moving QR code as a selectable feature
-  const features = [
+  const features: Feature[] = [
     "Unlimited menu items",
     "Advanced categories",
     "Priority support",
@@ -94,6 +99,38 @@ const Payment = () => {
     price: "100",
     duration: "2 minutes",
     description: "Quick test plan for your restaurant menu"
+  };
+
+  const renderFeature = (feature: Feature, index: number) => {
+    if (typeof feature === 'string') {
+      return (
+        <li key={index} className="flex items-center">
+          <div className="p-1 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 mr-2">
+            <Check className="h-4 w-4 text-white" />
+          </div>
+          <span>{feature}</span>
+        </li>
+      );
+    } else {
+      return (
+        <li key={index} className="flex items-center">
+          <div className="p-1 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 mr-2">
+            <Check className="h-4 w-4 text-white" />
+          </div>
+          <div 
+            className={`flex items-center ${feature.selectable ? 'cursor-pointer' : ''}`}
+            onClick={feature.selectable ? feature.onToggle : undefined}
+          >
+            <span>{feature.label}</span>
+            {feature.selectable && (
+              <div className={`h-5 w-5 rounded-full ml-2 border flex items-center justify-center ${feature.selected ? 'border-indigo-600' : 'border-gray-300'}`}>
+                {feature.selected && <CircleDot className="h-3 w-3 text-indigo-600" />}
+              </div>
+            )}
+          </div>
+        </li>
+      );
+    }
   };
 
   return (
@@ -118,39 +155,7 @@ const Payment = () => {
                 </div>
                 <p className="text-muted-foreground mb-6">{plan.description}</p>
                 <ul className="space-y-3 mb-8">
-                  {features.map((feature, i) => {
-                    // Check if feature is an object with selectable property
-                    if (typeof feature === 'object' && feature.selectable !== undefined) {
-                      return (
-                        <li key={i} className="flex items-center">
-                          <div className="p-1 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 mr-2">
-                            <Check className="h-4 w-4 text-white" />
-                          </div>
-                          <div 
-                            className="flex items-center cursor-pointer" 
-                            onClick={feature.onToggle}
-                          >
-                            <span>{feature.label}</span>
-                            {feature.selectable && (
-                              <div className={`h-5 w-5 rounded-full ml-2 border flex items-center justify-center ${feature.selected ? 'border-indigo-600' : 'border-gray-300'}`}>
-                                {feature.selected && <CircleDot className="h-3 w-3 text-indigo-600" />}
-                              </div>
-                            )}
-                          </div>
-                        </li>
-                      );
-                    } else {
-                      // Regular feature (string)
-                      return (
-                        <li key={i} className="flex items-center">
-                          <div className="p-1 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 mr-2">
-                            <Check className="h-4 w-4 text-white" />
-                          </div>
-                          <span>{feature}</span>
-                        </li>
-                      );
-                    }
-                  })}
+                  {features.map((feature, i) => renderFeature(feature, i))}
                 </ul>
                 <Button 
                   className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
