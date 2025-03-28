@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Calendar, CreditCard, Check, ChevronDown, ChevronUp, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { format, addMonths } from "date-fns";
+import { format } from "date-fns";
 import { 
   Accordion,
   AccordionContent,
@@ -44,52 +44,107 @@ const PaymentManagement = () => {
         
         const userId = sessionData.session.user.id;
         
-        // Fetch subscription data
-        const { data: subscriptionData, error: subscriptionError } = await supabase
-          .from("subscriptions")
+        // 1. First, check if the user has verified payments
+        const { data: verifiedPayments, error: paymentsError } = await supabase
+          .from("payments")
           .select("*")
           .eq("user_id", userId)
-          .eq("status", "active")
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .single();
+          .eq("status", "verified")
+          .order("created_at", { ascending: false });
           
-        if (subscriptionError) {
-          if (subscriptionError.code !== 'PGRST116') { // No rows returned
-            console.error("Error fetching subscription:", subscriptionError);
-          }
-        } else if (subscriptionData) {
-          setSubscription(subscriptionData);
-          
-          // Fetch payment data for the subscription
-          if (subscriptionData.payment_id) {
-            const { data: paymentData } = await supabase
-              .from("payments")
-              .select("payment_type")
-              .eq("id", subscriptionData.payment_id)
-              .single();
-              
-            if (paymentData) {
-              setSubscription({
-                ...subscriptionData,
-                payment_type: paymentData.payment_type
-              });
-            }
-          }
-          
-          // Fetch billing history (all payments for this user)
-          const { data: paymentsHistory } = await supabase
-            .from("payments")
+        if (paymentsError) {
+          console.error("Error fetching verified payments:", paymentsError);
+          return;
+        }
+        
+        let hasVerifiedPayment = verifiedPayments && verifiedPayments.length > 0;
+        
+        // 2. Fetch subscriptions if user has verified payments
+        if (hasVerifiedPayment) {
+          // Try to fetch active subscription
+          const { data: subscriptionData, error: subscriptionError } = await supabase
+            .from("subscriptions")
             .select("*")
             .eq("user_id", userId)
-            .order("created_at", { ascending: false });
+            .eq("status", "active")
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .single();
             
-          if (paymentsHistory) {
-            setBillingHistory(paymentsHistory);
+          if (subscriptionError) {
+            if (subscriptionError.code !== 'PGRST116') { // No rows returned
+              console.error("Error fetching subscription:", subscriptionError);
+            } else {
+              // If no active subscription, create one based on verified payment
+              const latestPayment = verifiedPayments[0];
+              const endDate = new Date();
+              endDate.setFullYear(endDate.getFullYear() + 1); // Assuming 1-year subscription
+              
+              const subscriptionDetails = {
+                user_id: userId,
+                payment_id: latestPayment.id,
+                plan: latestPayment.details?.plan || "menu_plan",
+                price: latestPayment.amount,
+                start_date: latestPayment.created_at,
+                end_date: endDate.toISOString(),
+                status: "active"
+              };
+              
+              const { data: newSubscription, error: createError } = await supabase
+                .from("subscriptions")
+                .insert(subscriptionDetails)
+                .select()
+                .single();
+                
+              if (createError) {
+                console.error("Error creating subscription:", createError);
+              } else if (newSubscription) {
+                setSubscription({
+                  ...newSubscription,
+                  payment_type: latestPayment.payment_type
+                });
+              }
+            }
+          } else if (subscriptionData) {
+            setSubscription(subscriptionData);
+            
+            // Look up payment information for this subscription
+            if (subscriptionData.payment_id) {
+              const { data: paymentData } = await supabase
+                .from("payments")
+                .select("payment_type")
+                .eq("id", subscriptionData.payment_id)
+                .single();
+                
+              if (paymentData) {
+                setSubscription({
+                  ...subscriptionData,
+                  payment_type: paymentData.payment_type
+                });
+              }
+            }
           }
         }
+        
+        // 3. Fetch billing history (all payments for this user)
+        const { data: paymentsHistory } = await supabase
+          .from("payments")
+          .select("*")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false });
+          
+        if (paymentsHistory) {
+          setBillingHistory(paymentsHistory);
+        }
+        
+        // 4. Set QR code preference based on latest payment
+        if (verifiedPayments && verifiedPayments.length > 0) {
+          setWantsQrCode(verifiedPayments[0].details?.has_qr_code || false);
+        }
+        
       } catch (error) {
         console.error("Error fetching data:", error);
+        toast.error("Failed to load subscription information");
       } finally {
         setIsLoading(false);
       }
@@ -132,9 +187,33 @@ const PaymentManagement = () => {
     toast.info("Payment method update feature coming soon");
   };
   
-  const handleToggleQrCode = (value: boolean) => {
+  const handleToggleQrCode = async (value: boolean) => {
     setWantsQrCode(value);
-    toast.info(value ? "QR code will be generated" : "QR code disabled");
+    
+    try {
+      // Update the latest payment's details with QR code preference
+      if (billingHistory.length > 0 && billingHistory[0].status === "verified") {
+        const latestPayment = billingHistory[0];
+        const updatedDetails = { 
+          ...latestPayment.details,
+          has_qr_code: value 
+        };
+        
+        const { error } = await supabase
+          .from("payments")
+          .update({ details: updatedDetails })
+          .eq("id", latestPayment.id);
+          
+        if (error) throw error;
+        
+        toast.success(value ? "QR code enabled" : "QR code disabled");
+      } else {
+        toast.info(value ? "QR code will be enabled after payment is verified" : "QR code disabled");
+      }
+    } catch (error) {
+      console.error("Error updating QR code preference:", error);
+      toast.error("Failed to update QR code preference");
+    }
   };
 
   if (isLoading) {
@@ -144,6 +223,10 @@ const PaymentManagement = () => {
       </div>
     );
   }
+
+  // Check if we have either a subscription or verified payments
+  const hasActiveSubscription = subscription || 
+    (billingHistory.length > 0 && billingHistory.some(payment => payment.status === "verified"));
 
   return (
     <div className="min-h-screen bg-gray-50 pb-10">
@@ -162,26 +245,27 @@ const PaymentManagement = () => {
       </div>
 
       <div className="max-w-xl mx-auto px-4 mt-6">
-        {subscription ? (
+        {hasActiveSubscription ? (
           <>
             {/* Subscription Details Card */}
             <div className="bg-white rounded-xl shadow-sm p-5 mb-6">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-medium">Subscription Details</h2>
-                <Badge className={subscription.status === "active" ? "bg-purple-100 text-purple-800" : "bg-gray-100 text-gray-800"}>
-                  {subscription.status === "active" ? "Active" : "Cancelled"}
+                <Badge className={subscription?.status === "active" ? "bg-purple-100 text-purple-800" : "bg-gray-100 text-gray-800"}>
+                  {subscription?.status === "active" ? "Active" : "Verified"}
                 </Badge>
               </div>
               
               <div className="space-y-4">
                 <div className="bg-gray-50 rounded-lg p-4">
                   <p className="text-gray-600 text-sm">Subscribed On</p>
-                  <p className="font-medium">{formatDate(subscription.start_date)}</p>
+                  <p className="font-medium">{subscription?.start_date ? formatDate(subscription.start_date) : 
+                    billingHistory.length > 0 ? formatDate(billingHistory[0].created_at) : "Recent"}</p>
                 </div>
                 
                 <div className="bg-gray-50 rounded-lg p-4">
                   <p className="text-gray-600 text-sm">Next Renewal</p>
-                  <p className="font-medium">{formatDate(subscription.end_date)}</p>
+                  <p className="font-medium">{subscription?.end_date ? formatDate(subscription.end_date) : "Annual subscription"}</p>
                   <p className="text-green-600 text-xs mt-1">Auto-renewal enabled</p>
                 </div>
                 
@@ -192,7 +276,8 @@ const PaymentManagement = () => {
                       <CreditCard className="h-5 w-5" />
                     </div>
                     <span className="font-medium">
-                      {subscription.payment_type ? `Pay in ${subscription.payment_type}` : "Pay in Cash"}
+                      {subscription?.payment_type ? `Pay in ${subscription.payment_type}` : 
+                        billingHistory.length > 0 ? `Pay in ${billingHistory[0].payment_type}` : "Cash"}
                     </span>
                   </div>
                   <button 
