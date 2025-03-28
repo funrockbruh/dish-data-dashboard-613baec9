@@ -1,3 +1,4 @@
+
 import { useParams } from "react-router-dom";
 import { usePublicMenu } from "@/hooks/public-menu";
 import { PublicMenuHeader } from "@/components/public-menu/PublicMenuHeader";
@@ -146,7 +147,7 @@ const PublicMenu = () => {
     <div className="bg-black text-white min-h-screen">
       {showExpiryWarning && restaurant && (
         <SubscriptionExpiryWarning 
-          restaurantName={restaurant.name || subdomain || 'Restaurant'} 
+          restaurantName={restaurant.restaurant_name || subdomain || 'Restaurant'} 
           expiryDate={new Date().toISOString()} 
         />
       )}
