@@ -3,11 +3,13 @@ import { Button } from "./ui/button";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { CountdownTimer } from "@/components/payment/CountdownTimer";
 
 export const Navigation = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [restaurantName, setRestaurantName] = useState<string | null>(null);
   const [subdomain, setSubdomain] = useState<string | null>(null);
+  const [renewalDate, setRenewalDate] = useState<Date | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -25,6 +27,23 @@ export const Navigation = () => {
         if (profileData) {
           setRestaurantName(profileData.restaurant_name);
           setSubdomain(profileData.subdomain);
+        }
+        
+        // Fetch renewal date
+        const { data: payments } = await supabase
+          .from("payments")
+          .select("*")
+          .eq("user_id", data.session.user.id)
+          .eq("status", "verified")
+          .order("created_at", { ascending: false })
+          .limit(1);
+          
+        if (payments && payments.length > 0) {
+          const verificationDate = new Date(payments[0].updated_at || payments[0].created_at);
+          // Set expiry to 2 minutes after verification
+          const expiryDate = new Date(verificationDate);
+          expiryDate.setMinutes(expiryDate.getMinutes() + 2);
+          setRenewalDate(expiryDate);
         }
       }
     };
@@ -46,9 +65,27 @@ export const Navigation = () => {
           setRestaurantName(profileData.restaurant_name);
           setSubdomain(profileData.subdomain);
         }
+        
+        // Fetch renewal date
+        const { data: payments } = await supabase
+          .from("payments")
+          .select("*")
+          .eq("user_id", session.user.id)
+          .eq("status", "verified")
+          .order("created_at", { ascending: false })
+          .limit(1);
+          
+        if (payments && payments.length > 0) {
+          const verificationDate = new Date(payments[0].updated_at || payments[0].created_at);
+          // Set expiry to 2 minutes after verification
+          const expiryDate = new Date(verificationDate);
+          expiryDate.setMinutes(expiryDate.getMinutes() + 2);
+          setRenewalDate(expiryDate);
+        }
       } else {
         setRestaurantName(null);
         setSubdomain(null);
+        setRenewalDate(null);
       }
     });
 
@@ -94,9 +131,16 @@ export const Navigation = () => {
             {isAuthenticated ? (
               <div className="flex items-center gap-3">
                 {restaurantName && (
-                  <Link to="/menu" className="text-gray-800 hover:text-gray-900">
-                    <span className="font-medium">{restaurantName}</span>
-                  </Link>
+                  <div className="flex items-center">
+                    <Link to="/menu" className="text-gray-800 hover:text-gray-900">
+                      <span className="font-medium">{restaurantName}</span>
+                    </Link>
+                    {renewalDate && (
+                      <Link to="/payment/manage">
+                        <CountdownTimer expiryDate={renewalDate} />
+                      </Link>
+                    )}
+                  </div>
                 )}
                 <Button 
                   variant="outline" 

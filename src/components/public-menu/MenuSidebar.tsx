@@ -1,3 +1,4 @@
+
 import { Edit, Info, MessageSquare, Phone, Settings } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
@@ -6,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import type { Restaurant } from "@/hooks/public-menu/types";
 import { useEffect, useState } from "react";
 import { ImageWithSkeleton } from "@/components/ui/image-with-skeleton";
+import { CountdownTimer } from "@/components/payment/CountdownTimer";
 
 interface MenuSidebarProps {
   restaurant: Restaurant | null;
@@ -23,6 +25,7 @@ export const MenuSidebar = ({
     facebook: false,
     tiktok: false
   });
+  const [renewalDate, setRenewalDate] = useState<Date | null>(null);
 
   useEffect(() => {
     if (restaurant) {
@@ -47,6 +50,36 @@ export const MenuSidebar = ({
       });
     }
   }, [restaurant]);
+
+  // Fetch renewal date if user is authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      const fetchRenewalDate = async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session?.user) {
+          // Get the latest verified payment
+          const { data: payments } = await supabase
+            .from("payments")
+            .select("*")
+            .eq("user_id", session.user.id)
+            .eq("status", "verified")
+            .order("created_at", { ascending: false })
+            .limit(1);
+            
+          if (payments && payments.length > 0) {
+            const verificationDate = new Date(payments[0].updated_at || payments[0].created_at);
+            // Set expiry to 2 minutes after verification
+            const expiryDate = new Date(verificationDate);
+            expiryDate.setMinutes(expiryDate.getMinutes() + 2);
+            setRenewalDate(expiryDate);
+          }
+        }
+      };
+      
+      fetchRenewalDate();
+    }
+  }, [isAuthenticated]);
 
   const formatPhoneNumber = (phone: string | undefined | null): string => {
     if (!phone) return "";
@@ -116,7 +149,12 @@ export const MenuSidebar = ({
                 </span>
               </div>
             )}
-            <h2 className="text-2xl font-bold text-center">{restaurant?.restaurant_name}</h2>
+            <div className="flex items-center">
+              <h2 className="text-2xl font-bold text-center">{restaurant?.restaurant_name}</h2>
+              {isAuthenticated && renewalDate && (
+                <CountdownTimer expiryDate={renewalDate} />
+              )}
+            </div>
             {(restaurant?.social_whatsapp || restaurant?.owner_number) && (
               <div className="flex items-center space-x-2">
                 <Phone className="h-4 w-4" />
