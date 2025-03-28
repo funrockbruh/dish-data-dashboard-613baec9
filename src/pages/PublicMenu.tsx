@@ -1,4 +1,3 @@
-
 import { useParams } from "react-router-dom";
 import { usePublicMenu } from "@/hooks/public-menu";
 import { PublicMenuHeader } from "@/components/public-menu/PublicMenuHeader";
@@ -26,6 +25,7 @@ const PublicMenu = () => {
   
   const [showExpiryWarning, setShowExpiryWarning] = useState(false);
   const [subscriptionExpired, setSubscriptionExpired] = useState(false);
+  const [expiryDate, setExpiryDate] = useState<string | null>(null);
 
   useEffect(() => {
     const checkSubscriptionStatus = async () => {
@@ -60,6 +60,7 @@ const PublicMenu = () => {
         if (endDate < now) {
           setShowExpiryWarning(true);
           setSubscriptionExpired(true);
+          setExpiryDate(subscription.end_date);
         }
       } catch (err) {
         console.error("Error checking subscription status:", err);
@@ -77,7 +78,8 @@ const PublicMenu = () => {
       featuredItems: featuredItems.length,
       error,
       showExpiryWarning,
-      subscriptionExpired
+      subscriptionExpired,
+      expiryDate
     });
     
     if (menuItems.length > 0) {
@@ -87,7 +89,7 @@ const PublicMenu = () => {
     if (debugInfo) {
       console.log("Debug info:", debugInfo);
     }
-  }, [restaurant, menuItems, categories, featuredItems, error, debugInfo, showExpiryWarning]);
+  }, [restaurant, menuItems, categories, featuredItems, error, debugInfo, showExpiryWarning, expiryDate]);
 
   if (isLoading) {
     return (
@@ -148,7 +150,7 @@ const PublicMenu = () => {
       {showExpiryWarning && restaurant && (
         <SubscriptionExpiryWarning 
           restaurantName={restaurant.restaurant_name || subdomain || 'Restaurant'} 
-          expiryDate={new Date().toISOString()} 
+          expiryDate={expiryDate || new Date().toISOString()} 
         />
       )}
       

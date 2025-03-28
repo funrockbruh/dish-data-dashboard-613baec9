@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -9,26 +8,50 @@ interface SubscriptionExpiryWarningProps {
   expiryDate: string;
 }
 
+const TIMER_DURATION = 300; // 5 minutes in seconds
+const TIMER_KEY = 'menu_deletion_timer';
+
 export const SubscriptionExpiryWarning = ({ 
   restaurantName, 
   expiryDate 
 }: SubscriptionExpiryWarningProps) => {
-  const [timeLeft, setTimeLeft] = useState<number>(300); // 5 minutes in seconds
   const [isVisible, setIsVisible] = useState<boolean>(true);
+  const [timeLeft, setTimeLeft] = useState<number>(() => {
+    // Try to load timer from localStorage to persist across refreshes
+    const savedTimer = localStorage.getItem(TIMER_KEY);
+    const savedExpiryDate = localStorage.getItem(`${TIMER_KEY}_expiry`);
+    
+    // If we have a saved timer with the same expiry date, use it
+    if (savedTimer && savedExpiryDate === expiryDate) {
+      const parsedTime = parseInt(savedTimer, 10);
+      return parsedTime > 0 ? parsedTime : TIMER_DURATION;
+    }
+    
+    // Otherwise start with the full duration
+    return TIMER_DURATION;
+  });
 
   useEffect(() => {
+    // Save the expiry date for comparison
+    localStorage.setItem(`${TIMER_KEY}_expiry`, expiryDate);
+    
     const interval = setInterval(() => {
       setTimeLeft((prevTime) => {
-        if (prevTime <= 1) {
+        const newTime = prevTime <= 1 ? 0 : prevTime - 1;
+        
+        // Save to localStorage for persistence
+        localStorage.setItem(TIMER_KEY, newTime.toString());
+        
+        if (newTime <= 0) {
           clearInterval(interval);
-          return 0;
         }
-        return prevTime - 1;
+        
+        return newTime;
       });
     }, 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [expiryDate]);
 
   const formatTimeLeft = () => {
     const minutes = Math.floor(timeLeft / 60);
