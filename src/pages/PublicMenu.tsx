@@ -1,3 +1,4 @@
+
 import { useParams } from "react-router-dom";
 import { usePublicMenu } from "@/hooks/public-menu";
 import { PublicMenuHeader } from "@/components/public-menu/PublicMenuHeader";
@@ -49,7 +50,9 @@ const PublicMenu = () => {
           .limit(1);
         
         if (subscriptionError || !subscriptions || subscriptions.length === 0) {
+          setSubscriptionExpired(true);
           setShowExpiryWarning(true);
+          setExpiryDate(new Date().toISOString());
           return;
         }
         
@@ -57,10 +60,20 @@ const PublicMenu = () => {
         const endDate = new Date(subscription.end_date);
         const now = new Date();
         
+        // Only show warning if the subscription has actually expired
         if (endDate < now) {
-          setShowExpiryWarning(true);
           setSubscriptionExpired(true);
+          setShowExpiryWarning(true);
           setExpiryDate(subscription.end_date);
+        } else {
+          // Clear the warning if subscription is valid
+          setSubscriptionExpired(false);
+          setShowExpiryWarning(false);
+          setExpiryDate(null);
+          
+          // Clear any saved timer when subscription is valid
+          localStorage.removeItem('menu_deletion_timer');
+          localStorage.removeItem('menu_deletion_timer_expiry');
         }
       } catch (err) {
         console.error("Error checking subscription status:", err);
@@ -147,7 +160,7 @@ const PublicMenu = () => {
 
   return (
     <div className="bg-black text-white min-h-screen">
-      {showExpiryWarning && restaurant && (
+      {showExpiryWarning && subscriptionExpired && restaurant && (
         <SubscriptionExpiryWarning 
           restaurantName={restaurant.restaurant_name || subdomain || 'Restaurant'} 
           expiryDate={expiryDate || new Date().toISOString()} 

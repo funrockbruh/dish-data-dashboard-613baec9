@@ -1,7 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Clock, AlertTriangle } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 
 interface SubscriptionExpiryWarningProps {
   restaurantName: string;
@@ -10,6 +12,7 @@ interface SubscriptionExpiryWarningProps {
 
 const TIMER_DURATION = 300; // 5 minutes in seconds
 const TIMER_KEY = 'menu_deletion_timer';
+const TIMER_EXPIRY_KEY = 'menu_deletion_timer_expiry';
 
 export const SubscriptionExpiryWarning = ({ 
   restaurantName, 
@@ -19,11 +22,12 @@ export const SubscriptionExpiryWarning = ({
   const [timeLeft, setTimeLeft] = useState<number>(() => {
     // Try to load timer from localStorage to persist across refreshes
     const savedTimer = localStorage.getItem(TIMER_KEY);
-    const savedExpiryDate = localStorage.getItem(`${TIMER_KEY}_expiry`);
+    const savedExpiryDate = localStorage.getItem(TIMER_EXPIRY_KEY);
     
     // If we have a saved timer with the same expiry date, use it
     if (savedTimer && savedExpiryDate === expiryDate) {
       const parsedTime = parseInt(savedTimer, 10);
+      // If the saved timer is still valid, use it; otherwise start fresh
       return parsedTime > 0 ? parsedTime : TIMER_DURATION;
     }
     
@@ -32,8 +36,13 @@ export const SubscriptionExpiryWarning = ({
   });
 
   useEffect(() => {
-    // Save the expiry date for comparison
-    localStorage.setItem(`${TIMER_KEY}_expiry`, expiryDate);
+    // When component mounts or expiryDate changes, update the stored expiry date
+    localStorage.setItem(TIMER_EXPIRY_KEY, expiryDate);
+    
+    // Only start a new timer if we're starting fresh (no valid timer exists)
+    if (timeLeft === TIMER_DURATION) {
+      localStorage.setItem(TIMER_KEY, TIMER_DURATION.toString());
+    }
     
     const interval = setInterval(() => {
       setTimeLeft((prevTime) => {
@@ -44,6 +53,12 @@ export const SubscriptionExpiryWarning = ({
         
         if (newTime <= 0) {
           clearInterval(interval);
+          // When timer reaches zero, show a toast notification
+          toast({
+            title: "Menu Access Expired",
+            description: `${restaurantName}'s menu is no longer available due to expired subscription.`,
+            variant: "destructive"
+          });
         }
         
         return newTime;
@@ -51,7 +66,7 @@ export const SubscriptionExpiryWarning = ({
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [expiryDate]);
+  }, [expiryDate, restaurantName, timeLeft]);
 
   const formatTimeLeft = () => {
     const minutes = Math.floor(timeLeft / 60);
