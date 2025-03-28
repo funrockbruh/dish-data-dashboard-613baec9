@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, User, PaintRoller, Tag, List, Star, Link as LinkIcon, HelpCircle, LogOut } from "lucide-react";
+import { ArrowLeft, User, PaintRoller, Tag, List, Star, Link as LinkIcon, CreditCard, HelpCircle, LogOut } from "lucide-react";
 import { toast } from "sonner";
 
 const Settings = () => {
@@ -130,6 +130,15 @@ const Settings = () => {
           >
             <LinkIcon className="mr-3 h-5 w-5" />
             Social Media Links
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            className="w-full justify-start h-14 text-lg border-2 rounded-xl" 
+            onClick={() => navigateTo("/payment/manage")}
+          >
+            <CreditCard className="mr-3 h-5 w-5" />
+            Payment Management
           </Button>
           
           <Button 
