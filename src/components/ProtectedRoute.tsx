@@ -37,6 +37,14 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
           
         if (!paymentsError && verifiedPayments && verifiedPayments.length > 0) {
           setHasVerifiedSubscription(true);
+          
+          // Check if the user is on the payment page and redirect to setup
+          const currentPath = window.location.pathname;
+          if (currentPath === "/payment") {
+            navigate("/setup");
+            return;
+          }
+          
           return;
         }
         
@@ -69,6 +77,13 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
           
           if (subscriptions && subscriptions.length > 0) {
             setHasVerifiedSubscription(true);
+            
+            // Check if the user is on the payment page and redirect to setup
+            const currentPath = window.location.pathname;
+            if (currentPath === "/payment") {
+              navigate("/setup");
+              return;
+            }
           } else {
             // Check if the user has a pending payment
             const { data: pendingPayments } = await supabase
