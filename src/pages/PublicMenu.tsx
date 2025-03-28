@@ -1,4 +1,3 @@
-
 import { useParams } from "react-router-dom";
 import { usePublicMenu } from "@/hooks/public-menu";
 import { PublicMenuHeader } from "@/components/public-menu/PublicMenuHeader";
@@ -6,8 +5,10 @@ import { FeaturedSection } from "@/components/public-menu/FeaturedSection";
 import { CategoriesSection } from "@/components/public-menu/CategoriesSection";
 import { MenuItemsSection } from "@/components/public-menu/MenuItemsSection";
 import { EmptyMenuState } from "@/components/menu/EmptyMenuState";
-import { useEffect } from "react";
+import { SubscriptionExpiryWarning } from "@/components/public-menu/SubscriptionExpiryWarning";
+import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { supabase } from "@/lib/supabase";
 
 const PublicMenu = () => {
   const { subdomain } = useParams<{ subdomain: string }>();
@@ -21,15 +22,61 @@ const PublicMenu = () => {
     debugInfo,
     formatPrice 
   } = usePublicMenu(subdomain);
+  
+  const [showExpiryWarning, setShowExpiryWarning] = useState(false);
+  const [subscriptionExpired, setSubscriptionExpired] = useState(false);
 
-  // Log the state for debugging
+  useEffect(() => {
+    const checkSubscriptionStatus = async () => {
+      if (!restaurant?.id) return;
+      
+      try {
+        const { data: restaurantData, error: restaurantError } = await supabase
+          .from("restaurant_profiles")
+          .select("id")
+          .eq("id", restaurant.id)
+          .single();
+          
+        if (restaurantError || !restaurantData) return;
+        
+        const { data: subscriptions, error: subscriptionError } = await supabase
+          .from("subscriptions")
+          .select("end_date, status")
+          .eq("user_id", restaurantData.id)
+          .eq("status", "active")
+          .order("created_at", { ascending: false })
+          .limit(1);
+        
+        if (subscriptionError || !subscriptions || subscriptions.length === 0) {
+          setShowExpiryWarning(true);
+          return;
+        }
+        
+        const subscription = subscriptions[0];
+        const endDate = new Date(subscription.end_date);
+        const now = new Date();
+        
+        if (endDate < now) {
+          setShowExpiryWarning(true);
+          setSubscriptionExpired(true);
+        }
+      } catch (err) {
+        console.error("Error checking subscription status:", err);
+      }
+    };
+    
+    checkSubscriptionStatus();
+  }, [restaurant]);
+
   useEffect(() => {
     console.log("Public Menu State:", {
       restaurant,
       menuItems: menuItems.length,
       categories: categories.length,
       featuredItems: featuredItems.length,
-      error
+      error,
+      showExpiryWarning,
+      subscriptionExpired
     });
     
     if (menuItems.length > 0) {
@@ -39,7 +86,7 @@ const PublicMenu = () => {
     if (debugInfo) {
       console.log("Debug info:", debugInfo);
     }
-  }, [restaurant, menuItems, categories, featuredItems, error, debugInfo]);
+  }, [restaurant, menuItems, categories, featuredItems, error, debugInfo, showExpiryWarning]);
 
   if (isLoading) {
     return (
@@ -49,19 +96,16 @@ const PublicMenu = () => {
           <Skeleton className="h-8 w-8 rounded-full bg-gray-800" />
         </div>
         <div className="container mx-auto p-4">
-          {/* Skeleton for Featured Section */}
           <div className="mb-6">
             <Skeleton className="w-full h-48 rounded-lg bg-gray-800" />
           </div>
           
-          {/* Skeleton for Categories */}
           <div className="mb-4 flex overflow-x-auto gap-3 py-2">
             {[1, 2, 3, 4].map((i) => (
               <Skeleton key={i} className="flex-none w-24 h-24 rounded-lg bg-gray-800" />
             ))}
           </div>
           
-          {/* Skeleton for Menu Items */}
           <div className="mb-8">
             <Skeleton className="w-1/2 h-8 mb-4 bg-gray-800" />
             <div className="grid grid-cols-2 gap-4">
@@ -100,6 +144,13 @@ const PublicMenu = () => {
 
   return (
     <div className="bg-black text-white min-h-screen">
+      {showExpiryWarning && restaurant && (
+        <SubscriptionExpiryWarning 
+          restaurantName={restaurant.name || subdomain || 'Restaurant'} 
+          expiryDate={new Date().toISOString()} 
+        />
+      )}
+      
       <PublicMenuHeader 
         restaurant={restaurant} 
         menuItems={menuItems}

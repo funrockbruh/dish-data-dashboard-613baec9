@@ -36,12 +36,16 @@ export const Pricing = () => {
         return;
       }
       
+      // Create a subscription that expires in 2 minutes for testing
+      const twoMinutesFromNow = new Date();
+      twoMinutesFromNow.setMinutes(twoMinutesFromNow.getMinutes() + 2);
+      
       const { error } = await supabase.from("subscriptions").insert({
         user_id: sessionData.session.user.id,
         plan: "menu_plan",
         price: 100,
         start_date: new Date().toISOString(),
-        end_date: new Date(Date.now() + 2 * 60 * 1000).toISOString(), // 2 minutes from now
+        end_date: twoMinutesFromNow.toISOString(), // 2 minutes from now
         status: "active"
       });
       
