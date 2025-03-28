@@ -90,7 +90,7 @@ const Payment = () => {
         return;
       }
 
-      // Create payment record without select()
+      // Create payment record - don't use select() 
       const { error: paymentError } = await supabase
         .from("payments")
         .insert({
@@ -111,7 +111,21 @@ const Payment = () => {
         return;
       }
 
-      // Create subscription record
+      // Get the just-created payment's ID to link with the subscription
+      const { data: paymentData, error: fetchError } = await supabase
+        .from("payments")
+        .select("id")
+        .eq("user_id", sessionData.session.user.id)
+        .eq("status", "pending")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+        
+      if (fetchError) {
+        console.error("Payment fetch error:", fetchError);
+      }
+
+      // Create subscription record with payment_id link
       const { error: subscriptionError } = await supabase
         .from("subscriptions")
         .insert({
@@ -119,7 +133,9 @@ const Payment = () => {
           plan: "menu_plan",
           price: currentPrice,
           start_date: new Date().toISOString(),
+          end_date: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(), // 1 year from now
           status: "pending",
+          payment_id: paymentData?.id || null,
           details: {
             payment_method: method,
             has_qr_code: hasQRCode

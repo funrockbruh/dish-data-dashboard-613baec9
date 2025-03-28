@@ -37,6 +37,9 @@ export const PaymentVerification = () => {
   const fetchPayments = async () => {
     try {
       setLoading(true);
+      
+      // Important: This is admin functionality, we need to bypass RLS
+      // This should only be accessible to admin users
       const { data, error } = await supabase
         .from("payments")
         .select("*")
