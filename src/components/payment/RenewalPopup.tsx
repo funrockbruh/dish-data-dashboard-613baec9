@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -5,11 +6,13 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { format, addMinutes } from "date-fns";
 import { toast } from "sonner";
+
 interface RenewalPopupProps {
   restaurantName: string;
   expiryDate: Date;
   userId: string;
 }
+
 export const RenewalPopup = ({
   restaurantName,
   expiryDate,
@@ -22,22 +25,43 @@ export const RenewalPopup = ({
   // Calculate grace period (5 minutes after expiry)
   const gracePeriod = addMinutes(expiryDate, 5);
   const formattedGracePeriod = format(gracePeriod, "HH:mm");
+
   useEffect(() => {
-    const checkExpiry = () => {
+    const checkExpiry = async () => {
       const now = new Date();
 
       // Show popup if current time is past expiry date but before grace period
       if (now > expiryDate && now < gracePeriod) {
         setIsVisible(true);
       } else if (now >= gracePeriod) {
-        // If past grace period, redirect to payment page
-        navigate("/payment");
+        // If past grace period, delete the user account
+        try {
+          const { error } = await supabase.auth.admin.deleteUser(userId);
+          if (error) {
+            console.error("Error deleting user:", error);
+            toast.error("Error deleting account, please contact support");
+            // Force sign out anyway
+            await supabase.auth.signOut();
+            navigate("/");
+          } else {
+            toast.success("Your account has been deleted due to subscription expiry");
+            navigate("/");
+          }
+        } catch (error) {
+          console.error("Failed to delete user:", error);
+          // Fallback: just sign out the user if direct deletion fails
+          await supabase.auth.signOut();
+          navigate("/");
+        }
       }
     };
+    
     checkExpiry();
     const interval = setInterval(checkExpiry, 5000);
+    
     return () => clearInterval(interval);
-  }, [expiryDate, gracePeriod, navigate]);
+  }, [expiryDate, gracePeriod, navigate, userId]);
+
   const handleRenewalRequest = async () => {
     try {
       setIsLoading(true);
@@ -67,7 +91,9 @@ export const RenewalPopup = ({
       setIsLoading(false);
     }
   };
+
   if (!isVisible) return null;
+
   return <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md">
       <div className="bg-black/100 backdrop-blur-[15px] text-white rounded-xl p-8 max-w-sm w-full text-center shadow-2xl border border-white/10 mt-[500px] py-[180px]">
         <h2 className="text-2xl font-bold mb-6">Renewal request</h2>
