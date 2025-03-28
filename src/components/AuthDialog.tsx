@@ -36,12 +36,38 @@ export const AuthDialog = ({ trigger }: { trigger: React.ReactNode }) => {
     checkSession();
 
     // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
         setOpen(false);
         
-        // Redirect to payment page instead of setup
-        navigate('/payment');
+        // Check if user has a pending payment
+        const { data: pendingPayments } = await supabase
+          .from("payments")
+          .select("*")
+          .eq("user_id", session.user.id)
+          .eq("status", "pending")
+          .limit(1);
+          
+        if (pendingPayments && pendingPayments.length > 0) {
+          // User has a pending payment, redirect to pending page
+          navigate('/payment/pending');
+        } else {
+          // Check if user has an active subscription
+          const { data: activeSubscriptions } = await supabase
+            .from("subscriptions")
+            .select("*")
+            .eq("user_id", session.user.id)
+            .eq("status", "active")
+            .limit(1);
+            
+          if (activeSubscriptions && activeSubscriptions.length > 0) {
+            // User has an active subscription, redirect to setup
+            navigate('/setup');
+          } else {
+            // No pending payment or active subscription, redirect to payment page
+            navigate('/payment');
+          }
+        }
       }
     });
 
