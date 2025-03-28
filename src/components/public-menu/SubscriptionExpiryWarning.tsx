@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -13,6 +12,7 @@ interface SubscriptionExpiryWarningProps {
 const TIMER_DURATION = 300; // 5 minutes in seconds
 const TIMER_KEY = 'menu_deletion_timer';
 const TIMER_EXPIRY_KEY = 'menu_deletion_timer_expiry';
+const TIMER_START_KEY = 'menu_deletion_timer_start';
 
 export const SubscriptionExpiryWarning = ({ 
   restaurantName, 
@@ -21,35 +21,42 @@ export const SubscriptionExpiryWarning = ({
   const [isVisible, setIsVisible] = useState<boolean>(true);
   const [timeLeft, setTimeLeft] = useState<number>(() => {
     // Try to load timer from localStorage to persist across refreshes
-    const savedTimer = localStorage.getItem(TIMER_KEY);
     const savedExpiryDate = localStorage.getItem(TIMER_EXPIRY_KEY);
+    const savedStartTime = localStorage.getItem(TIMER_START_KEY);
     
-    // If we have a saved timer with the same expiry date, use it
-    if (savedTimer && savedExpiryDate === expiryDate) {
-      const parsedTime = parseInt(savedTimer, 10);
-      // If the saved timer is still valid, use it; otherwise start fresh
-      return parsedTime > 0 ? parsedTime : TIMER_DURATION;
+    // If we have a saved timer with the same expiry date, calculate remaining time
+    if (savedExpiryDate === expiryDate && savedStartTime) {
+      const startTimeMs = parseInt(savedStartTime, 10);
+      const elapsedSeconds = Math.floor((Date.now() - startTimeMs) / 1000);
+      const remainingTime = TIMER_DURATION - elapsedSeconds;
+      
+      // If there's still time left, use it; otherwise start fresh
+      return remainingTime > 0 ? remainingTime : TIMER_DURATION;
     }
     
-    // Otherwise start with the full duration
+    // Otherwise start with the full duration and save the start time
+    const now = Date.now();
+    localStorage.setItem(TIMER_START_KEY, now.toString());
+    localStorage.setItem(TIMER_EXPIRY_KEY, expiryDate);
+    
     return TIMER_DURATION;
   });
 
   useEffect(() => {
-    // When component mounts or expiryDate changes, update the stored expiry date
-    localStorage.setItem(TIMER_EXPIRY_KEY, expiryDate);
+    // Check if the expiry date has changed
+    const savedExpiryDate = localStorage.getItem(TIMER_EXPIRY_KEY);
     
-    // Only start a new timer if we're starting fresh (no valid timer exists)
-    if (timeLeft === TIMER_DURATION) {
-      localStorage.setItem(TIMER_KEY, TIMER_DURATION.toString());
+    // If the expiry date changed, reset the timer
+    if (savedExpiryDate !== expiryDate) {
+      const now = Date.now();
+      localStorage.setItem(TIMER_START_KEY, now.toString());
+      localStorage.setItem(TIMER_EXPIRY_KEY, expiryDate);
+      setTimeLeft(TIMER_DURATION);
     }
     
     const interval = setInterval(() => {
       setTimeLeft((prevTime) => {
         const newTime = prevTime <= 1 ? 0 : prevTime - 1;
-        
-        // Save to localStorage for persistence
-        localStorage.setItem(TIMER_KEY, newTime.toString());
         
         if (newTime <= 0) {
           clearInterval(interval);
@@ -66,7 +73,7 @@ export const SubscriptionExpiryWarning = ({
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [expiryDate, restaurantName, timeLeft]);
+  }, [expiryDate, restaurantName]);
 
   const formatTimeLeft = () => {
     const minutes = Math.floor(timeLeft / 60);
