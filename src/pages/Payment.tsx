@@ -37,10 +37,17 @@ const Payment = () => {
           navigate("/");
           return;
         }
+        
+        // Check for active subscription
         const {
           data: subscriptionData,
           error
-        } = await supabase.from("subscriptions").select("*").eq("user_id", sessionData.session.user.id).eq("status", "active").single();
+        } = await supabase
+          .from("subscriptions")
+          .select("*")
+          .eq("user_id", sessionData.session.user.id)
+          .eq("status", "active")
+          .maybeSingle();
         
         if (error && error.code !== 'PGRST116') {
           console.error("Subscription check error:", error);
@@ -83,17 +90,19 @@ const Payment = () => {
         return;
       }
 
-      // First create a payment record
-      const { data: paymentData, error: paymentError } = await supabase.from("payments").insert({
-        user_id: sessionData.session.user.id,
-        amount: currentPrice,
-        payment_type: method,
-        status: "pending",
-        details: {
-          has_qr_code: hasQRCode,
-          plan: "menu_plan"
-        }
-      }).select().single();
+      // First create a payment record (removing the select() part that causes permission issues)
+      const { error: paymentError } = await supabase
+        .from("payments")
+        .insert({
+          user_id: sessionData.session.user.id,
+          amount: currentPrice,
+          payment_type: method,
+          status: "pending",
+          details: {
+            has_qr_code: hasQRCode,
+            plan: "menu_plan"
+          }
+        });
 
       if (paymentError) {
         console.error("Payment creation error:", paymentError);
@@ -102,22 +111,22 @@ const Payment = () => {
         return;
       }
 
-      // Then create a pending subscription
+      // Then create a pending subscription (removing dependence on paymentData.id)
       const {
         error: subscriptionError
-      } = await supabase.from("subscriptions").insert({
-        user_id: sessionData.session.user.id,
-        plan: "menu_plan",
-        price: currentPrice,
-        start_date: new Date().toISOString(),
-        // Subscription will be activated after payment is verified
-        status: "pending",
-        payment_id: paymentData.id,
-        details: {
-          payment_method: method,
-          has_qr_code: hasQRCode
-        }
-      });
+      } = await supabase
+        .from("subscriptions")
+        .insert({
+          user_id: sessionData.session.user.id,
+          plan: "menu_plan",
+          price: currentPrice,
+          start_date: new Date().toISOString(),
+          status: "pending",
+          details: {
+            payment_method: method,
+            has_qr_code: hasQRCode
+          }
+        });
       
       if (subscriptionError) {
         console.error("Subscription creation error:", subscriptionError);
