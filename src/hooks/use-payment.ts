@@ -12,44 +12,59 @@ export const usePayment = () => {
   const [currentPrice, setCurrentPrice] = useState(100);
   const [paymentSubmitted, setPaymentSubmitted] = useState(false);
   const [errorInfo, setErrorInfo] = useState<any>(null);
+  const [sessionData, setSessionData] = useState<any>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const {
-          data: sessionData
-        } = await supabase.auth.getSession();
-        if (!sessionData.session) {
+        // Get the current session
+        const { data: session, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error("Session error:", sessionError);
+          setErrorInfo({ source: "Session check", error: sessionError });
+          return;
+        }
+
+        if (!session.session) {
+          console.log("No active session found, redirecting to home");
           navigate("/");
           return;
         }
+
+        // Store session data for debugging and later use
+        setSessionData(session);
         
-        // Check for active subscription with improved error handling
+        // Check for active subscription
         try {
           console.log("Checking for active subscriptions...");
-          const {
-            data: subscriptionData,
-            error
-          } = await supabase
+          console.log("Current user ID:", session.session.user.id);
+          
+          const { data: subscriptionData, error: subscriptionError } = await supabase
             .from("subscriptions")
             .select("id, plan, status")
+            .eq("user_id", session.session.user.id)
             .eq("status", "active")
-            .eq("user_id", sessionData.session.user.id)
             .maybeSingle();
           
-          if (error) {
-            console.error("Subscription check error:", error);
-            setErrorInfo(error);
+          if (subscriptionError) {
+            console.error("Subscription check error:", subscriptionError);
+            setErrorInfo({ 
+              source: "Subscription check", 
+              error: subscriptionError,
+              userId: session.session.user.id 
+            });
             
             // Only show toast for actual errors, not for "no rows returned"
-            if (error.code !== 'PGRST116') {
-              toast.error(`Subscription check failed: ${error.message}`);
+            if (subscriptionError.code !== 'PGRST116') {
+              toast.error(`Subscription check failed: ${subscriptionError.message}`);
             }
             return;
           }
           
           if (subscriptionData) {
+            console.log("Active subscription found:", subscriptionData);
             setHasSubscription(true);
             toast.info("You already have an active subscription");
             navigate("/setup");
@@ -58,11 +73,11 @@ export const usePayment = () => {
           }
         } catch (err) {
           console.error("Subscription check error:", err);
-          setErrorInfo(err);
+          setErrorInfo({ source: "Subscription check try/catch", error: err });
         }
       } catch (error) {
         console.error("Auth check error:", error);
-        setErrorInfo(error);
+        setErrorInfo({ source: "Auth check try/catch", error: error });
       }
     };
     checkAuth();
@@ -83,16 +98,22 @@ export const usePayment = () => {
         return;
       }
 
-      const {
-        data: sessionData
-      } = await supabase.auth.getSession();
-      if (!sessionData.session) {
+      const { data: session, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        setErrorInfo({ source: "Payment session check", error: sessionError });
+        toast.error(`Session error: ${sessionError.message}`);
+        setIsLoading(false);
+        return;
+      }
+
+      if (!session.session) {
         toast.error("Please sign in to subscribe");
         setIsLoading(false);
         return;
       }
 
-      const userId = sessionData.session.user.id;
+      const userId = session.session.user.id;
       console.log("Creating payment record for user:", userId);
 
       // Create payment record with explicit user_id
@@ -113,7 +134,11 @@ export const usePayment = () => {
 
       if (paymentError) {
         console.error("Payment creation error:", paymentError);
-        setErrorInfo(paymentError);
+        setErrorInfo({ source: "Payment creation", error: paymentError, payload: {
+          user_id: userId,
+          amount: currentPrice,
+          payment_type: method
+        }});
         toast.error(`Failed to create payment record: ${paymentError.message}`);
         setIsLoading(false);
         return;
@@ -121,7 +146,7 @@ export const usePayment = () => {
 
       console.log("Payment record created:", paymentData);
 
-      // Create subscription record with explicit user_id but without 'details' column
+      // Create subscription record with explicit user_id
       const { error: subscriptionError } = await supabase
         .from("subscriptions")
         .insert({
@@ -136,7 +161,16 @@ export const usePayment = () => {
       
       if (subscriptionError) {
         console.error("Subscription creation error:", subscriptionError);
-        setErrorInfo(subscriptionError);
+        setErrorInfo({ 
+          source: "Subscription creation", 
+          error: subscriptionError,
+          payload: {
+            plan: "menu_plan",
+            price: currentPrice,
+            user_id: userId,
+            payment_id: paymentData?.id
+          }
+        });
         toast.error(`Failed to create subscription: ${subscriptionError.message}`);
         setIsLoading(false);
         return;
@@ -147,7 +181,7 @@ export const usePayment = () => {
       
     } catch (error) {
       console.error("Payment error:", error);
-      setErrorInfo(error);
+      setErrorInfo({ source: "Payment process try/catch", error });
       toast.error("Failed to process payment. Please try again.");
     } finally {
       setIsLoading(false);
@@ -166,6 +200,7 @@ export const usePayment = () => {
     currentPrice,
     paymentSubmitted,
     errorInfo,
+    sessionData,
     handlePaymentSelect,
     toggleQRCode
   };

@@ -17,6 +17,7 @@ const Payment = () => {
     currentPrice,
     paymentSubmitted,
     errorInfo,
+    sessionData,
     handlePaymentSelect,
     toggleQRCode
   } = usePayment();
@@ -67,6 +68,21 @@ const Payment = () => {
               </h3>
               <div className="bg-amber-100 p-3 rounded text-amber-900 font-mono text-sm overflow-auto max-h-40">
                 <pre>{JSON.stringify(errorInfo, null, 2)}</pre>
+              </div>
+            </Card>
+          )}
+
+          {/* Session Debug Information */}
+          {sessionData && (
+            <Card className="p-4 mb-6 bg-blue-50 border-blue-200">
+              <h3 className="font-semibold text-blue-800 mb-2 flex items-center">
+                <Badge variant="outline" className="bg-blue-100 text-blue-800 mr-2">DEBUG</Badge>
+                Session Information
+              </h3>
+              <div className="bg-blue-100 p-3 rounded text-blue-900 font-mono text-sm overflow-auto max-h-40">
+                <pre>User ID: {sessionData.session?.user.id}</pre>
+                <pre>Email: {sessionData.session?.user.email}</pre>
+                <pre>Auth Provider: {sessionData.session?.user.app_metadata?.provider || 'N/A'}</pre>
               </div>
             </Card>
           )}
