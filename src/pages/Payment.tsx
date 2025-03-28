@@ -38,7 +38,7 @@ const Payment = () => {
           return;
         }
         
-        // Check for active subscription
+        // Check for active subscription - using maybeSingle to avoid errors
         const {
           data: subscriptionData,
           error
@@ -90,7 +90,7 @@ const Payment = () => {
         return;
       }
 
-      // First create a payment record (removing the select() part that causes permission issues)
+      // Create payment record without select()
       const { error: paymentError } = await supabase
         .from("payments")
         .insert({
@@ -111,10 +111,8 @@ const Payment = () => {
         return;
       }
 
-      // Then create a pending subscription (removing dependence on paymentData.id)
-      const {
-        error: subscriptionError
-      } = await supabase
+      // Create subscription record
+      const { error: subscriptionError } = await supabase
         .from("subscriptions")
         .insert({
           user_id: sessionData.session.user.id,
