@@ -98,7 +98,7 @@ export async function updateOrCreateSubscription(
   paymentData: Payment
 ): Promise<boolean> {
   try {
-    // Find existing subscription
+    // Find existing subscription by payment_id
     const { data: subscriptions, error: findError } = await supabase
       .from("subscriptions")
       .select("id")
@@ -134,6 +134,7 @@ export async function updateOrCreateSubscription(
           payment_id: paymentId,
           plan: paymentData.details?.plan || "default_plan",
           price: paymentData.amount,
+          start_date: new Date().toISOString(),
           end_date: endDate.toISOString(),
           status: "active"
         });

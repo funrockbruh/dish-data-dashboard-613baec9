@@ -27,39 +27,63 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
         
         const userId = sessionData.session.user.id;
         
-        // Check if user has a verified subscription
-        const { data: subscriptions, error } = await supabase
-          .from("subscriptions")
-          .select("*")
-          .eq("user_id", userId)
-          .eq("status", "active")
-          .limit(1);
-        
-        if (error) {
-          console.error("Error checking subscription:", error);
-          toast.error("Error checking subscription status");
-          return;
-        }
-        
-        if (subscriptions && subscriptions.length > 0) {
-          setHasVerifiedSubscription(true);
-        } else {
-          // Check if the user has a pending payment
-          const { data: pendingPayments } = await supabase
-            .from("payments")
+        try {
+          // Check if user has a verified subscription
+          const { data: subscriptions, error } = await supabase
+            .from("subscriptions")
             .select("*")
             .eq("user_id", userId)
-            .eq("status", "pending")
+            .eq("status", "active")
             .limit(1);
+          
+          if (error) {
+            console.error("Error checking subscription:", error);
             
-          if (pendingPayments && pendingPayments.length > 0) {
-            // User has pending payment but not verified yet
-            toast.info("Your payment is pending verification by an admin");
-          } else {
-            // No subscription or pending payment found
-            toast.error("Please subscribe to a plan to access this content");
-            navigate("/payment");
+            // If there's a permission error with the subscriptions table, 
+            // check payments instead and show a special message
+            if (error.code === '42501') {
+              const { data: verifiedPayments, error: paymentsError } = await supabase
+                .from("payments")
+                .select("*")
+                .eq("user_id", userId)
+                .eq("status", "verified")
+                .limit(1);
+                
+              if (!paymentsError && verifiedPayments && verifiedPayments.length > 0) {
+                // User has a verified payment but subscription table has permission issues
+                setHasVerifiedSubscription(true);
+                toast.info("You have a verified payment. Using temporary access until system is updated.");
+                return;
+              }
+            }
+            
+            toast.error("Error checking subscription status");
+            return;
           }
+          
+          if (subscriptions && subscriptions.length > 0) {
+            setHasVerifiedSubscription(true);
+          } else {
+            // Check if the user has a pending payment
+            const { data: pendingPayments } = await supabase
+              .from("payments")
+              .select("*")
+              .eq("user_id", userId)
+              .eq("status", "pending")
+              .limit(1);
+              
+            if (pendingPayments && pendingPayments.length > 0) {
+              // User has pending payment but not verified yet
+              toast.info("Your payment is pending verification by an admin");
+            } else {
+              // No subscription or pending payment found
+              toast.error("Please subscribe to a plan to access this content");
+              navigate("/payment");
+            }
+          }
+        } catch (err) {
+          console.error("Subscription check error:", err);
+          toast.error("Error checking subscription status");
         }
       } catch (err) {
         console.error("Protected route error:", err);

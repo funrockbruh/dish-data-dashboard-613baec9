@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Check, Circle, Clock } from "lucide-react";
@@ -103,48 +102,18 @@ const Payment = () => {
       }
 
       console.log("Payment created successfully:", paymentData[0]);
-
-      // Only include the essential fields for subscription creation
-      // Avoid any potential references to the users table
-      try {
-        console.log("Creating subscription with payment_id:", paymentData[0].id);
-        
-        const {
-          error: subscriptionError
-        } = await supabase.from("subscriptions").insert({
-          user_id: userId,
-          plan: "menu_plan",
-          price: currentPrice,
-          start_date: new Date().toISOString(),
-          end_date: new Date(Date.now() + 2 * 60 * 1000).toISOString(), // 2 minutes from now
-          status: "pending",
-          payment_id: paymentData[0].id
-        });
-        
-        if (subscriptionError) {
-          console.error("Subscription error:", subscriptionError);
-          throw subscriptionError;
-        }
-        
-        console.log("Subscription created successfully");
-      } catch (subscriptionError) {
-        console.error("Failed to create subscription:", subscriptionError);
-        // If subscription creation fails, we'll still show the payment as submitted
-        // since the payment itself was successful
-        toast.warning("Payment recorded, but subscription setup had an issue. The admin will handle it.");
-      }
       
       // Set payment as submitted
       setPaymentSubmitted(true);
       toast.success("Payment request submitted!");
       
-      // Navigate to the pending verification page instead of setup
+      // Navigate to the pending verification page
       setTimeout(() => {
         navigate("/payment/pending");
       }, 2000);
     } catch (error: any) {
       console.error("Payment processing error:", error);
-      toast.error(`Failed to subscribe: ${error.message || "Please try again"}`);
+      toast.error(`Failed to submit payment: ${error.message || "Please try again"}`);
     } finally {
       setIsLoading(false);
     }
