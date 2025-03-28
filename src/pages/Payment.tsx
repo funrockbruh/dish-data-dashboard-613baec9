@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Check, Circle } from "lucide-react";
@@ -38,7 +37,7 @@ const Payment = () => {
           return;
         }
         
-        // Check for active subscription - directly using auth.uid() to avoid joining with users table
+        // Check for active subscription using the RLS policy
         try {
           const {
             data: subscriptionData,
@@ -46,7 +45,6 @@ const Payment = () => {
           } = await supabase
             .from("subscriptions")
             .select("*")
-            .eq("user_id", sessionData.session.user.id) // Use the session user ID directly
             .eq("status", "active")
             .maybeSingle();
           
@@ -98,7 +96,6 @@ const Payment = () => {
       const { error: paymentError } = await supabase
         .from("payments")
         .insert({
-          user_id: sessionData.session.user.id,
           amount: currentPrice,
           payment_type: method,
           status: "pending",
@@ -119,7 +116,6 @@ const Payment = () => {
       const { error: subscriptionError } = await supabase
         .from("subscriptions")
         .insert({
-          user_id: sessionData.session.user.id,
           plan: "menu_plan",
           price: currentPrice,
           start_date: new Date().toISOString(),
