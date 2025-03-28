@@ -7,14 +7,12 @@ import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { Navigation } from "@/components/Navigation";
 import { useIsMobile } from "@/hooks/use-mobile";
-
 type Feature = string | {
   label: string;
   selectable: boolean;
   selected?: boolean;
   onToggle?: () => void;
 };
-
 const Payment = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [hasSubscription, setHasSubscription] = useState(false);
@@ -23,7 +21,6 @@ const Payment = () => {
   const [currentPrice, setCurrentPrice] = useState(100);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-
   useEffect(() => {
     const checkAuth = async () => {
       const {
@@ -44,11 +41,9 @@ const Payment = () => {
     };
     checkAuth();
   }, [navigate]);
-
   useEffect(() => {
     setCurrentPrice(hasQRCode ? 149 : 100);
   }, [hasQRCode]);
-
   const handlePaymentSelect = async (method: string) => {
     try {
       setIsLoading(true);
@@ -84,11 +79,9 @@ const Payment = () => {
       setIsLoading(false);
     }
   };
-
   const toggleQRCode = () => {
     setHasQRCode(!hasQRCode);
   };
-
   const features: Feature[] = ["Unlimited menu items", "Advanced categories", "Priority support", "Mobile-friendly design", "Real-time updates", {
     label: "Custom branding",
     selectable: false
@@ -98,14 +91,12 @@ const Payment = () => {
     selected: hasQRCode,
     onToggle: toggleQRCode
   }];
-
   const plan = {
     name: "Menu Plan",
     price: currentPrice.toString(),
     duration: "2 minutes",
     description: "Quick test plan for your restaurant menu"
   };
-
   const renderFeature = (feature: Feature, index: number) => {
     if (typeof feature === 'string') {
       return <li key={index} className="flex items-center">
@@ -125,7 +116,6 @@ const Payment = () => {
         </li>;
     }
   };
-
   const PaymentMethods = () => <div className={`${isMobile ? 'fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm border-t border-gray-200 shadow-lg px-4 py-3 z-50 rounded-t-2xl' : 'bg-white/80 backdrop-blur-sm rounded-lg p-6 shadow-md mb-6'}`}>
       <div className="space-y-3">
         {!isMobile && <h3 className="text-lg font-medium mb-2">Payment Methods</h3>}
@@ -134,20 +124,13 @@ const Payment = () => {
         </Button>
         
         <Button onClick={() => handlePaymentSelect('whish')} disabled={isLoading} className="w-full bg-rose-600 hover:bg-rose-700 text-white h-12">
-          {isLoading && paymentMethod === 'whish' ? "Processing..." : (
-            <>
-              <img 
-                src="/lovable-uploads/d5e36463-92ad-4802-99fc-ab3c9b4a5179.png" 
-                alt="Whish logo" 
-                className="h-5 mr-2"
-              /> 
+          {isLoading && paymentMethod === 'whish' ? "Processing..." : <>
+              <img alt="Whish logo" src="/lovable-uploads/b718db26-08e1-484c-ad5c-463495cce89b.png" className="h-12 mr--1 object-fill" /> 
               Whish Pay
-            </>
-          )}
+            </>}
         </Button>
       </div>
     </div>;
-
   return <div className="min-h-screen bg-gradient-to-b from-blue-50/50 to-purple-50/50">
       <Navigation />
       <main className={`pt-20 pb-16 px-4 ${isMobile ? 'pb-36' : ''}`}>
@@ -187,5 +170,4 @@ const Payment = () => {
       {isMobile && <PaymentMethods />}
     </div>;
 };
-
 export default Payment;
