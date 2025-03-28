@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Check, Circle } from "lucide-react";
@@ -51,7 +50,6 @@ const Payment = () => {
     checkAuth();
   }, [navigate]);
 
-  // Update price when QR code selection changes
   useEffect(() => {
     setCurrentPrice(hasQRCode ? 149 : 100);
   }, [hasQRCode]);
@@ -150,11 +148,11 @@ const Payment = () => {
   };
 
   const PaymentMethods = () => (
-    <div className={`${isMobile ? 'fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg px-4 py-4 z-50' : 'bg-white/80 backdrop-blur-sm rounded-lg p-6 shadow-md mb-6'}`}>
-      <div className="space-y-4">
+    <div className={`${isMobile ? 'fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm border-t border-gray-200 shadow-lg px-4 py-3 z-50 rounded-t-2xl' : 'bg-white/80 backdrop-blur-sm rounded-lg p-6 shadow-md mb-6'}`}>
+      <div className="space-y-3">
         {!isMobile && <h3 className="text-lg font-medium mb-2">Payment Methods</h3>}
         <Button 
-          className="w-full bg-green-500 hover:bg-green-600 text-white h-14"
+          className="w-full bg-green-500 hover:bg-green-600 text-white h-12"
           onClick={() => handlePaymentSelect('cash')}
           disabled={isLoading}
         >
@@ -162,7 +160,7 @@ const Payment = () => {
         </Button>
         
         <Button 
-          className="w-full bg-pink-600 hover:bg-pink-700 text-white h-14"
+          className="w-full bg-pink-600 hover:bg-pink-700 text-white h-12"
           onClick={() => handlePaymentSelect('whish')}
           disabled={isLoading}
         >
