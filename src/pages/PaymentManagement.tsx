@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Calendar, CreditCard, Check, ChevronDown, ChevronUp, Trash2, RefreshCw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
+import { format, addMinutes } from "date-fns";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { toast } from "sonner";
 
@@ -24,8 +24,11 @@ const PaymentManagement = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [wantsQrCode, setWantsQrCode] = useState(false);
   const [billingHistory, setBillingHistory] = useState<any[]>([]);
+  const [testRenewalDate, setTestRenewalDate] = useState(new Date());
 
   useEffect(() => {
+    setTestRenewalDate(addMinutes(new Date(), 2));
+    
     const fetchSubscriptionData = async () => {
       try {
         setIsLoading(true);
@@ -142,6 +145,14 @@ const PaymentManagement = () => {
     }
   };
 
+  const formatDateTime = (date: Date) => {
+    try {
+      return format(date, "MMMM d, yyyy 'at' h:mm a");
+    } catch (e) {
+      return "Invalid date";
+    }
+  };
+
   const handleCancelSubscription = async () => {
     if (!subscription) return;
     try {
@@ -203,7 +214,6 @@ const PaymentManagement = () => {
       </div>;
   }
 
-  // Check if we have either a subscription or verified payments
   const hasActiveSubscription = subscription || billingHistory.length > 0 && billingHistory.some(payment => payment.status === "verified");
   return <div className="min-h-screen bg-gray-50 pb-10">
       <div className="bg-white shadow-sm">
@@ -235,7 +245,9 @@ const PaymentManagement = () => {
                 <div className="bg-gray-50 rounded-lg p-4">
                   <p className="text-gray-600 text-sm">Next Renewal</p>
                   <div className="flex items-center justify-between">
-                    <p className="font-medium">{subscription?.end_date ? formatDate(subscription.end_date) : "Annual subscription"}</p>
+                    <p className="font-medium">
+                      {subscription?.end_date ? formatDate(subscription.end_date) : formatDateTime(testRenewalDate)}
+                    </p>
                     <Button 
                       variant="outline" 
                       size="sm" 
