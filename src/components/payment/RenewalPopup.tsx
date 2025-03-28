@@ -36,33 +36,51 @@ export const RenewalPopup = ({
       } else if (now >= gracePeriod) {
         // If past grace period, delete the user account
         try {
-          // Create a deletion request in the payments table
-          const {
-            error: requestError
-          } = await supabase.from("payments").insert({
-            user_id: userId,
-            amount: 0,
-            payment_type: "account_expiry",
-            status: "pending",
-            details: {
-              request_type: "deletion",
-              requested_at: new Date().toISOString(),
+          // Call the edge function to delete the user
+          const response = await fetch(`${window.location.origin}/api/delete-expired-user`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+            },
+            body: JSON.stringify({ 
+              userId,
               reason: "subscription_expiry"
-            }
+            })
           });
           
-          if (requestError) {
-            console.error("Error creating deletion request:", requestError);
+          const result = await response.json();
+          
+          if (!response.ok) {
+            throw new Error(result.error || "Failed to delete user account");
           }
           
-          // Sign out the user regardless of whether the deletion request was successful
+          // Sign out the user after successful deletion
           await supabase.auth.signOut();
-          toast.error("Your account has expired due to payment not being renewed");
+          toast.success("Your account has been deleted due to subscription expiry");
           navigate("/");
         } catch (error) {
           console.error("Failed to process account expiry:", error);
-          // Fallback: just sign out the user if any errors occur
+          // Create a fallback deletion request in the payments table
+          try {
+            await supabase.from("payments").insert({
+              user_id: userId,
+              amount: 0,
+              payment_type: "account_expiry",
+              status: "pending",
+              details: {
+                request_type: "deletion",
+                requested_at: new Date().toISOString(),
+                reason: "subscription_expiry"
+              }
+            });
+          } catch (fallbackError) {
+            console.error("Error creating deletion request:", fallbackError);
+          }
+          
+          // Sign out the user regardless of errors
           await supabase.auth.signOut();
+          toast.error("Your account has expired due to payment not being renewed");
           navigate("/");
         }
       }
