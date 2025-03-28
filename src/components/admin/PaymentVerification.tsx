@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
@@ -44,6 +45,7 @@ export const PaymentVerification = () => {
       if (error) throw error;
       setPayments(data || []);
     } catch (error: any) {
+      console.error("Failed to fetch payments:", error);
       toast.error(error.message || "Failed to fetch payments");
     } finally {
       setLoading(false);
@@ -52,13 +54,25 @@ export const PaymentVerification = () => {
 
   const handleVerify = async (id: string) => {
     try {
+      console.log("Starting payment verification for id:", id);
+      
       // Get admin ID
       const { data: session } = await supabase.auth.getSession();
-      const { data: adminData } = await supabase
+      console.log("Current session:", session?.session?.user?.email);
+      
+      const { data: adminData, error: adminError } = await supabase
         .from("admin_users")
         .select("id")
         .eq("email", session.session?.user.email)
         .single();
+
+      if (adminError) {
+        console.error("Admin lookup error:", adminError);
+        toast.error("Admin ID not found");
+        return;
+      }
+
+      console.log("Admin data:", adminData);
 
       if (!adminData) {
         toast.error("Admin ID not found");
@@ -66,11 +80,19 @@ export const PaymentVerification = () => {
       }
 
       // Get the payment to update subscription
-      const { data: paymentData } = await supabase
+      const { data: paymentData, error: paymentFetchError } = await supabase
         .from("payments")
         .select("*")
         .eq("id", id)
         .single();
+
+      if (paymentFetchError) {
+        console.error("Payment fetch error:", paymentFetchError);
+        toast.error("Payment not found");
+        return;
+      }
+
+      console.log("Payment data found:", paymentData);
 
       if (!paymentData) {
         toast.error("Payment not found");
@@ -87,7 +109,12 @@ export const PaymentVerification = () => {
         })
         .eq("id", id);
 
-      if (paymentError) throw paymentError;
+      if (paymentError) {
+        console.error("Payment update error:", paymentError);
+        throw paymentError;
+      }
+
+      console.log("Payment updated successfully");
 
       // Update subscription status
       const { error: subscriptionError } = await supabase
@@ -97,33 +124,61 @@ export const PaymentVerification = () => {
         })
         .eq("payment_id", id);
 
-      if (subscriptionError) throw subscriptionError;
+      if (subscriptionError) {
+        console.error("Subscription update error:", subscriptionError);
+        throw subscriptionError;
+      }
+
+      console.log("Subscription updated successfully");
 
       // Add audit log
-      await supabase.from("audit_logs").insert({
+      const auditData = {
         admin_id: adminData.id,
         action: "verify_payment",
         resource_type: "payments",
         resource_id: id,
         details: { action: "payment_verified" }
-      });
+      };
+      
+      console.log("Adding audit log:", auditData);
+      
+      const { error: auditError } = await supabase
+        .from("audit_logs")
+        .insert(auditData);
+
+      if (auditError) {
+        console.error("Audit log error:", auditError);
+      }
 
       toast.success("Payment verified successfully");
       fetchPayments();
     } catch (error: any) {
+      console.error("Verification error details:", error);
       toast.error(error.message || "Failed to verify payment");
     }
   };
 
   const handleReject = async (id: string) => {
     try {
+      console.log("Starting payment rejection for id:", id);
+      
       // Get admin ID
       const { data: session } = await supabase.auth.getSession();
-      const { data: adminData } = await supabase
+      console.log("Current session:", session?.session?.user?.email);
+      
+      const { data: adminData, error: adminError } = await supabase
         .from("admin_users")
         .select("id")
         .eq("email", session.session?.user.email)
         .single();
+
+      if (adminError) {
+        console.error("Admin lookup error:", adminError);
+        toast.error("Admin ID not found");
+        return;
+      }
+
+      console.log("Admin data:", adminData);
 
       if (!adminData) {
         toast.error("Admin ID not found");
@@ -140,9 +195,14 @@ export const PaymentVerification = () => {
         })
         .eq("id", id);
 
-      if (paymentError) throw paymentError;
+      if (paymentError) {
+        console.error("Payment update error:", paymentError);
+        throw paymentError;
+      }
 
-      // Update subscription status
+      console.log("Payment updated successfully");
+
+      // Update subscription status - notice we're using the payment_id parameter
       const { error: subscriptionError } = await supabase
         .from("subscriptions")
         .update({
@@ -150,20 +210,36 @@ export const PaymentVerification = () => {
         })
         .eq("payment_id", id);
 
-      if (subscriptionError) throw subscriptionError;
+      if (subscriptionError) {
+        console.error("Subscription update error:", subscriptionError);
+        throw subscriptionError;
+      }
+
+      console.log("Subscription updated successfully");
 
       // Add audit log
-      await supabase.from("audit_logs").insert({
+      const auditData = {
         admin_id: adminData.id,
         action: "reject_payment",
         resource_type: "payments",
         resource_id: id,
         details: { action: "payment_rejected" }
-      });
+      };
+      
+      console.log("Adding audit log:", auditData);
+      
+      const { error: auditError } = await supabase
+        .from("audit_logs")
+        .insert(auditData);
+
+      if (auditError) {
+        console.error("Audit log error:", auditError);
+      }
 
       toast.success("Payment rejected");
       fetchPayments();
     } catch (error: any) {
+      console.error("Rejection error details:", error);
       toast.error(error.message || "Failed to reject payment");
     }
   };
