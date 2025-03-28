@@ -21,7 +21,9 @@ export const CountdownTimer = ({ expiryDate }: CountdownTimerProps) => {
       // Show timer when less than 1 minute remains
       if (timeDiff <= 60000 && timeDiff > 0) {
         setShowTimer(true);
-        setTimeLeft(formatDistanceToNow(expiryDate, { addSuffix: true }));
+        // Format to show "X seconds left"
+        const formattedTime = formatDistanceToNow(expiryDate, { addSuffix: false });
+        setTimeLeft(`${formattedTime} left`);
       } else {
         setShowTimer(false);
       }
