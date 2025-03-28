@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Check, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 
 interface Payment {
   id: string;
@@ -66,8 +67,20 @@ export const PaymentVerification = () => {
         return;
       }
 
+      // Get the payment to update subscription
+      const { data: paymentData } = await supabase
+        .from("payments")
+        .select("*")
+        .eq("id", id)
+        .single();
+
+      if (!paymentData) {
+        toast.error("Payment not found");
+        return;
+      }
+
       // Update payment status
-      const { error } = await supabase
+      const { error: paymentError } = await supabase
         .from("payments")
         .update({
           verified: true,
@@ -76,7 +89,17 @@ export const PaymentVerification = () => {
         })
         .eq("id", id);
 
-      if (error) throw error;
+      if (paymentError) throw paymentError;
+
+      // Update subscription status
+      const { error: subscriptionError } = await supabase
+        .from("subscriptions")
+        .update({
+          status: "active"
+        })
+        .eq("payment_id", id);
+
+      if (subscriptionError) throw subscriptionError;
 
       // Add audit log
       await supabase.from("audit_logs").insert({
@@ -110,7 +133,7 @@ export const PaymentVerification = () => {
       }
 
       // Update payment status
-      const { error } = await supabase
+      const { error: paymentError } = await supabase
         .from("payments")
         .update({
           verified: false,
@@ -119,7 +142,17 @@ export const PaymentVerification = () => {
         })
         .eq("id", id);
 
-      if (error) throw error;
+      if (paymentError) throw paymentError;
+
+      // Update subscription status
+      const { error: subscriptionError } = await supabase
+        .from("subscriptions")
+        .update({
+          status: "rejected"
+        })
+        .eq("payment_id", id);
+
+      if (subscriptionError) throw subscriptionError;
 
       // Add audit log
       await supabase.from("audit_logs").insert({
@@ -160,6 +193,7 @@ export const PaymentVerification = () => {
               <TableHead>User ID</TableHead>
               <TableHead>Amount</TableHead>
               <TableHead>Type</TableHead>
+              <TableHead>Details</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
@@ -171,15 +205,23 @@ export const PaymentVerification = () => {
                   {new Date(payment.created_at).toLocaleDateString()}
                 </TableCell>
                 <TableCell className="font-mono text-xs">
-                  {payment.user_id}
+                  {payment.user_id.slice(0, 8)}...
                 </TableCell>
-                <TableCell>${payment.amount}</TableCell>
+                <TableCell className="font-semibold">${payment.amount}</TableCell>
                 <TableCell>{payment.payment_type}</TableCell>
+                <TableCell>
+                  {payment.details?.has_qr_code && (
+                    <Badge variant="success" className="mr-2">QR Code</Badge>
+                  )}
+                  {payment.details?.plan && (
+                    <Badge>{payment.details.plan}</Badge>
+                  )}
+                </TableCell>
                 <TableCell>
                   <Badge variant={
                     payment.status === "verified" ? "success" : 
                     payment.status === "rejected" ? "destructive" : 
-                    "outline"
+                    "warning"
                   }>
                     {payment.status}
                   </Badge>

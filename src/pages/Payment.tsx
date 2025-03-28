@@ -71,6 +71,24 @@ const Payment = () => {
         return;
       }
 
+      // Create a payment record first
+      const {
+        data: paymentData,
+        error: paymentError
+      } = await supabase.from("payments").insert({
+        user_id: sessionData.session.user.id,
+        amount: currentPrice,
+        payment_type: method,
+        status: "pending",
+        details: {
+          has_qr_code: hasQRCode,
+          plan: "menu_plan"
+        }
+      }).select();
+
+      if (paymentError) throw paymentError;
+
+      // Now create the subscription linked to the payment
       const {
         error
       } = await supabase.from("subscriptions").insert({
@@ -79,7 +97,8 @@ const Payment = () => {
         price: currentPrice,
         start_date: new Date().toISOString(),
         end_date: new Date(Date.now() + 2 * 60 * 1000).toISOString(),
-        status: "active",
+        status: "pending",
+        payment_id: paymentData[0].id,
         details: {
           payment_method: method,
           has_qr_code: hasQRCode
