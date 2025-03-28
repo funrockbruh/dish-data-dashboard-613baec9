@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,13 +5,11 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { format, addMinutes } from "date-fns";
 import { toast } from "sonner";
-
 interface RenewalPopupProps {
   restaurantName: string;
   expiryDate: Date;
   userId: string;
 }
-
 export const RenewalPopup = ({
   restaurantName,
   expiryDate,
@@ -25,7 +22,6 @@ export const RenewalPopup = ({
   // Calculate grace period (5 minutes after expiry)
   const gracePeriod = addMinutes(expiryDate, 5);
   const formattedGracePeriod = format(gracePeriod, "HH:mm");
-
   useEffect(() => {
     const checkExpiry = () => {
       const now = new Date();
@@ -38,12 +34,10 @@ export const RenewalPopup = ({
         navigate("/payment");
       }
     };
-
     checkExpiry();
     const interval = setInterval(checkExpiry, 5000);
     return () => clearInterval(interval);
   }, [expiryDate, gracePeriod, navigate]);
-
   const handleRenewalRequest = async () => {
     try {
       setIsLoading(true);
@@ -63,7 +57,6 @@ export const RenewalPopup = ({
           plan: "menu_plan"
         }
       });
-
       if (error) throw error;
       toast.success("Renewal request submitted successfully");
       // Keep the popup visible but update UI to show request was sent
@@ -74,12 +67,9 @@ export const RenewalPopup = ({
       setIsLoading(false);
     }
   };
-
   if (!isVisible) return null;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md">
-      <div className="bg-black/90 text-white rounded-xl p-8 max-w-sm w-full text-center shadow-2xl border border-white/10">
+  return <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md">
+      <div className="bg-black/90 text-white rounded-xl p-8 max-w-sm w-full text-center shadow-2xl border border-white/10 mt-[500px] py-[180px]">
         <h2 className="text-2xl font-bold mb-6">Renewal request</h2>
         
         <div className="mb-6 flex justify-center">
@@ -92,14 +82,9 @@ export const RenewalPopup = ({
         
         <p className="mb-8 text-gray-300">{restaurantName} has until {formattedGracePeriod}</p>
         
-        <Button 
-          className="w-full bg-purple-600 hover:bg-purple-700 text-white py-6 text-lg font-medium"
-          onClick={handleRenewalRequest} 
-          disabled={isLoading}
-        >
+        <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white py-6 text-lg font-medium" onClick={handleRenewalRequest} disabled={isLoading}>
           {isLoading ? "Processing..." : "Ask for Renewal"}
         </Button>
       </div>
-    </div>
-  );
+    </div>;
 };
