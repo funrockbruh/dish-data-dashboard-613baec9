@@ -18,6 +18,8 @@ import PublicMenu from "./pages/PublicMenu";
 import AdminPanel from "./pages/AdminPanel";
 import AdminLogin from "./pages/AdminLogin";
 import Payment from "./pages/Payment";
+import PendingVerification from "./pages/PendingVerification";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -31,14 +33,21 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/verify" element={<Verify />} />
           <Route path="/payment" element={<Payment />} />
-          <Route path="/setup" element={<RestaurantSetup />} />
-          <Route path="/categories" element={<CategorySetup />} />
-          <Route path="/menu" element={<MenuItemsList />} />
-          <Route path="/featured" element={<FeaturedItems />} />
+          <Route path="/payment/pending" element={<PendingVerification />} />
+          
+          {/* Protected routes that require verified subscription */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/setup" element={<RestaurantSetup />} />
+            <Route path="/categories" element={<CategorySetup />} />
+            <Route path="/menu" element={<MenuItemsList />} />
+            <Route path="/featured" element={<FeaturedItems />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/theme" element={<Theme />} />
+            <Route path="/social-media" element={<SocialMedia />} />
+          </Route>
+          
+          {/* Public routes */}
           <Route path="/menu/:subdomain" element={<PublicMenu />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/theme" element={<Theme />} />
-          <Route path="/social-media" element={<SocialMedia />} />
           <Route path="/admin-panel" element={<AdminPanel />} />
           <Route path="/admin-login" element={<AdminLogin />} />
         </Routes>

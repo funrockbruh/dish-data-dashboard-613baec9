@@ -44,6 +44,14 @@ const Payment = () => {
         toast.info("You already have an active subscription");
         navigate("/setup");
       }
+      
+      // Also check for pending payments
+      const {
+        data: pendingPayment
+      } = await supabase.from("payments").select("*").eq("user_id", sessionData.session.user.id).eq("status", "pending").single();
+      if (pendingPayment) {
+        navigate("/payment/pending");
+      }
     };
     checkAuth();
   }, [navigate]);
@@ -130,10 +138,10 @@ const Payment = () => {
       setPaymentSubmitted(true);
       toast.success("Payment request submitted!");
       
-      // Don't navigate immediately, let the user see the pending state
+      // Navigate to the pending verification page instead of setup
       setTimeout(() => {
-        navigate("/setup");
-      }, 3000);
+        navigate("/payment/pending");
+      }, 2000);
     } catch (error: any) {
       console.error("Payment processing error:", error);
       toast.error(`Failed to subscribe: ${error.message || "Please try again"}`);
