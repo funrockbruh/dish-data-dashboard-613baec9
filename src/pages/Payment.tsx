@@ -20,6 +20,7 @@ const Payment = () => {
   const [hasSubscription, setHasSubscription] = useState(false);
   const [hasQRCode, setHasQRCode] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
+  const [currentPrice, setCurrentPrice] = useState(100);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -48,6 +49,11 @@ const Payment = () => {
     checkAuth();
   }, [navigate]);
 
+  // Update price when QR code selection changes
+  useEffect(() => {
+    setCurrentPrice(hasQRCode ? 149 : 100);
+  }, [hasQRCode]);
+
   const handlePaymentSelect = async (method: string) => {
     try {
       setIsLoading(true);
@@ -63,7 +69,7 @@ const Payment = () => {
       const { error } = await supabase.from("subscriptions").insert({
         user_id: sessionData.session.user.id,
         plan: "menu_plan",
-        price: 100,
+        price: currentPrice,
         start_date: new Date().toISOString(),
         end_date: new Date(Date.now() + 2 * 60 * 1000).toISOString(), // 2 minutes from now
         status: "active",
@@ -85,6 +91,10 @@ const Payment = () => {
     }
   };
 
+  const toggleQRCode = () => {
+    setHasQRCode(!hasQRCode);
+  };
+
   const features: Feature[] = [
     "Unlimited menu items",
     "Advanced categories",
@@ -92,12 +102,12 @@ const Payment = () => {
     "Mobile-friendly design",
     "Real-time updates",
     { label: "Custom branding", selectable: false },
-    { label: "Unique QR code", selectable: true, selected: hasQRCode, onToggle: () => setHasQRCode(!hasQRCode) }
+    { label: "Unique QR code", selectable: true, selected: hasQRCode, onToggle: toggleQRCode }
   ];
 
   const plan = {
     name: "Menu Plan",
-    price: "100",
+    price: currentPrice.toString(),
     duration: "2 minutes",
     description: "Quick test plan for your restaurant menu"
   };
