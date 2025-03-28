@@ -6,8 +6,7 @@ import { supabase } from "@/lib/supabase";
 
 export const Navigation = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [restaurantName, setRestaurantName] = useState<string | null>(null);
-  const [subdomain, setSubdomain] = useState<string | null>(null);
+  const [email, setEmail] = useState<string | null>(null);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -15,17 +14,7 @@ export const Navigation = () => {
       setIsAuthenticated(!!data.session);
       
       if (data.session) {
-        // Fetch restaurant profile
-        const { data: profileData } = await supabase
-          .from('restaurant_profiles')
-          .select('restaurant_name, subdomain')
-          .eq('id', data.session.user.id)
-          .single();
-          
-        if (profileData) {
-          setRestaurantName(profileData.restaurant_name);
-          setSubdomain(profileData.subdomain);
-        }
+        setEmail(data.session.user.email);
       }
     };
 
@@ -35,20 +24,9 @@ export const Navigation = () => {
       setIsAuthenticated(!!session);
       
       if (session) {
-        // Fetch restaurant profile
-        const { data: profileData } = await supabase
-          .from('restaurant_profiles')
-          .select('restaurant_name, subdomain')
-          .eq('id', session.user.id)
-          .single();
-          
-        if (profileData) {
-          setRestaurantName(profileData.restaurant_name);
-          setSubdomain(profileData.subdomain);
-        }
+        setEmail(session.user.email);
       } else {
-        setRestaurantName(null);
-        setSubdomain(null);
+        setEmail(null);
       }
     });
 
@@ -93,10 +71,10 @@ export const Navigation = () => {
           <div>
             {isAuthenticated ? (
               <div className="flex items-center gap-3">
-                {restaurantName && (
-                  <Link to="/menu" className="text-gray-800 hover:text-gray-900">
-                    <span className="font-medium">{restaurantName}</span>
-                  </Link>
+                {email && (
+                  <span className="text-gray-800 font-medium truncate max-w-[140px]">
+                    {email}
+                  </span>
                 )}
                 <Button 
                   variant="outline" 

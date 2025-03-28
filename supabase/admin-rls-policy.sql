@@ -23,3 +23,24 @@ USING (
     WHERE email = auth.email()
   )
 );
+
+-- Create profiles RLS policy for users to manage their own profiles
+CREATE POLICY "Users can manage their own profiles"
+ON public.restaurant_profiles
+FOR ALL
+TO authenticated
+USING (id = auth.uid());
+
+-- Create subscription access policy that doesn't reference users table
+CREATE POLICY "Users can access their own subscriptions" 
+ON public.subscriptions 
+FOR ALL 
+TO authenticated 
+USING (user_id = auth.uid());
+
+-- Create payment access policy that doesn't reference users table
+CREATE POLICY "Users can access their own payments" 
+ON public.payments 
+FOR ALL 
+TO authenticated 
+USING (user_id = auth.uid());

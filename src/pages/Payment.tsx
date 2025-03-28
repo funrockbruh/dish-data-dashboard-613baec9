@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Check, Circle } from "lucide-react";
@@ -38,26 +37,29 @@ const Payment = () => {
           return;
         }
         
-        // Check for active subscription - using maybeSingle to avoid errors
-        const {
-          data: subscriptionData,
-          error
-        } = await supabase
-          .from("subscriptions")
-          .select("*")
-          .eq("user_id", sessionData.session.user.id)
-          .eq("status", "active")
-          .maybeSingle();
-        
-        if (error && error.code !== 'PGRST116') {
-          console.error("Subscription check error:", error);
-          return;
-        }
-        
-        if (subscriptionData) {
-          setHasSubscription(true);
-          toast.info("You already have an active subscription");
-          navigate("/setup");
+        // Check for active subscription - using filter instead of joining with users table
+        try {
+          const {
+            data: subscriptionData,
+            error
+          } = await supabase
+            .from("subscriptions")
+            .select("*")
+            .eq("status", "active")
+            .maybeSingle();
+          
+          if (error && error.code !== 'PGRST116') {
+            console.error("Subscription check error:", error);
+            return;
+          }
+          
+          if (subscriptionData) {
+            setHasSubscription(true);
+            toast.info("You already have an active subscription");
+            navigate("/setup");
+          }
+        } catch (err) {
+          console.error("Error checking subscription:", err);
         }
       } catch (error) {
         console.error("Auth check error:", error);
@@ -90,7 +92,7 @@ const Payment = () => {
         return;
       }
 
-      // Create payment record - don't use select() 
+      // Create payment record - don't use select()
       const { error: paymentError } = await supabase
         .from("payments")
         .insert({
@@ -111,21 +113,7 @@ const Payment = () => {
         return;
       }
 
-      // Get the just-created payment's ID to link with the subscription
-      const { data: paymentData, error: fetchError } = await supabase
-        .from("payments")
-        .select("id")
-        .eq("user_id", sessionData.session.user.id)
-        .eq("status", "pending")
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-        
-      if (fetchError) {
-        console.error("Payment fetch error:", fetchError);
-      }
-
-      // Create subscription record with payment_id link
+      // Create subscription record without getting payment ID
       const { error: subscriptionError } = await supabase
         .from("subscriptions")
         .insert({
@@ -135,7 +123,6 @@ const Payment = () => {
           start_date: new Date().toISOString(),
           end_date: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(), // 1 year from now
           status: "pending",
-          payment_id: paymentData?.id || null,
           details: {
             payment_method: method,
             has_qr_code: hasQRCode
