@@ -1,6 +1,7 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Check, CircleDot } from "lucide-react";
+import { Check, Circle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
@@ -114,20 +115,23 @@ const Payment = () => {
     } else {
       return (
         <li key={index} className="flex items-center">
-          <div className="p-1 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 mr-2">
-            <Check className="h-4 w-4 text-white" />
-          </div>
-          <div 
-            className={`flex items-center ${feature.selectable ? 'cursor-pointer' : ''}`}
-            onClick={feature.selectable ? feature.onToggle : undefined}
-          >
-            <span>{feature.label}</span>
-            {feature.selectable && (
-              <div className={`h-5 w-5 rounded-full ml-2 border flex items-center justify-center ${feature.selected ? 'border-indigo-600' : 'border-gray-300'}`}>
-                {feature.selected && <CircleDot className="h-3 w-3 text-indigo-600" />}
-              </div>
-            )}
-          </div>
+          {feature.selectable ? (
+            <div 
+              className={`p-1 rounded-full ${feature.selected ? 'bg-gradient-to-r from-blue-600 to-purple-600' : 'border border-gray-300'} mr-2 cursor-pointer`}
+              onClick={feature.onToggle}
+            >
+              {feature.selected ? (
+                <Check className="h-4 w-4 text-white" />
+              ) : (
+                <Circle className="h-4 w-4 text-gray-300" />
+              )}
+            </div>
+          ) : (
+            <div className="p-1 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 mr-2">
+              <Check className="h-4 w-4 text-white" />
+            </div>
+          )}
+          <span>{feature.label}</span>
         </li>
       );
     }
