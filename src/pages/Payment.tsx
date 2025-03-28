@@ -6,6 +6,8 @@ import { PaymentMethods } from "@/components/payment/PaymentMethods";
 import { PaymentConfirmation } from "@/components/payment/PaymentConfirmation";
 import { usePayment } from "@/hooks/use-payment";
 import { Feature } from "@/components/payment/PlanFeatures";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 const Payment = () => {
   const {
@@ -14,6 +16,7 @@ const Payment = () => {
     paymentMethod,
     currentPrice,
     paymentSubmitted,
+    errorInfo,
     handlePaymentSelect,
     toggleQRCode
   } = usePayment();
@@ -54,6 +57,19 @@ const Payment = () => {
             <h1 className="text-3xl font-bold mb-2">Choose Your Plan</h1>
             <p className="text-muted-foreground">Select a subscription plan to continue</p>
           </div>
+
+          {/* Debug Information */}
+          {errorInfo && (
+            <Card className="p-4 mb-6 bg-amber-50 border-amber-200">
+              <h3 className="font-semibold text-amber-800 mb-2 flex items-center">
+                <Badge variant="outline" className="bg-amber-100 text-amber-800 mr-2">DEBUG</Badge>
+                Error Information
+              </h3>
+              <div className="bg-amber-100 p-3 rounded text-amber-900 font-mono text-sm overflow-auto max-h-40">
+                <pre>{JSON.stringify(errorInfo, null, 2)}</pre>
+              </div>
+            </Card>
+          )}
 
           {paymentSubmitted ? (
             <PaymentConfirmation 

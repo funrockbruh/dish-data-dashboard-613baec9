@@ -11,6 +11,7 @@ export const usePayment = () => {
   const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
   const [currentPrice, setCurrentPrice] = useState(100);
   const [paymentSubmitted, setPaymentSubmitted] = useState(false);
+  const [errorInfo, setErrorInfo] = useState<any>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -24,19 +25,27 @@ export const usePayment = () => {
           return;
         }
         
-        // Check for active subscription using the RLS policy
+        // Check for active subscription with improved error handling
         try {
+          console.log("Checking for active subscriptions...");
           const {
             data: subscriptionData,
             error
           } = await supabase
             .from("subscriptions")
-            .select("*")
+            .select("id, plan, status")
             .eq("status", "active")
+            .eq("user_id", sessionData.session.user.id)
             .maybeSingle();
           
-          if (error && error.code !== 'PGRST116') {
+          if (error) {
             console.error("Subscription check error:", error);
+            setErrorInfo(error);
+            
+            // Only show toast for actual errors, not for "no rows returned"
+            if (error.code !== 'PGRST116') {
+              toast.error(`Subscription check failed: ${error.message}`);
+            }
             return;
           }
           
@@ -44,12 +53,16 @@ export const usePayment = () => {
             setHasSubscription(true);
             toast.info("You already have an active subscription");
             navigate("/setup");
+          } else {
+            console.log("No active subscription found.");
           }
         } catch (err) {
           console.error("Subscription check error:", err);
+          setErrorInfo(err);
         }
       } catch (error) {
         console.error("Auth check error:", error);
+        setErrorInfo(error);
       }
     };
     checkAuth();
@@ -79,8 +92,11 @@ export const usePayment = () => {
         return;
       }
 
-      // Create payment record - don't need to explicitly set user_id as RLS will handle it
-      const { error: paymentError } = await supabase
+      const userId = sessionData.session.user.id;
+      console.log("Creating payment record for user:", userId);
+
+      // Create payment record with explicit user_id
+      const { data: paymentData, error: paymentError } = await supabase
         .from("payments")
         .insert({
           amount: currentPrice,
@@ -90,17 +106,22 @@ export const usePayment = () => {
             has_qr_code: hasQRCode,
             plan: "menu_plan"
           },
-          user_id: sessionData.session.user.id // Explicitly set user_id from session
-        });
+          user_id: userId
+        })
+        .select("id")
+        .single();
 
       if (paymentError) {
         console.error("Payment creation error:", paymentError);
-        toast.error("Failed to create payment record");
+        setErrorInfo(paymentError);
+        toast.error(`Failed to create payment record: ${paymentError.message}`);
         setIsLoading(false);
         return;
       }
 
-      // Create subscription record with explicit user_id
+      console.log("Payment record created:", paymentData);
+
+      // Create subscription record with explicit user_id but without 'details' column
       const { error: subscriptionError } = await supabase
         .from("subscriptions")
         .insert({
@@ -109,16 +130,14 @@ export const usePayment = () => {
           start_date: new Date().toISOString(),
           end_date: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(), // 1 year from now
           status: "pending",
-          user_id: sessionData.session.user.id, // Explicitly set user_id from session
-          details: {
-            payment_method: method,
-            has_qr_code: hasQRCode
-          }
+          user_id: userId,
+          payment_id: paymentData?.id || null
         });
       
       if (subscriptionError) {
         console.error("Subscription creation error:", subscriptionError);
-        toast.error("Failed to create subscription");
+        setErrorInfo(subscriptionError);
+        toast.error(`Failed to create subscription: ${subscriptionError.message}`);
         setIsLoading(false);
         return;
       }
@@ -128,6 +147,7 @@ export const usePayment = () => {
       
     } catch (error) {
       console.error("Payment error:", error);
+      setErrorInfo(error);
       toast.error("Failed to process payment. Please try again.");
     } finally {
       setIsLoading(false);
@@ -145,6 +165,7 @@ export const usePayment = () => {
     paymentMethod,
     currentPrice,
     paymentSubmitted,
+    errorInfo,
     handlePaymentSelect,
     toggleQRCode
   };
