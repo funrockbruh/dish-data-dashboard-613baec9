@@ -227,23 +227,6 @@ const Payment = () => {
     </div>
   );
 
-  const features: Feature[] = ["Unlimited menu items", "Advanced categories", "Priority support", "Mobile-friendly design", "Real-time updates", {
-    label: "Custom branding",
-    selectable: false
-  }, {
-    label: "Unique QR code",
-    selectable: true,
-    selected: hasQRCode,
-    onToggle: toggleQRCode
-  }];
-
-  const plan = {
-    name: "Menu Plan",
-    price: currentPrice.toString(),
-    duration: "2 minutes",
-    description: "Quick test plan for your restaurant menu"
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50/50 to-purple-50/50">
       <Navigation />
