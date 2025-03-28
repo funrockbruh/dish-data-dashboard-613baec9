@@ -69,7 +69,7 @@ export const RenewalPopup = ({
   };
   if (!isVisible) return null;
   return <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
-      <div className="bg-black text-white rounded-xl p-6 max-w-xs w-full text-center mt-[500px]">
+      <div className="bg-black text-white rounded-xl p-6 max-w-xs w-full text-center">
         <h2 className="text-xl font-bold mb-4">Renewal request</h2>
         
         <div className="mb-4 flex justify-center">
