@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Check, Circle } from "lucide-react";
@@ -37,7 +38,7 @@ const Payment = () => {
           return;
         }
         
-        // Check for active subscription - using filter instead of joining with users table
+        // Check for active subscription - directly using auth.uid() to avoid joining with users table
         try {
           const {
             data: subscriptionData,
@@ -45,6 +46,7 @@ const Payment = () => {
           } = await supabase
             .from("subscriptions")
             .select("*")
+            .eq("user_id", sessionData.session.user.id) // Use the session user ID directly
             .eq("status", "active")
             .maybeSingle();
           
@@ -59,7 +61,7 @@ const Payment = () => {
             navigate("/setup");
           }
         } catch (err) {
-          console.error("Error checking subscription:", err);
+          console.error("Subscription check error:", err);
         }
       } catch (error) {
         console.error("Auth check error:", error);
