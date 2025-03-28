@@ -254,7 +254,7 @@ const PaymentManagement = () => {
                 </div>
                 
                 <h3 className="font-medium">Menu</h3>
-                <p className="text-gray-600 text-sm">Perfect for individuals</p>
+                <p className="text-gray-600 text-sm">Perfect for restaurants</p>
                 
                 <p className="text-2xl font-bold mt-3 mb-3">$100<span className="text-sm text-gray-500 font-normal">/year</span></p>
                 
