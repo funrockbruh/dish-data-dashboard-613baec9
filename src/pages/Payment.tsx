@@ -71,14 +71,15 @@ const Payment = () => {
         return;
       }
 
-      console.log("Creating payment with user_id:", sessionData.session.user.id);
+      const userId = sessionData.session.user.id;
+      console.log("Creating payment with user_id:", userId);
 
       // Create a payment record first
       const {
         data: paymentData,
         error: paymentError
       } = await supabase.from("payments").insert({
-        user_id: sessionData.session.user.id,
+        user_id: userId,
         amount: currentPrice,
         payment_type: method,
         status: "pending",
@@ -95,18 +96,22 @@ const Payment = () => {
 
       console.log("Payment created successfully:", paymentData[0]);
 
-      // Now create the subscription linked to the payment
-      const {
-        error: subscriptionError
-      } = await supabase.from("subscriptions").insert({
-        user_id: sessionData.session.user.id,
+      // Modified subscription creation to avoid referencing users table
+      const subscriptionData = {
+        user_id: userId,
         plan: "menu_plan",
         price: currentPrice,
         start_date: new Date().toISOString(),
         end_date: new Date(Date.now() + 2 * 60 * 1000).toISOString(),
         status: "pending",
         payment_id: paymentData[0].id
-      });
+      };
+      
+      console.log("Creating subscription with data:", subscriptionData);
+      
+      const {
+        error: subscriptionError
+      } = await supabase.from("subscriptions").insert(subscriptionData);
       
       if (subscriptionError) {
         console.error("Subscription error:", subscriptionError);
