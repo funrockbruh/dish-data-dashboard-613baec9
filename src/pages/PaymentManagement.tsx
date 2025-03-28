@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
@@ -27,8 +28,6 @@ const PaymentManagement = () => {
   const [testRenewalDate, setTestRenewalDate] = useState(new Date());
 
   useEffect(() => {
-    setTestRenewalDate(addMinutes(new Date(), 2));
-    
     const fetchSubscriptionData = async () => {
       try {
         setIsLoading(true);
@@ -54,6 +53,15 @@ const PaymentManagement = () => {
         }
         let hasVerifiedPayment = verifiedPayments && verifiedPayments.length > 0;
 
+        // If verified payment exists, set the test renewal date to 2 minutes after verification
+        if (hasVerifiedPayment && verifiedPayments[0]) {
+          const verificationDate = new Date(verifiedPayments[0].updated_at || verifiedPayments[0].created_at);
+          setTestRenewalDate(addMinutes(verificationDate, 2));
+        } else {
+          // Fallback to current time + 2 minutes if no verified payment
+          setTestRenewalDate(addMinutes(new Date(), 2));
+        }
+
         // 2. Fetch subscriptions if user has verified payments
         if (hasVerifiedPayment) {
           // Try to fetch active subscription
@@ -61,8 +69,8 @@ const PaymentManagement = () => {
             data: subscriptionData,
             error: subscriptionError
           } = await supabase.from("subscriptions").select("*").eq("user_id", userId).eq("status", "active").order("created_at", {
-            ascending: false
-          }).limit(1).single();
+              ascending: false
+            }).limit(1).single();
           if (subscriptionError) {
             if (subscriptionError.code !== 'PGRST116') {
               // No rows returned
