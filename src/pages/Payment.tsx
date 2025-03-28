@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { Navigation } from "@/components/Navigation";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 type Feature = string | {
   label: string;
@@ -22,6 +23,7 @@ const Payment = () => {
   const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
   const [currentPrice, setCurrentPrice] = useState(100);
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -147,10 +149,33 @@ const Payment = () => {
     }
   };
 
+  const PaymentMethods = () => (
+    <div className={`${isMobile ? 'fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg px-4 py-4 z-50' : 'bg-white/80 backdrop-blur-sm rounded-lg p-6 shadow-md mb-6'}`}>
+      <div className="space-y-4">
+        {!isMobile && <h3 className="text-lg font-medium mb-2">Payment Methods</h3>}
+        <Button 
+          className="w-full bg-green-500 hover:bg-green-600 text-white h-14"
+          onClick={() => handlePaymentSelect('cash')}
+          disabled={isLoading}
+        >
+          {isLoading && paymentMethod === 'cash' ? "Processing..." : "Pay in Cash"}
+        </Button>
+        
+        <Button 
+          className="w-full bg-pink-600 hover:bg-pink-700 text-white h-14"
+          onClick={() => handlePaymentSelect('whish')}
+          disabled={isLoading}
+        >
+          {isLoading && paymentMethod === 'whish' ? "Processing..." : <><span className="mr-2 font-bold">W</span> Whish Pay</>}
+        </Button>
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50/50 to-purple-50/50">
       <Navigation />
-      <main className="pt-20 pb-16 px-4">
+      <main className={`pt-20 pb-16 px-4 ${isMobile ? 'pb-36' : ''}`}>
         <div className="container mx-auto max-w-4xl">
           <div className="text-center mb-10">
             <h1 className="text-3xl font-bold mb-2">Choose Your Plan</h1>
@@ -180,33 +205,18 @@ const Payment = () => {
               </Card>
             </div>
 
-            <div className="md:col-span-1">
-              <div className="sticky top-24">
-                <div className="bg-white/80 backdrop-blur-sm rounded-lg p-6 shadow-md mb-6">
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-medium mb-2">Payment Methods</h3>
-                    <Button 
-                      className="w-full bg-green-500 hover:bg-green-600 text-white h-14"
-                      onClick={() => handlePaymentSelect('cash')}
-                      disabled={isLoading}
-                    >
-                      {isLoading && paymentMethod === 'cash' ? "Processing..." : "Pay in Cash"}
-                    </Button>
-                    
-                    <Button 
-                      className="w-full bg-pink-600 hover:bg-pink-700 text-white h-14"
-                      onClick={() => handlePaymentSelect('whish')}
-                      disabled={isLoading}
-                    >
-                      {isLoading && paymentMethod === 'whish' ? "Processing..." : <><span className="mr-2 font-bold">W</span> Whish Pay</>}
-                    </Button>
-                  </div>
+            {!isMobile && (
+              <div className="md:col-span-1">
+                <div className="sticky top-24">
+                  <PaymentMethods />
                 </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </main>
+      
+      {isMobile && <PaymentMethods />}
     </div>
   );
 };
