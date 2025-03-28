@@ -36,20 +36,32 @@ export const RenewalPopup = ({
       } else if (now >= gracePeriod) {
         // If past grace period, delete the user account
         try {
-          const { error } = await supabase.auth.admin.deleteUser(userId);
-          if (error) {
-            console.error("Error deleting user:", error);
-            toast.error("Error deleting account, please contact support");
-            // Force sign out anyway
-            await supabase.auth.signOut();
-            navigate("/");
-          } else {
-            toast.success("Your account has been deleted due to subscription expiry");
-            navigate("/");
+          // Create a deletion request in the payments table
+          const {
+            error: requestError
+          } = await supabase.from("payments").insert({
+            user_id: userId,
+            amount: 0,
+            payment_type: "account_expiry",
+            status: "pending",
+            details: {
+              request_type: "deletion",
+              requested_at: new Date().toISOString(),
+              reason: "subscription_expiry"
+            }
+          });
+          
+          if (requestError) {
+            console.error("Error creating deletion request:", requestError);
           }
+          
+          // Sign out the user regardless of whether the deletion request was successful
+          await supabase.auth.signOut();
+          toast.error("Your account has expired due to payment not being renewed");
+          navigate("/");
         } catch (error) {
-          console.error("Failed to delete user:", error);
-          // Fallback: just sign out the user if direct deletion fails
+          console.error("Failed to process account expiry:", error);
+          // Fallback: just sign out the user if any errors occur
           await supabase.auth.signOut();
           navigate("/");
         }
