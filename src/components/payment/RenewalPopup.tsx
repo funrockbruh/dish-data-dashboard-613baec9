@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -5,11 +6,13 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { format, addMinutes } from "date-fns";
 import { toast } from "sonner";
+
 interface RenewalPopupProps {
   restaurantName: string;
   expiryDate: Date;
   userId: string;
 }
+
 export const RenewalPopup = ({
   restaurantName,
   expiryDate,
@@ -22,6 +25,7 @@ export const RenewalPopup = ({
   // Calculate grace period (5 minutes after expiry)
   const gracePeriod = addMinutes(expiryDate, 5);
   const formattedGracePeriod = format(gracePeriod, "HH:mm");
+
   useEffect(() => {
     const checkExpiry = () => {
       const now = new Date();
@@ -34,10 +38,12 @@ export const RenewalPopup = ({
         navigate("/payment");
       }
     };
+
     checkExpiry();
     const interval = setInterval(checkExpiry, 5000);
     return () => clearInterval(interval);
   }, [expiryDate, gracePeriod, navigate]);
+
   const handleRenewalRequest = async () => {
     try {
       setIsLoading(true);
@@ -57,6 +63,7 @@ export const RenewalPopup = ({
           plan: "menu_plan"
         }
       });
+
       if (error) throw error;
       toast.success("Renewal request submitted successfully");
       // Keep the popup visible but update UI to show request was sent
@@ -67,24 +74,32 @@ export const RenewalPopup = ({
       setIsLoading(false);
     }
   };
+
   if (!isVisible) return null;
-  return <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
-      <div className="bg-black text-white rounded-xl p-6 max-w-xs w-full text-center">
-        <h2 className="text-xl font-bold mb-4">Renewal request</h2>
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md">
+      <div className="bg-black/90 text-white rounded-xl p-8 max-w-sm w-full text-center shadow-2xl border border-white/10">
+        <h2 className="text-2xl font-bold mb-6">Renewal request</h2>
         
-        <div className="mb-4 flex justify-center">
-          <AlertTriangle size={48} className="text-yellow-400" />
+        <div className="mb-6 flex justify-center">
+          <AlertTriangle size={56} className="text-yellow-400" />
         </div>
         
-        <h3 className="text-lg font-semibold mb-1">{restaurantName}</h3>
+        <h3 className="text-xl font-semibold mb-2">{restaurantName}</h3>
         
-        <p className="mb-4">Has not renewed his subscription</p>
+        <p className="mb-4 text-gray-300">Has not renewed his subscription</p>
         
-        <p className="mb-6">{restaurantName} has until {formattedGracePeriod}</p>
+        <p className="mb-8 text-gray-300">{restaurantName} has until {formattedGracePeriod}</p>
         
-        <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white" onClick={handleRenewalRequest} disabled={isLoading}>
+        <Button 
+          className="w-full bg-purple-600 hover:bg-purple-700 text-white py-6 text-lg font-medium"
+          onClick={handleRenewalRequest} 
+          disabled={isLoading}
+        >
           {isLoading ? "Processing..." : "Ask for Renewal"}
         </Button>
       </div>
-    </div>;
+    </div>
+  );
 };
