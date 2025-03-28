@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
@@ -6,14 +5,8 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Calendar, CreditCard, Check, ChevronDown, ChevronUp, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
-import { 
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { toast } from "sonner";
-
 interface SubscriptionData {
   id: string;
   status: string;
@@ -23,63 +16,57 @@ interface SubscriptionData {
   payment_type?: string;
   created_at: string;
 }
-
 const PaymentManagement = () => {
   const navigate = useNavigate();
   const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [wantsQrCode, setWantsQrCode] = useState(false);
   const [billingHistory, setBillingHistory] = useState<any[]>([]);
-
   useEffect(() => {
     const fetchSubscriptionData = async () => {
       try {
         setIsLoading(true);
-        const { data: sessionData } = await supabase.auth.getSession();
-        
+        const {
+          data: sessionData
+        } = await supabase.auth.getSession();
         if (!sessionData.session) {
           navigate("/");
           return;
         }
-        
         const userId = sessionData.session.user.id;
-        
+
         // 1. First, check if the user has verified payments
-        const { data: verifiedPayments, error: paymentsError } = await supabase
-          .from("payments")
-          .select("*")
-          .eq("user_id", userId)
-          .eq("status", "verified")
-          .order("created_at", { ascending: false });
-          
+        const {
+          data: verifiedPayments,
+          error: paymentsError
+        } = await supabase.from("payments").select("*").eq("user_id", userId).eq("status", "verified").order("created_at", {
+          ascending: false
+        });
         if (paymentsError) {
           console.error("Error fetching verified payments:", paymentsError);
           return;
         }
-        
         let hasVerifiedPayment = verifiedPayments && verifiedPayments.length > 0;
-        
+
         // 2. Fetch subscriptions if user has verified payments
         if (hasVerifiedPayment) {
           // Try to fetch active subscription
-          const { data: subscriptionData, error: subscriptionError } = await supabase
-            .from("subscriptions")
-            .select("*")
-            .eq("user_id", userId)
-            .eq("status", "active")
-            .order("created_at", { ascending: false })
-            .limit(1)
-            .single();
-            
+          const {
+            data: subscriptionData,
+            error: subscriptionError
+          } = await supabase.from("subscriptions").select("*").eq("user_id", userId).eq("status", "active").order("created_at", {
+            ascending: false
+          }).limit(1).single();
           if (subscriptionError) {
-            if (subscriptionError.code !== 'PGRST116') { // No rows returned
+            if (subscriptionError.code !== 'PGRST116') {
+              // No rows returned
               console.error("Error fetching subscription:", subscriptionError);
             } else {
               // If no active subscription, create one based on verified payment
               const latestPayment = verifiedPayments[0];
               const endDate = new Date();
               endDate.setFullYear(endDate.getFullYear() + 1); // Assuming 1-year subscription
-              
+
               const subscriptionDetails = {
                 user_id: userId,
                 payment_id: latestPayment.id,
@@ -89,13 +76,10 @@ const PaymentManagement = () => {
                 end_date: endDate.toISOString(),
                 status: "active"
               };
-              
-              const { data: newSubscription, error: createError } = await supabase
-                .from("subscriptions")
-                .insert(subscriptionDetails)
-                .select()
-                .single();
-                
+              const {
+                data: newSubscription,
+                error: createError
+              } = await supabase.from("subscriptions").insert(subscriptionDetails).select().single();
               if (createError) {
                 console.error("Error creating subscription:", createError);
               } else if (newSubscription) {
@@ -107,15 +91,12 @@ const PaymentManagement = () => {
             }
           } else if (subscriptionData) {
             setSubscription(subscriptionData);
-            
+
             // Look up payment information for this subscription
             if (subscriptionData.payment_id) {
-              const { data: paymentData } = await supabase
-                .from("payments")
-                .select("payment_type")
-                .eq("id", subscriptionData.payment_id)
-                .single();
-                
+              const {
+                data: paymentData
+              } = await supabase.from("payments").select("payment_type").eq("id", subscriptionData.payment_id).single();
               if (paymentData) {
                 setSubscription({
                   ...subscriptionData,
@@ -125,23 +106,21 @@ const PaymentManagement = () => {
             }
           }
         }
-        
+
         // 3. Fetch billing history (all payments for this user)
-        const { data: paymentsHistory } = await supabase
-          .from("payments")
-          .select("*")
-          .eq("user_id", userId)
-          .order("created_at", { ascending: false });
-          
+        const {
+          data: paymentsHistory
+        } = await supabase.from("payments").select("*").eq("user_id", userId).order("created_at", {
+          ascending: false
+        });
         if (paymentsHistory) {
           setBillingHistory(paymentsHistory);
         }
-        
+
         // 4. Set QR code preference based on latest payment
         if (verifiedPayments && verifiedPayments.length > 0) {
           setWantsQrCode(verifiedPayments[0].details?.has_qr_code || false);
         }
-        
       } catch (error) {
         console.error("Error fetching data:", error);
         toast.error("Failed to load subscription information");
@@ -149,10 +128,8 @@ const PaymentManagement = () => {
         setIsLoading(false);
       }
     };
-    
     fetchSubscriptionData();
   }, [navigate]);
-
   const formatDate = (dateString: string) => {
     try {
       return format(new Date(dateString), "MMMM d, yyyy");
@@ -160,18 +137,15 @@ const PaymentManagement = () => {
       return "Invalid date";
     }
   };
-  
   const handleCancelSubscription = async () => {
     if (!subscription) return;
-    
     try {
-      const { error } = await supabase
-        .from("subscriptions")
-        .update({ status: "cancelled" })
-        .eq("id", subscription.id);
-        
+      const {
+        error
+      } = await supabase.from("subscriptions").update({
+        status: "cancelled"
+      }).eq("id", subscription.id);
       if (error) throw error;
-      
       toast.success("Subscription cancelled successfully");
       setSubscription({
         ...subscription,
@@ -182,30 +156,25 @@ const PaymentManagement = () => {
       toast.error("Failed to cancel subscription");
     }
   };
-  
   const handleUpdatePaymentMethod = () => {
     toast.info("Payment method update feature coming soon");
   };
-  
   const handleToggleQrCode = async (value: boolean) => {
     setWantsQrCode(value);
-    
     try {
       // Update the latest payment's details with QR code preference
       if (billingHistory.length > 0 && billingHistory[0].status === "verified") {
         const latestPayment = billingHistory[0];
-        const updatedDetails = { 
+        const updatedDetails = {
           ...latestPayment.details,
-          has_qr_code: value 
+          has_qr_code: value
         };
-        
-        const { error } = await supabase
-          .from("payments")
-          .update({ details: updatedDetails })
-          .eq("id", latestPayment.id);
-          
+        const {
+          error
+        } = await supabase.from("payments").update({
+          details: updatedDetails
+        }).eq("id", latestPayment.id);
         if (error) throw error;
-        
         toast.success(value ? "QR code enabled" : "QR code disabled");
       } else {
         toast.info(value ? "QR code will be enabled after payment is verified" : "QR code disabled");
@@ -215,29 +184,18 @@ const PaymentManagement = () => {
       toast.error("Failed to update QR code preference");
     }
   };
-
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
+    return <div className="min-h-screen flex items-center justify-center">
         <div className="w-12 h-12 border-t-4 border-blue-500 rounded-full animate-spin"></div>
-      </div>
-    );
+      </div>;
   }
 
   // Check if we have either a subscription or verified payments
-  const hasActiveSubscription = subscription || 
-    (billingHistory.length > 0 && billingHistory.some(payment => payment.status === "verified"));
-
-  return (
-    <div className="min-h-screen bg-gray-50 pb-10">
+  const hasActiveSubscription = subscription || billingHistory.length > 0 && billingHistory.some(payment => payment.status === "verified");
+  return <div className="min-h-screen bg-gray-50 pb-10">
       <div className="bg-white shadow-sm">
         <div className="max-w-xl mx-auto px-4 py-4 flex items-center">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => navigate("/settings")}
-            className="mr-3"
-          >
+          <Button variant="ghost" size="icon" onClick={() => navigate("/settings")} className="mr-3">
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <h1 className="text-xl font-bold">Payment Management</h1>
@@ -245,8 +203,7 @@ const PaymentManagement = () => {
       </div>
 
       <div className="max-w-xl mx-auto px-4 mt-6">
-        {hasActiveSubscription ? (
-          <>
+        {hasActiveSubscription ? <>
             {/* Subscription Details Card */}
             <div className="bg-white rounded-xl shadow-sm p-5 mb-6">
               <div className="flex justify-between items-center mb-4">
@@ -259,8 +216,7 @@ const PaymentManagement = () => {
               <div className="space-y-4">
                 <div className="bg-gray-50 rounded-lg p-4">
                   <p className="text-gray-600 text-sm">Subscribed On</p>
-                  <p className="font-medium">{subscription?.start_date ? formatDate(subscription.start_date) : 
-                    billingHistory.length > 0 ? formatDate(billingHistory[0].created_at) : "Recent"}</p>
+                  <p className="font-medium">{subscription?.start_date ? formatDate(subscription.start_date) : billingHistory.length > 0 ? formatDate(billingHistory[0].created_at) : "Recent"}</p>
                 </div>
                 
                 <div className="bg-gray-50 rounded-lg p-4">
@@ -276,14 +232,10 @@ const PaymentManagement = () => {
                       <CreditCard className="h-5 w-5" />
                     </div>
                     <span className="font-medium">
-                      {subscription?.payment_type ? `Pay in ${subscription.payment_type}` : 
-                        billingHistory.length > 0 ? `Pay in ${billingHistory[0].payment_type}` : "Cash"}
+                      {subscription?.payment_type ? `Pay in ${subscription.payment_type}` : billingHistory.length > 0 ? `Pay in ${billingHistory[0].payment_type}` : "Cash"}
                     </span>
                   </div>
-                  <button 
-                    onClick={handleUpdatePaymentMethod}
-                    className="text-purple-600 font-medium mt-2 flex items-center"
-                  >
+                  <button onClick={handleUpdatePaymentMethod} className="text-purple-600 font-medium mt-2 flex items-center">
                     Update <ChevronDown className="h-4 w-4 ml-1" />
                   </button>
                 </div>
@@ -301,7 +253,7 @@ const PaymentManagement = () => {
                   </div>
                 </div>
                 
-                <h3 className="font-medium">Basic</h3>
+                <h3 className="font-medium">Menu</h3>
                 <p className="text-gray-600 text-sm">Perfect for individuals</p>
                 
                 <p className="text-2xl font-bold mt-3 mb-3">$100<span className="text-sm text-gray-500 font-normal">/year</span></p>
@@ -328,18 +280,10 @@ const PaymentManagement = () => {
               <h2 className="text-lg font-medium mb-4">Do you want a unique QR code?</h2>
               
               <div className="flex space-x-4">
-                <Button 
-                  variant={!wantsQrCode ? "default" : "outline"} 
-                  className={!wantsQrCode ? "bg-white border-2 border-gray-200 text-black" : ""}
-                  onClick={() => handleToggleQrCode(false)}
-                >
+                <Button variant={!wantsQrCode ? "default" : "outline"} className={!wantsQrCode ? "bg-white border-2 border-gray-200 text-black" : ""} onClick={() => handleToggleQrCode(false)}>
                   No
                 </Button>
-                <Button 
-                  variant={wantsQrCode ? "default" : "outline"} 
-                  className={wantsQrCode ? "bg-white border-2 border-gray-200 text-black" : ""}
-                  onClick={() => handleToggleQrCode(true)}
-                >
+                <Button variant={wantsQrCode ? "default" : "outline"} className={wantsQrCode ? "bg-white border-2 border-gray-200 text-black" : ""} onClick={() => handleToggleQrCode(true)}>
                   Yes
                 </Button>
               </div>
@@ -352,50 +296,31 @@ const PaymentManagement = () => {
                   View billing history
                 </AccordionTrigger>
                 <AccordionContent>
-                  {billingHistory.length > 0 ? (
-                    <div className="space-y-2 mt-2">
-                      {billingHistory.map((payment) => (
-                        <div key={payment.id} className="border rounded-lg p-3 flex justify-between items-center">
+                  {billingHistory.length > 0 ? <div className="space-y-2 mt-2">
+                      {billingHistory.map(payment => <div key={payment.id} className="border rounded-lg p-3 flex justify-between items-center">
                           <div>
                             <p className="font-medium">${payment.amount}</p>
                             <p className="text-xs text-gray-500">{formatDate(payment.created_at)}</p>
                           </div>
-                          <Badge className={
-                            payment.status === "verified" ? "bg-green-100 text-green-800" : 
-                            payment.status === "pending" ? "bg-yellow-100 text-yellow-800" : 
-                            "bg-red-100 text-red-800"
-                          }>
+                          <Badge className={payment.status === "verified" ? "bg-green-100 text-green-800" : payment.status === "pending" ? "bg-yellow-100 text-yellow-800" : "bg-red-100 text-red-800"}>
                             {payment.status}
                           </Badge>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-gray-500">No billing history available</p>
-                  )}
+                        </div>)}
+                    </div> : <p className="text-gray-500">No billing history available</p>}
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
             
-            <Button 
-              variant="outline" 
-              className="w-full flex items-center justify-center text-red-500 border-red-200"
-              onClick={handleCancelSubscription}
-            >
+            <Button variant="outline" className="w-full flex items-center justify-center text-red-500 border-red-200" onClick={handleCancelSubscription}>
               <Trash2 className="h-5 w-5 mr-2" />
               Cancel subscription
             </Button>
-          </>
-        ) : (
-          <div className="bg-white rounded-xl shadow-sm p-5 text-center">
+          </> : <div className="bg-white rounded-xl shadow-sm p-5 text-center">
             <h2 className="text-lg font-medium mb-4">No Active Subscription</h2>
             <p className="text-gray-600 mb-4">You don't have an active subscription at the moment.</p>
             <Button onClick={() => navigate("/payment")}>Subscribe Now</Button>
-          </div>
-        )}
+          </div>}
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default PaymentManagement;
