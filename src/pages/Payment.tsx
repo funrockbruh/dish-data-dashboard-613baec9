@@ -71,6 +71,8 @@ const Payment = () => {
         return;
       }
 
+      console.log("Creating payment with user_id:", sessionData.session.user.id);
+
       // Create a payment record first
       const {
         data: paymentData,
@@ -91,7 +93,9 @@ const Payment = () => {
         throw paymentError;
       }
 
-      // Now create the subscription linked to the payment, without the details field
+      console.log("Payment created successfully:", paymentData[0]);
+
+      // Now create the subscription linked to the payment
       const {
         error: subscriptionError
       } = await supabase.from("subscriptions").insert({
@@ -108,6 +112,8 @@ const Payment = () => {
         console.error("Subscription error:", subscriptionError);
         throw subscriptionError;
       }
+      
+      console.log("Subscription created successfully");
       
       // Set payment as submitted
       setPaymentSubmitted(true);
@@ -220,6 +226,23 @@ const Payment = () => {
       </div>
     </div>
   );
+
+  const features: Feature[] = ["Unlimited menu items", "Advanced categories", "Priority support", "Mobile-friendly design", "Real-time updates", {
+    label: "Custom branding",
+    selectable: false
+  }, {
+    label: "Unique QR code",
+    selectable: true,
+    selected: hasQRCode,
+    onToggle: toggleQRCode
+  }];
+
+  const plan = {
+    name: "Menu Plan",
+    price: currentPrice.toString(),
+    duration: "2 minutes",
+    description: "Quick test plan for your restaurant menu"
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50/50 to-purple-50/50">
