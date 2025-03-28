@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Check, Circle } from "lucide-react";
@@ -7,6 +8,7 @@ import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { Navigation } from "@/components/Navigation";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Badge } from "@/components/ui/badge";
 
 type Feature = string | {
   label: string;
@@ -21,6 +23,7 @@ const Payment = () => {
   const [hasQRCode, setHasQRCode] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
   const [currentPrice, setCurrentPrice] = useState(100);
+  const [paymentSubmitted, setPaymentSubmitted] = useState(false);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
@@ -68,26 +71,47 @@ const Payment = () => {
         return;
       }
 
+      // First create a payment record
+      const { data: paymentData, error: paymentError } = await supabase.from("payments").insert({
+        user_id: sessionData.session.user.id,
+        amount: currentPrice,
+        payment_type: method,
+        status: "pending",
+        details: {
+          has_qr_code: hasQRCode,
+          plan: "menu_plan"
+        }
+      }).select().single();
+
+      if (paymentError) throw paymentError;
+
+      // Then create a pending subscription
       const {
-        error
+        error: subscriptionError
       } = await supabase.from("subscriptions").insert({
         user_id: sessionData.session.user.id,
         plan: "menu_plan",
         price: currentPrice,
         start_date: new Date().toISOString(),
-        end_date: new Date(Date.now() + 2 * 60 * 1000).toISOString(),
-        status: "active",
+        // Subscription will be activated after payment is verified
+        status: "pending",
+        payment_id: paymentData.id,
         details: {
           payment_method: method,
           has_qr_code: hasQRCode
         }
       });
-      if (error) throw error;
-      toast.success("Successfully subscribed to Menu Plan!");
-      navigate("/setup");
+      
+      if (subscriptionError) throw subscriptionError;
+      
+      toast.success("Payment submitted for verification!");
+      setPaymentSubmitted(true);
+      
+      // Don't navigate away immediately so user can see the confirmation
+      // navigate("/setup");
     } catch (error) {
-      console.error("Subscription error:", error);
-      toast.error("Failed to subscribe. Please try again.");
+      console.error("Payment error:", error);
+      toast.error("Failed to process payment. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -137,11 +161,11 @@ const Payment = () => {
   const PaymentMethods = () => <div className={`${isMobile ? 'fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-sm border-t border-gray-200 shadow-lg px-4 py-3 z-50 rounded-t-2xl' : 'bg-white/80 backdrop-blur-sm rounded-lg p-6 shadow-md mb-6'}`}>
       <div className="space-y-3">
         {!isMobile && <h3 className="text-lg font-medium mb-2">Payment Methods</h3>}
-        <Button className="w-full bg-green-500 hover:bg-green-600 text-white h-12" onClick={() => handlePaymentSelect('cash')} disabled={isLoading}>
+        <Button className="w-full bg-green-500 hover:bg-green-600 text-white h-12" onClick={() => handlePaymentSelect('cash')} disabled={isLoading || paymentSubmitted}>
           {isLoading && paymentMethod === 'cash' ? "Processing..." : "Pay in Cash"}
         </Button>
         
-        <Button onClick={() => handlePaymentSelect('whish')} disabled={isLoading} className="w-full bg-rose-600 hover:bg-rose-700 text-white h-12">
+        <Button onClick={() => handlePaymentSelect('whish')} disabled={isLoading || paymentSubmitted} className="w-full bg-rose-600 hover:bg-rose-700 text-white h-12">
           {isLoading && paymentMethod === 'whish' ? "Processing..." : <>
               <img alt="Whish logo" src="/lovable-uploads/b718db26-08e1-484c-ad5c-463495cce89b.png" className="h-12 mr--1 object-fill" /> 
               Whish Pay
@@ -159,34 +183,61 @@ const Payment = () => {
             <p className="text-muted-foreground">Select a subscription plan to continue</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
-            <div className="md:col-span-2">
-              <Card className="p-8 glass-card hover-lift fade-in border-0 hover:shadow-2xl transition-all duration-300 w-full">
-                <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
-                <div className="mb-4">
-                  <span className="text-4xl font-bold gradient-text">${plan.price}</span>
-                  <span className="text-muted-foreground">/{plan.duration}</span>
+          {paymentSubmitted ? (
+            <div className="flex justify-center">
+              <div className="w-full max-w-md">
+                <div className="border border-gray-200 rounded-full p-3 flex justify-between items-center bg-white mb-8">
+                  <span className="font-medium text-lg pl-3">{plan.name}</span>
+                  <Badge variant="outline" className="bg-orange-100 text-orange-500 border-orange-200">
+                    Pending
+                  </Badge>
                 </div>
-                <p className="text-muted-foreground mb-6">{plan.description}</p>
-                <ul className="space-y-3 mb-8">
-                  {features.map((feature, i) => renderFeature(feature, i))}
-                </ul>
-                <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white" disabled={true}>
-                  Selected
-                </Button>
-              </Card>
+                <div className="text-center">
+                  <p className="text-muted-foreground mb-4">
+                    Your payment is pending approval. You'll receive access to your subscription once confirmed.
+                  </p>
+                  <p className="text-sm text-muted-foreground mb-8">
+                    Payment method: <span className="font-medium">{paymentMethod === 'cash' ? 'Cash' : 'Whish Pay'}</span>
+                    <br />
+                    Amount: <span className="font-medium">${currentPrice}</span>
+                    {hasQRCode && <><br />Including QR code feature</>}
+                  </p>
+                  <Button onClick={() => navigate("/setup")} className="bg-blue-600 hover:bg-blue-700">
+                    Continue to Setup
+                  </Button>
+                </div>
+              </div>
             </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
+              <div className="md:col-span-2">
+                <Card className="p-8 glass-card hover-lift fade-in border-0 hover:shadow-2xl transition-all duration-300 w-full">
+                  <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
+                  <div className="mb-4">
+                    <span className="text-4xl font-bold gradient-text">${plan.price}</span>
+                    <span className="text-muted-foreground">/{plan.duration}</span>
+                  </div>
+                  <p className="text-muted-foreground mb-6">{plan.description}</p>
+                  <ul className="space-y-3 mb-8">
+                    {features.map((feature, i) => renderFeature(feature, i))}
+                  </ul>
+                  <Button className="w-full bg-indigo-600 hover:bg-indigo-700 text-white" disabled={true}>
+                    Selected
+                  </Button>
+                </Card>
+              </div>
 
-            {!isMobile && <div className="md:col-span-1">
-                <div className="sticky top-24">
-                  <PaymentMethods />
-                </div>
-              </div>}
-          </div>
+              {!isMobile && <div className="md:col-span-1">
+                  <div className="sticky top-24">
+                    <PaymentMethods />
+                  </div>
+                </div>}
+            </div>
+          )}
         </div>
       </main>
       
-      {isMobile && <PaymentMethods />}
+      {isMobile && !paymentSubmitted && <PaymentMethods />}
     </div>;
 };
 
