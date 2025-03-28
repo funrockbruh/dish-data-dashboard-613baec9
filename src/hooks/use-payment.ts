@@ -79,7 +79,7 @@ export const usePayment = () => {
         return;
       }
 
-      // Create payment record - don't use select()
+      // Create payment record - don't need to explicitly set user_id as RLS will handle it
       const { error: paymentError } = await supabase
         .from("payments")
         .insert({
@@ -89,7 +89,8 @@ export const usePayment = () => {
           details: {
             has_qr_code: hasQRCode,
             plan: "menu_plan"
-          }
+          },
+          user_id: sessionData.session.user.id // Explicitly set user_id from session
         });
 
       if (paymentError) {
@@ -99,7 +100,7 @@ export const usePayment = () => {
         return;
       }
 
-      // Create subscription record without getting payment ID
+      // Create subscription record with explicit user_id
       const { error: subscriptionError } = await supabase
         .from("subscriptions")
         .insert({
@@ -108,6 +109,7 @@ export const usePayment = () => {
           start_date: new Date().toISOString(),
           end_date: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(), // 1 year from now
           status: "pending",
+          user_id: sessionData.session.user.id, // Explicitly set user_id from session
           details: {
             payment_method: method,
             has_qr_code: hasQRCode
