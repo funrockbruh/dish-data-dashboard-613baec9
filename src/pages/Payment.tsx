@@ -86,11 +86,14 @@ const Payment = () => {
         }
       }).select();
 
-      if (paymentError) throw paymentError;
+      if (paymentError) {
+        console.error("Payment creation error:", paymentError);
+        throw paymentError;
+      }
 
-      // Now create the subscription linked to the payment
+      // Now create the subscription linked to the payment, without the details field
       const {
-        error
+        error: subscriptionError
       } = await supabase.from("subscriptions").insert({
         user_id: sessionData.session.user.id,
         plan: "menu_plan",
@@ -98,13 +101,13 @@ const Payment = () => {
         start_date: new Date().toISOString(),
         end_date: new Date(Date.now() + 2 * 60 * 1000).toISOString(),
         status: "pending",
-        payment_id: paymentData[0].id,
-        details: {
-          payment_method: method,
-          has_qr_code: hasQRCode
-        }
+        payment_id: paymentData[0].id
       });
-      if (error) throw error;
+      
+      if (subscriptionError) {
+        console.error("Subscription error:", subscriptionError);
+        throw subscriptionError;
+      }
       
       // Set payment as submitted
       setPaymentSubmitted(true);
@@ -114,9 +117,9 @@ const Payment = () => {
       setTimeout(() => {
         navigate("/setup");
       }, 3000);
-    } catch (error) {
-      console.error("Subscription error:", error);
-      toast.error("Failed to subscribe. Please try again.");
+    } catch (error: any) {
+      console.error("Payment processing error:", error);
+      toast.error(`Failed to subscribe: ${error.message || "Please try again"}`);
     } finally {
       setIsLoading(false);
     }
