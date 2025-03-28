@@ -2,11 +2,12 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Calendar, CreditCard, Check, ChevronDown, ChevronUp, Trash2 } from "lucide-react";
+import { ArrowLeft, Calendar, CreditCard, Check, ChevronDown, ChevronUp, Trash2, RefreshCw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { toast } from "sonner";
+
 interface SubscriptionData {
   id: string;
   status: string;
@@ -16,12 +17,14 @@ interface SubscriptionData {
   payment_type?: string;
   created_at: string;
 }
+
 const PaymentManagement = () => {
   const navigate = useNavigate();
   const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [wantsQrCode, setWantsQrCode] = useState(false);
   const [billingHistory, setBillingHistory] = useState<any[]>([]);
+
   useEffect(() => {
     const fetchSubscriptionData = async () => {
       try {
@@ -130,6 +133,7 @@ const PaymentManagement = () => {
     };
     fetchSubscriptionData();
   }, [navigate]);
+
   const formatDate = (dateString: string) => {
     try {
       return format(new Date(dateString), "MMMM d, yyyy");
@@ -137,6 +141,7 @@ const PaymentManagement = () => {
       return "Invalid date";
     }
   };
+
   const handleCancelSubscription = async () => {
     if (!subscription) return;
     try {
@@ -156,9 +161,11 @@ const PaymentManagement = () => {
       toast.error("Failed to cancel subscription");
     }
   };
+
   const handleUpdatePaymentMethod = () => {
     toast.info("Payment method update feature coming soon");
   };
+
   const handleToggleQrCode = async (value: boolean) => {
     setWantsQrCode(value);
     try {
@@ -184,6 +191,12 @@ const PaymentManagement = () => {
       toast.error("Failed to update QR code preference");
     }
   };
+
+  const handleRenewSubscription = () => {
+    navigate("/payment");
+    toast.info("Redirecting to subscription renewal");
+  };
+
   if (isLoading) {
     return <div className="min-h-screen flex items-center justify-center">
         <div className="w-12 h-12 border-t-4 border-blue-500 rounded-full animate-spin"></div>
@@ -221,8 +234,18 @@ const PaymentManagement = () => {
                 
                 <div className="bg-gray-50 rounded-lg p-4">
                   <p className="text-gray-600 text-sm">Next Renewal</p>
-                  <p className="font-medium">{subscription?.end_date ? formatDate(subscription.end_date) : "Annual subscription"}</p>
-                  
+                  <div className="flex items-center justify-between">
+                    <p className="font-medium">{subscription?.end_date ? formatDate(subscription.end_date) : "Annual subscription"}</p>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="text-purple-600 border-purple-200 hover:bg-purple-50"
+                      onClick={handleRenewSubscription}
+                    >
+                      <RefreshCw className="h-4 w-4 mr-1" />
+                      Renew
+                    </Button>
+                  </div>
                 </div>
                 
                 <div className="mt-4">
@@ -323,4 +346,5 @@ const PaymentManagement = () => {
       </div>
     </div>;
 };
+
 export default PaymentManagement;
