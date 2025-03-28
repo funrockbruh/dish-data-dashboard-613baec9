@@ -222,7 +222,7 @@ const PaymentManagement = () => {
                 <div className="bg-gray-50 rounded-lg p-4">
                   <p className="text-gray-600 text-sm">Next Renewal</p>
                   <p className="font-medium">{subscription?.end_date ? formatDate(subscription.end_date) : "Annual subscription"}</p>
-                  <p className="text-green-600 text-xs mt-1">Auto-renewal enabled</p>
+                  
                 </div>
                 
                 <div className="mt-4">
