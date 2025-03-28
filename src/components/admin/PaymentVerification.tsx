@@ -11,7 +11,7 @@ import {
   TableRow 
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Check, X, QrCode } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface Payment {
@@ -37,9 +37,6 @@ export const PaymentVerification = () => {
   const fetchPayments = async () => {
     try {
       setLoading(true);
-      
-      // Important: This is admin functionality, we need to bypass RLS
-      // This should only be accessible to admin users
       const { data, error } = await supabase
         .from("payments")
         .select("*")
@@ -70,7 +67,7 @@ export const PaymentVerification = () => {
       }
 
       // Update payment status
-      const { error: paymentError } = await supabase
+      const { error } = await supabase
         .from("payments")
         .update({
           verified: true,
@@ -79,18 +76,7 @@ export const PaymentVerification = () => {
         })
         .eq("id", id);
 
-      if (paymentError) throw paymentError;
-
-      // Also update any pending subscriptions linked to this payment
-      const { error: subscriptionError } = await supabase
-        .from("subscriptions")
-        .update({
-          status: "active"
-        })
-        .eq("payment_id", id)
-        .eq("status", "pending");
-
-      if (subscriptionError) throw subscriptionError;
+      if (error) throw error;
 
       // Add audit log
       await supabase.from("audit_logs").insert({
@@ -124,7 +110,7 @@ export const PaymentVerification = () => {
       }
 
       // Update payment status
-      const { error: paymentError } = await supabase
+      const { error } = await supabase
         .from("payments")
         .update({
           verified: false,
@@ -133,18 +119,7 @@ export const PaymentVerification = () => {
         })
         .eq("id", id);
 
-      if (paymentError) throw paymentError;
-
-      // Also update any pending subscriptions linked to this payment
-      const { error: subscriptionError } = await supabase
-        .from("subscriptions")
-        .update({
-          status: "cancelled"
-        })
-        .eq("payment_id", id)
-        .eq("status", "pending");
-
-      if (subscriptionError) throw subscriptionError;
+      if (error) throw error;
 
       // Add audit log
       await supabase.from("audit_logs").insert({
@@ -185,7 +160,6 @@ export const PaymentVerification = () => {
               <TableHead>User ID</TableHead>
               <TableHead>Amount</TableHead>
               <TableHead>Type</TableHead>
-              <TableHead>Details</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
@@ -197,20 +171,10 @@ export const PaymentVerification = () => {
                   {new Date(payment.created_at).toLocaleDateString()}
                 </TableCell>
                 <TableCell className="font-mono text-xs">
-                  {payment.user_id.substring(0, 8)}...
+                  {payment.user_id}
                 </TableCell>
                 <TableCell>${payment.amount}</TableCell>
                 <TableCell>{payment.payment_type}</TableCell>
-                <TableCell>
-                  {payment.details?.has_qr_code && (
-                    <div className="flex items-center text-xs text-blue-600">
-                      <QrCode className="h-3 w-3 mr-1" /> QR Code
-                    </div>
-                  )}
-                  {payment.details?.plan && (
-                    <div className="text-xs">{payment.details.plan}</div>
-                  )}
-                </TableCell>
                 <TableCell>
                   <Badge variant={
                     payment.status === "verified" ? "success" : 
