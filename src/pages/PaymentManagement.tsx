@@ -26,6 +26,7 @@ const PaymentManagement = () => {
   const [wantsQrCode, setWantsQrCode] = useState(false);
   const [billingHistory, setBillingHistory] = useState<any[]>([]);
   const [testRenewalDate, setTestRenewalDate] = useState(new Date());
+  const [isSubmittingRenewal, setIsSubmittingRenewal] = useState(false);
 
   useEffect(() => {
     const fetchSubscriptionData = async () => {
@@ -211,9 +212,66 @@ const PaymentManagement = () => {
     }
   };
 
-  const handleRenewSubscription = () => {
-    navigate("/payment");
-    toast.info("Redirecting to subscription renewal");
+  const handleRenewSubscription = async () => {
+    try {
+      setIsSubmittingRenewal(true);
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        navigate("/");
+        return;
+      }
+      
+      const userId = sessionData.session.user.id;
+      
+      // Check if there's already a pending renewal request
+      const { data: pendingRequests } = await supabase
+        .from("payments")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("status", "pending")
+        .order("created_at", { ascending: false });
+        
+      if (pendingRequests && pendingRequests.length > 0) {
+        toast.info("You already have a pending renewal request");
+        setIsSubmittingRenewal(false);
+        return;
+      }
+      
+      // Create a new payment entry as a renewal request
+      const paymentDetails = {
+        user_id: userId,
+        amount: 100, // Standard renewal amount
+        payment_type: subscription?.payment_type || "cash",
+        status: "pending",
+        details: {
+          plan: subscription?.plan || "menu_plan",
+          has_qr_code: wantsQrCode,
+          renewal_request: true
+        }
+      };
+      
+      const { error } = await supabase.from("payments").insert(paymentDetails);
+      
+      if (error) throw error;
+      
+      toast.success("Renewal request submitted successfully");
+      
+      // Refresh billing history to show the new pending request
+      const { data: updatedHistory } = await supabase
+        .from("payments")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false });
+        
+      if (updatedHistory) {
+        setBillingHistory(updatedHistory);
+      }
+    } catch (error) {
+      console.error("Error submitting renewal request:", error);
+      toast.error("Failed to submit renewal request");
+    } finally {
+      setIsSubmittingRenewal(false);
+    }
   };
 
   if (isLoading) {
@@ -261,9 +319,10 @@ const PaymentManagement = () => {
                       size="sm" 
                       className="text-purple-600 border-purple-200 hover:bg-purple-50"
                       onClick={handleRenewSubscription}
+                      disabled={isSubmittingRenewal}
                     >
-                      <RefreshCw className="h-4 w-4 mr-1" />
-                      Renew
+                      <RefreshCw className={`h-4 w-4 mr-1 ${isSubmittingRenewal ? "animate-spin" : ""}`} />
+                      {isSubmittingRenewal ? "Submitting..." : "Renew"}
                     </Button>
                   </div>
                 </div>
