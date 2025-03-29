@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,7 +19,6 @@ export const RenewalPopup = ({
 }: RenewalPopupProps) => {
   const [isVisible, setIsVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
   const navigate = useNavigate();
 
   // Calculate grace period (5 minutes after expiry)
@@ -48,27 +46,18 @@ export const RenewalPopup = ({
   // Function to handle user deletion
   const handleUserDeletion = async () => {
     try {
-      if (isDeleting) return; // Prevent multiple deletion attempts
-      setIsDeleting(true);
-      
       // Sign out the user first
-      console.log("Signing out user");
       await supabase.auth.signOut();
       
       // Call the edge function to delete the user
-      console.log("Calling edge function to delete user:", userId);
-      const result = await handleUserExpiry(userId);
-      console.log("User deletion result:", result);
+      await handleUserExpiry(userId);
       
       // Redirect to payment page after successful deletion
       navigate("/payment");
     } catch (error) {
       console.error("Error processing account expiry:", error);
-      toast.error("Error processing account expiry: " + (error.message || error));
       // Still redirect to payment page even if there's an error
       navigate("/payment");
-    } finally {
-      setIsDeleting(false);
     }
   };
 
