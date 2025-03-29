@@ -19,7 +19,7 @@ serve(async (req) => {
 
     if (!userId) {
       return new Response(
-        JSON.stringify({ error: 'User ID is required' }),
+        JSON.stringify({ success: false, error: 'User ID is required' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
@@ -167,7 +167,7 @@ serve(async (req) => {
     console.error('Error in delete-expired-user function:', error);
     
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ success: false, error: error.message }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }

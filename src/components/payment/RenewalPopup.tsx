@@ -13,6 +13,13 @@ interface RenewalPopupProps {
   userId: string;
 }
 
+// Define a type for the result from handleUserExpiry
+interface UserDeletionResult {
+  success: boolean;
+  message?: string;
+  error?: string;
+}
+
 export const RenewalPopup = ({
   restaurantName,
   expiryDate,
@@ -58,9 +65,9 @@ export const RenewalPopup = ({
       await supabase.auth.signOut();
       
       // Call the edge function to delete the user
-      const result = await handleUserExpiry(userId);
+      const result = await handleUserExpiry(userId) as UserDeletionResult;
       
-      if (result && 'success' in result && !result.success) {
+      if (!result.success) {
         console.error("User deletion failed:", result.error);
         toast.error("There was an issue processing your account. Please contact support.");
       } else {

@@ -16,15 +16,22 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   }
 });
 
+// Define return type for the user expiry function
+interface UserDeletionResult {
+  success: boolean;
+  message?: string;
+  error?: string;
+}
+
 // Handle user deletion with improved error handling and logging
-export const handleUserExpiry = async (userId: string) => {
+export const handleUserExpiry = async (userId: string): Promise<UserDeletionResult> => {
   try {
     console.log(`Initiating complete deletion process for user: ${userId}`);
     
     // Create a promise with timeout to handle potential edge function hanging
     const timeoutDuration = 20000; // 20 seconds timeout
     
-    const deletePromise = new Promise(async (resolve, reject) => {
+    const deletePromise = new Promise<UserDeletionResult>(async (resolve, reject) => {
       try {
         // Invoke the edge function to delete the user and all associated data
         const { data, error } = await supabase.functions.invoke('delete-expired-user', {
@@ -33,28 +40,28 @@ export const handleUserExpiry = async (userId: string) => {
         
         if (error) {
           console.error('Error invoking delete-expired-user function:', error);
-          reject(error);
+          reject({ success: false, error: error.message });
         } else {
           console.log('User deletion completed successfully:', data);
-          resolve(data);
+          resolve({ success: true, message: 'User deletion completed successfully' });
         }
-      } catch (fnError) {
+      } catch (fnError: any) {
         console.error('Exception during function invocation:', fnError);
-        reject(fnError);
+        reject({ success: false, error: fnError.message });
       }
     });
     
     // Add timeout to prevent hanging
-    const timeoutPromise = new Promise((_, reject) => {
+    const timeoutPromise = new Promise<UserDeletionResult>((_, reject) => {
       setTimeout(() => {
-        reject(new Error(`User deletion timed out after ${timeoutDuration}ms`));
+        reject({ success: false, error: `User deletion timed out after ${timeoutDuration}ms` });
       }, timeoutDuration);
     });
     
     // Race the deletion promise against the timeout
     const result = await Promise.race([deletePromise, timeoutPromise]);
     return result;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error during user expiry handling:', error);
     // We still return something to prevent further cascading errors
     return { success: false, error: error.message };
