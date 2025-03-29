@@ -94,7 +94,7 @@ export const Navigation = () => {
             {/* Logo and brand */}
             <div className="flex items-center">
               <Link to="/" className="flex items-center gap-2">
-                <img src="/lovable-uploads/a3769547-5e65-4658-a5f7-7e2784808bd8.png" alt="Logo" className="h-[100px] w-auto" />
+                <img src="/lovable-uploads/a3769547-5e65-4658-a5f7-7e2784808bd8.png" alt="Logo" className="h-[100px] w-auto mt-[-6px]" />
               </Link>
             </div>
 
