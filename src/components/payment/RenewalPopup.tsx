@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ export const RenewalPopup = ({
 }: RenewalPopupProps) => {
   const [isVisible, setIsVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const navigate = useNavigate();
 
   // Calculate grace period (5 minutes after expiry)
@@ -32,7 +34,7 @@ export const RenewalPopup = ({
       // Show popup if current time is past expiry date but before grace period
       if (now > expiryDate && now < gracePeriod) {
         setIsVisible(true);
-      } else if (now >= gracePeriod) {
+      } else if (now >= gracePeriod && !isDeleting) {
         // If past grace period, delete user and redirect to payment page
         handleUserDeletion();
       }
@@ -41,21 +43,35 @@ export const RenewalPopup = ({
     checkExpiry();
     const interval = setInterval(checkExpiry, 5000);
     return () => clearInterval(interval);
-  }, [expiryDate, gracePeriod, navigate]);
+  }, [expiryDate, gracePeriod, navigate, isDeleting]);
 
   // Function to handle user deletion
   const handleUserDeletion = async () => {
     try {
+      // Prevent multiple deletion attempts
+      setIsDeleting(true);
+      
+      console.log(`Grace period expired for user ${userId}. Starting deletion process.`);
+      toast.info("Your subscription has expired. Logging out...");
+      
       // Sign out the user first
       await supabase.auth.signOut();
       
       // Call the edge function to delete the user
-      await handleUserExpiry(userId);
+      const result = await handleUserExpiry(userId);
       
-      // Redirect to payment page after successful deletion
+      if (result && 'success' in result && !result.success) {
+        console.error("User deletion failed:", result.error);
+        toast.error("There was an issue processing your account. Please contact support.");
+      } else {
+        console.log("User deletion completed:", result);
+      }
+      
+      // Redirect to payment page after deletion process, successful or not
       navigate("/payment");
     } catch (error) {
       console.error("Error processing account expiry:", error);
+      toast.error("Error processing account expiry");
       // Still redirect to payment page even if there's an error
       navigate("/payment");
     }

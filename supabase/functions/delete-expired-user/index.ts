@@ -33,16 +33,18 @@ serve(async (req) => {
     // Clean up all storage buckets for the user
     const bucketNames = ['menu-item-images', 'menu-category-images', 'restaurant-logos'];
     
-    console.log(`Attempting to clean up storage for user ${userId}`);
+    console.log(`Starting storage cleanup for user ${userId}`);
     
     // Delete files from each bucket
     for (const bucketName of bucketNames) {
       try {
+        console.log(`Processing bucket ${bucketName} for user ${userId}`);
+        
         // List all files in the user's folder
         const { data: files, error: listError } = await supabase
           .storage
           .from(bucketName)
-          .list(`${userId}`);
+          .list(userId);
           
         if (listError) {
           console.error(`Error listing files in ${bucketName}/${userId}:`, listError);
@@ -52,38 +54,39 @@ serve(async (req) => {
         if (files && files.length > 0) {
           console.log(`Found ${files.length} files in ${bucketName}/${userId}`);
           
-          // Delete each file individually
-          for (const file of files) {
-            const filePath = `${userId}/${file.name}`;
-            const { error: deleteError } = await supabase
-              .storage
-              .from(bucketName)
-              .remove([filePath]);
+          // Get file paths to delete
+          const filePaths = files.map(file => `${userId}/${file.name}`);
+          
+          // Delete files in batch
+          const { error: deleteError } = await supabase
+            .storage
+            .from(bucketName)
+            .remove(filePaths);
               
-            if (deleteError) {
-              console.error(`Error deleting file ${filePath}:`, deleteError);
-            } else {
-              console.log(`Successfully deleted ${filePath}`);
-            }
+          if (deleteError) {
+            console.error(`Error deleting files from ${bucketName}/${userId}:`, deleteError);
+          } else {
+            console.log(`Successfully deleted ${filePaths.length} files from ${bucketName}/${userId}`);
           }
         } else {
           console.log(`No files found in ${bucketName}/${userId}`);
         }
         
-        // Try to remove the empty folder
+        // Try to remove the empty folder itself
+        // Note: This may not always work as expected since folders are virtual in object storage
         try {
           const { error: folderError } = await supabase
             .storage
             .from(bucketName)
-            .remove([`${userId}/`]);
+            .remove([`${userId}`]);
             
           if (folderError) {
-            console.log(`Note: Empty folder removal returned error (this is often normal):`, folderError);
+            console.log(`Note: Folder removal attempt for ${bucketName}/${userId} returned:`, folderError);
           } else {
-            console.log(`Successfully removed empty folder ${bucketName}/${userId}/`);
+            console.log(`Successfully removed folder ${bucketName}/${userId}`);
           }
         } catch (folderErr) {
-          console.log(`Note: Error removing folder ${bucketName}/${userId}/ (this is often normal):`, folderErr);
+          console.log(`Note: Error attempting to remove folder ${bucketName}/${userId}:`, folderErr);
         }
       } catch (bucketErr) {
         console.error(`Error processing bucket ${bucketName}:`, bucketErr);
