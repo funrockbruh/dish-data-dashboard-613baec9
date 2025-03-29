@@ -21,7 +21,6 @@ interface UserDeletionResult {
   success: boolean;
   message?: string;
   error?: string;
-  authError?: string;
 }
 
 // Handle user deletion with improved error handling and logging
@@ -44,11 +43,7 @@ export const handleUserExpiry = async (userId: string): Promise<UserDeletionResu
           reject({ success: false, error: error.message });
         } else {
           console.log('User deletion completed successfully:', data);
-          resolve({ 
-            success: true, 
-            message: data.message || 'User deletion completed successfully',
-            authError: data.authError
-          });
+          resolve({ success: true, message: 'User deletion completed successfully' });
         }
       } catch (fnError: any) {
         console.error('Exception during function invocation:', fnError);

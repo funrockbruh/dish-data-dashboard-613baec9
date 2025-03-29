@@ -15,61 +15,71 @@ export const Navigation = () => {
   const [renewalDate, setRenewalDate] = useState<Date | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
 
-  // Function to fetch user data and check subscription status
-  const fetchUserData = async (userId: string) => {
-    try {
-      // Fetch restaurant profile
-      const { data: profileData } = await supabase
-        .from('restaurant_profiles')
-        .select('restaurant_name, subdomain')
-        .eq('id', userId)
-        .single();
-        
-      if (profileData) {
-        setRestaurantName(profileData.restaurant_name);
-        setSubdomain(profileData.subdomain);
-      }
-
-      // Fetch renewal date
-      const { data: payments } = await supabase
-        .from("payments")
-        .select("*")
-        .eq("user_id", userId)
-        .eq("status", "verified")
-        .order("created_at", { ascending: false })
-        .limit(1);
-        
-      if (payments && payments.length > 0) {
-        const verificationDate = new Date(payments[0].updated_at || payments[0].created_at);
-        // Set expiry to 2 minutes after verification
-        const expiryDate = new Date(verificationDate);
-        expiryDate.setMinutes(expiryDate.getMinutes() + 2);
-        setRenewalDate(expiryDate);
-      }
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-    }
-  };
-
   useEffect(() => {
     const checkAuth = async () => {
-      const { data } = await supabase.auth.getSession();
+      const {
+        data
+      } = await supabase.auth.getSession();
       setIsAuthenticated(!!data.session);
-      
       if (data.session) {
         setUserId(data.session.user.id);
-        await fetchUserData(data.session.user.id);
+
+        // Fetch restaurant profile
+        const {
+          data: profileData
+        } = await supabase.from('restaurant_profiles').select('restaurant_name, subdomain').eq('id', data.session.user.id).single();
+        if (profileData) {
+          setRestaurantName(profileData.restaurant_name);
+          setSubdomain(profileData.subdomain);
+        }
+
+        // Fetch renewal date
+        const {
+          data: payments
+        } = await supabase.from("payments").select("*").eq("user_id", data.session.user.id).eq("status", "verified").order("created_at", {
+          ascending: false
+        }).limit(1);
+        if (payments && payments.length > 0) {
+          const verificationDate = new Date(payments[0].updated_at || payments[0].created_at);
+          // Set expiry to 2 minutes after verification
+          const expiryDate = new Date(verificationDate);
+          expiryDate.setMinutes(expiryDate.getMinutes() + 2);
+          setRenewalDate(expiryDate);
+        }
       }
     };
-    
     checkAuth();
-    
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const {
+      data: {
+        subscription
+      }
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       setIsAuthenticated(!!session);
-      
       if (session) {
         setUserId(session.user.id);
-        await fetchUserData(session.user.id);
+
+        // Fetch restaurant profile
+        const {
+          data: profileData
+        } = await supabase.from('restaurant_profiles').select('restaurant_name, subdomain').eq('id', session.user.id).single();
+        if (profileData) {
+          setRestaurantName(profileData.restaurant_name);
+          setSubdomain(profileData.subdomain);
+        }
+
+        // Fetch renewal date
+        const {
+          data: payments
+        } = await supabase.from("payments").select("*").eq("user_id", session.user.id).eq("status", "verified").order("created_at", {
+          ascending: false
+        }).limit(1);
+        if (payments && payments.length > 0) {
+          const verificationDate = new Date(payments[0].updated_at || payments[0].created_at);
+          // Set expiry to 2 minutes after verification
+          const expiryDate = new Date(verificationDate);
+          expiryDate.setMinutes(expiryDate.getMinutes() + 2);
+          setRenewalDate(expiryDate);
+        }
       } else {
         setRestaurantName(null);
         setSubdomain(null);
@@ -77,7 +87,6 @@ export const Navigation = () => {
         setUserId(null);
       }
     });
-    
     return () => {
       subscription.unsubscribe();
     };

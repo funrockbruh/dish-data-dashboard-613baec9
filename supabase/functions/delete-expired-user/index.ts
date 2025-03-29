@@ -30,8 +30,6 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log(`Starting deletion process for user ${userId}`);
-    
     // Clean up all storage buckets for the user
     const bucketNames = ['menu-item-images', 'menu-category-images', 'restaurant-logos'];
     
@@ -75,6 +73,7 @@ serve(async (req) => {
         }
         
         // Try to remove the empty folder itself
+        // Note: This may not always work as expected since folders are virtual in object storage
         try {
           const { error: folderError } = await supabase
             .storage
@@ -94,11 +93,8 @@ serve(async (req) => {
       }
     }
 
-    // Delete all data in database tables for this user
+    // Delete menu items for this restaurant
     try {
-      console.log(`Cleaning up database records for user ${userId}`);
-      
-      // Delete menu items for this restaurant
       const { error: menuItemsError } = await supabase
         .from('menu_items')
         .delete()
@@ -109,8 +105,12 @@ serve(async (req) => {
       } else {
         console.log(`Menu items for restaurant ${userId} were deleted successfully`);
       }
-      
-      // Delete menu categories for this restaurant
+    } catch (err) {
+      console.error('Error deleting menu items:', err);
+    }
+    
+    // Delete menu categories for this restaurant
+    try {
       const { error: menuCategoriesError } = await supabase
         .from('menu_categories')
         .delete()
@@ -121,8 +121,12 @@ serve(async (req) => {
       } else {
         console.log(`Menu categories for restaurant ${userId} were deleted successfully`);
       }
-      
-      // Delete the restaurant profile
+    } catch (err) {
+      console.error('Error deleting menu categories:', err);
+    }
+    
+    // Delete the restaurant profile
+    try {
       const { error: profileError } = await supabase
         .from('restaurant_profiles')
         .delete()
@@ -133,87 +137,37 @@ serve(async (req) => {
       } else {
         console.log(`Restaurant profile for user ${userId} was deleted successfully`);
       }
-      
-      // Delete any payment records
-      const { error: paymentsError } = await supabase
-        .from('payments')
-        .delete()
-        .eq('user_id', userId);
-      
-      if (paymentsError) {
-        console.error('Error deleting payment records:', paymentsError);
-      } else {
-        console.log(`Payment records for user ${userId} were deleted successfully`);
-      }
-      
-      // Delete any subscription records
-      const { error: subscriptionsError } = await supabase
-        .from('subscriptions')
-        .delete()
-        .eq('user_id', userId);
-      
-      if (subscriptionsError) {
-        console.error('Error deleting subscription records:', subscriptionsError);
-      } else {
-        console.log(`Subscription records for user ${userId} were deleted successfully`);
-      }
-    } catch (dbErr) {
-      console.error('Error cleaning up database records:', dbErr);
+    } catch (err) {
+      console.error('Error deleting restaurant profile:', err);
     }
 
     // Delete the user using admin APIs
     try {
       console.log(`Attempting to delete user ${userId} from auth system`);
+      const { error } = await supabase.auth.admin.deleteUser(userId);
       
-      // First try to delete the user with admin.deleteUser
-      try {
-        const { error } = await supabase.auth.admin.deleteUser(userId);
-        
-        if (error) {
-          console.error('Error deleting user with admin.deleteUser, falling back to alternative method:', error);
-          throw error; // This will be caught by the outer try/catch
-        }
-        
-        console.log(`User ${userId} was successfully deleted with admin.deleteUser`);
-        return new Response(
-          JSON.stringify({ success: true, message: 'User and all associated data deleted successfully' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
-        );
-      } catch (authErr) {
-        // If admin.deleteUser fails, try alternative approach
-        console.log(`Falling back to alternative user deletion approach for ${userId}`);
-        
-        // We'll mark this as a success since we've cleaned up all the user's data
-        // The auth user might have already been deleted or will be cleaned up by Supabase eventually
-        console.log(`User ${userId} data was cleaned up, but auth user deletion faced issues`);
-        
-        return new Response(
-          JSON.stringify({ 
-            success: true, 
-            message: 'User data deleted successfully, but auth user deletion may require manual attention',
-            authError: String(authErr)
-          }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
-        );
+      if (error) {
+        console.error('Error deleting user from auth system:', error);
+        throw error;
       }
-    } catch (error) {
-      console.error('Error in user deletion process:', error);
       
-      // Return a success response since we've at least cleaned up the user's data
-      return new Response(
-        JSON.stringify({ 
-          success: true, 
-          message: 'User data deleted successfully, but auth user deletion may require manual attention',
-          error: String(error)
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
-      );
+      console.log(`User ${userId} was automatically deleted due to expired subscription`);
+    } catch (authErr) {
+      console.error('Error deleting user:', authErr);
+      throw authErr;
     }
+
+    // Return a success response
+    return new Response(
+      JSON.stringify({ success: true, message: 'User and all associated data deleted successfully' }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+    );
+
   } catch (error) {
     console.error('Error in delete-expired-user function:', error);
     
     return new Response(
-      JSON.stringify({ success: false, error: String(error) }),
+      JSON.stringify({ success: false, error: error.message }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }

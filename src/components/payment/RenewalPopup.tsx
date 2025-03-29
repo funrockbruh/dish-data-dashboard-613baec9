@@ -72,7 +72,6 @@ export const RenewalPopup = ({
         toast.error("There was an issue processing your account. Please contact support.");
       } else {
         console.log("User deletion completed:", result);
-        toast.success("Your account has been processed successfully.");
       }
       
       // Redirect to payment page after deletion process, successful or not
