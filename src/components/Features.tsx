@@ -1,3 +1,4 @@
+
 import { Card } from "./ui/card";
 import { Clock, Edit, Layout, Smartphone } from "lucide-react";
 
@@ -26,7 +27,7 @@ const features = [
 
 export const Features = () => {
   return (
-    <section className="py-24 px-4 bg-gradient-to-b from-white to-blue-50/50">
+    <section id="features-section" className="py-24 px-4 bg-gradient-to-b from-white to-blue-50/50">
       <div className="container mx-auto">
         <div className="text-center mb-16 fade-in">
           <h2 className="text-3xl font-bold mb-4 gradient-text">Everything You Need</h2>

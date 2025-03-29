@@ -1,3 +1,4 @@
+
 import { Button } from "./ui/button";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
@@ -5,12 +6,15 @@ import { supabase } from "@/lib/supabase";
 import { CountdownTimer } from "@/components/payment/CountdownTimer";
 import { RenewalPopup } from "@/components/payment/RenewalPopup";
 import { ImageWithSkeleton } from "./ui/image-with-skeleton";
+import { toast } from "sonner";
+
 export const Navigation = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [restaurantName, setRestaurantName] = useState<string | null>(null);
   const [subdomain, setSubdomain] = useState<string | null>(null);
   const [renewalDate, setRenewalDate] = useState<Date | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
+
   useEffect(() => {
     const checkAuth = async () => {
       const {
@@ -87,6 +91,18 @@ export const Navigation = () => {
       subscription.unsubscribe();
     };
   }, []);
+
+  const scrollToSection = (sectionId: string) => {
+    const section = document.getElementById(sectionId);
+    if (section) {
+      section.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
+  const handleComingSoon = () => {
+    toast.info("Coming soon! This feature is under development.");
+  };
+
   return <>
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-sm border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -100,21 +116,30 @@ export const Navigation = () => {
 
             {/* Navigation Links */}
             <div className="hidden md:flex items-center gap-8">
-              <Link to="/" className="text-gray-600 hover:text-gray-900 transition-colors">
-                Personal
-              </Link>
-              <Link to="/benefits" className="text-gray-600 hover:text-gray-900 transition-colors">
-                Benefits
-              </Link>
-              <Link to="/features" className="text-gray-600 hover:text-gray-900 transition-colors">
+              <button 
+                onClick={() => scrollToSection("features-section")} 
+                className="text-gray-600 hover:text-gray-900 transition-colors"
+              >
                 Features
-              </Link>
-              <Link to="/about" className="text-gray-600 hover:text-gray-900 transition-colors">
+              </button>
+              <button 
+                onClick={() => scrollToSection("pricing-section")} 
+                className="text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                Pricing
+              </button>
+              <button 
+                onClick={handleComingSoon} 
+                className="text-gray-600 hover:text-gray-900 transition-colors"
+              >
                 About us
-              </Link>
-              <Link to="/help" className="text-gray-600 hover:text-gray-900 transition-colors">
+              </button>
+              <button 
+                onClick={handleComingSoon} 
+                className="text-gray-600 hover:text-gray-900 transition-colors"
+              >
                 Help
-              </Link>
+              </button>
             </div>
 
             {/* CTA Button or Account Link */}

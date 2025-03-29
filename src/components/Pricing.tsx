@@ -57,7 +57,7 @@ export const Pricing = () => {
   };
 
   return (
-    <section className="py-24 px-4 bg-gradient-to-b from-blue-50/50 to-purple-50/50">
+    <section id="pricing-section" className="py-24 px-4 bg-gradient-to-b from-blue-50/50 to-purple-50/50">
       <div className="container mx-auto">
         <div className="text-center mb-16 fade-in">
           <h2 className="text-3xl font-bold mb-4 gradient-text">Simple, Transparent Pricing</h2>
