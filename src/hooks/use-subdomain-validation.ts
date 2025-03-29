@@ -19,47 +19,17 @@ export const useSubdomainValidation = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) throw new Error("Not authenticated");
       
-      // First check if subdomain exists in restaurant_profiles
-      const { data: existingSubdomain, error: subdError } = await supabase
+      const { data: existingSubdomain } = await supabase
         .from('restaurant_profiles')
         .select('id')
         .eq('subdomain', subdomain)
         .neq('id', session.user.id)
         .maybeSingle();
         
-      if (subdError) throw subdError;
-      
-      // If subdomain exists, check if the user still exists in auth
       if (existingSubdomain) {
-        try {
-          // Use the edge function to verify if the owner of this subdomain still exists
-          const { data: verificationData, error: verificationError } = await supabase.functions.invoke('verify-user-exists', {
-            body: { userId: existingSubdomain.id },
-          });
-          
-          if (verificationError) {
-            console.error('Verification error:', verificationError);
-            // If there's an error verifying, assume the user might still exist
-            setSubdomainError("This subdomain is already taken. Please choose another one.");
-            return false;
-          }
-          
-          // If user doesn't exist, the subdomain is actually available
-          if (verificationData && !verificationData.exists) {
-            setSubdomainError(null);
-            return true;
-          }
-          
-          setSubdomainError("This subdomain is already taken. Please choose another one.");
-          return false;
-        } catch (verifyError) {
-          console.error('Error in verification process:', verifyError);
-          // If there's an exception in verification, be conservative and say it's taken
-          setSubdomainError("This subdomain is already taken. Please choose another one.");
-          return false;
-        }
+        setSubdomainError("This subdomain is already taken. Please choose another one.");
+        return false;
       }
-      
       setSubdomainError(null);
       return true;
     } catch (error) {

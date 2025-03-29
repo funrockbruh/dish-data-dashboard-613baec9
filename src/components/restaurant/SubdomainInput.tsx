@@ -31,48 +31,20 @@ export const SubdomainInput = ({
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) return;
       
-      // First check if subdomain exists in restaurant_profiles
-      const { data: existingSubdomain, error: subdError } = await supabase
+      const { data: existingSubdomain, error: subdomainError } = await supabase
         .from('restaurant_profiles')
         .select('id')
         .eq('subdomain', value)
         .neq('id', session.user.id)
         .maybeSingle();
-      
-      if (subdError) throw subdError;
-      
-      // If subdomain exists, check if the user still exists in auth
+        
       if (existingSubdomain) {
-        try {
-          // Use the edge function to verify if the owner of this subdomain still exists
-          const { data: verificationData, error: verificationError } = await supabase.functions.invoke('verify-user-exists', {
-            body: { userId: existingSubdomain.id },
-          });
-          
-          if (verificationError) {
-            console.error('Error checking subdomain:', verificationError);
-            // If there's an error verifying, assume the user might still exist
-            onErrorChange("This subdomain is already taken. Please choose another one.");
-            return;
-          }
-          
-          // If user doesn't exist, the subdomain is actually available
-          if (verificationData && !verificationData.exists) {
-            onErrorChange(null);
-            return;
-          }
-          
-          onErrorChange("This subdomain is already taken. Please choose another one.");
-        } catch (verifyError) {
-          console.error('Error in verification process:', verifyError);
-          onErrorChange("Error checking subdomain availability");
-        }
+        onErrorChange("This subdomain is already taken. Please choose another one.");
       } else {
         onErrorChange(null);
       }
     } catch (error) {
       console.error('Error checking subdomain:', error);
-      onErrorChange("Error checking subdomain availability");
     } finally {
       setIsChecking(false);
     }
