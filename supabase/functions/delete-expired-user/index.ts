@@ -30,7 +30,45 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Delete the user using admin APIs
+    // First, delete the associated restaurant profile 
+    // This ensures all user data is properly cleaned up
+    const { error: profileDeleteError } = await supabase
+      .from('restaurant_profiles')
+      .delete()
+      .eq('id', userId);
+
+    if (profileDeleteError) {
+      console.error('Error deleting restaurant profile:', profileDeleteError);
+      // We'll continue with user deletion even if profile deletion fails
+    } else {
+      console.log(`Restaurant profile for user ${userId} was deleted successfully`);
+    }
+
+    // Delete any other dependent records if needed
+    // For example: menu categories, menu items, etc.
+    const { error: menuCategoriesDeleteError } = await supabase
+      .from('menu_categories')
+      .delete()
+      .eq('restaurant_id', userId);
+
+    if (menuCategoriesDeleteError) {
+      console.error('Error deleting menu categories:', menuCategoriesDeleteError);
+    } else {
+      console.log(`Menu categories for restaurant ${userId} were deleted successfully`);
+    }
+
+    const { error: menuItemsDeleteError } = await supabase
+      .from('menu_items')
+      .delete()
+      .eq('restaurant_id', userId);
+
+    if (menuItemsDeleteError) {
+      console.error('Error deleting menu items:', menuItemsDeleteError);
+    } else {
+      console.log(`Menu items for restaurant ${userId} were deleted successfully`);
+    }
+
+    // Finally, delete the user from auth system
     const { error } = await supabase.auth.admin.deleteUser(userId);
 
     if (error) {
@@ -42,7 +80,7 @@ serve(async (req) => {
 
     // Return a success response
     return new Response(
-      JSON.stringify({ success: true, message: 'User deleted successfully' }),
+      JSON.stringify({ success: true, message: 'User and associated data deleted successfully' }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );
 
