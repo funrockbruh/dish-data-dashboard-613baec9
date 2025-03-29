@@ -52,15 +52,6 @@ serve(async (req) => {
       }
     );
 
-    // Verify the user is authenticated
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 401,
-      });
-    }
-
     // Get request body
     const { userId, reason } = await req.json();
     
@@ -71,23 +62,6 @@ serve(async (req) => {
       });
     }
 
-    // Verify that the user is attempting to delete their own account or is an admin
-    const { data: adminData } = await supabaseAdmin
-      .from("admin_users")
-      .select("id")
-      .eq("email", user.email)
-      .maybeSingle();
-      
-    const isAdmin = !!adminData;
-    const isSelfDelete = userId === user.id;
-    
-    if (!isAdmin && !isSelfDelete) {
-      return new Response(JSON.stringify({ error: "Not authorized to delete this user" }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 403,
-      });
-    }
-
     // Create audit log before deletion
     await supabaseAdmin.from("audit_logs").insert({
       user_id: userId,
@@ -95,7 +69,7 @@ serve(async (req) => {
       resource_type: "auth.users",
       resource_id: userId,
       details: {
-        deleted_by: isAdmin ? adminData.id : "self",
+        deleted_by: "system",
         reason: reason || "subscription_expiry"
       }
     });

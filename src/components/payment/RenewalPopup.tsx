@@ -37,17 +37,31 @@ export const RenewalPopup = ({
         // If past grace period, delete the user account
         try {
           // Call the edge function to delete the user
-          const response = await fetch(`${window.location.origin}/api/delete-expired-user`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-            },
-            body: JSON.stringify({ 
-              userId,
-              reason: "subscription_expiry"
-            })
-          });
+          const { data: session } = await supabase.auth.getSession();
+          if (!session.session) {
+            throw new Error("No authenticated session");
+          }
+
+          const response = await fetch(
+            `${window.location.origin}/functions/v1/delete-expired-user`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${session.session.access_token}`
+              },
+              body: JSON.stringify({ 
+                userId,
+                reason: "subscription_expiry"
+              })
+            }
+          );
+          
+          // Check if response is JSON
+          const contentType = response.headers.get("content-type");
+          if (!contentType || !contentType.includes("application/json")) {
+            throw new Error("Non-JSON response from server");
+          }
           
           const result = await response.json();
           
