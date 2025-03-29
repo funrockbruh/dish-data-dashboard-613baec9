@@ -50,7 +50,7 @@ export const Footer = () => {
             <p className="text-muted-foreground">
               Ready to transform your menu management?
             </p>
-            <Button className="hover-lift">Start Free Trial</Button>
+            <Button className="hover-lift">Get started</Button>
           </div>
         </div>
         <div className="mt-12 pt-8 border-t text-center text-muted-foreground">
