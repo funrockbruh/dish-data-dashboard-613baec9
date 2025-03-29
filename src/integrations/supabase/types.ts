@@ -39,7 +39,7 @@ export type Database = {
           id: string
           resource_id: string | null
           resource_type: string
-          user_id: string | null
+          restaurant_name: string | null
         }
         Insert: {
           action: string
@@ -49,7 +49,7 @@ export type Database = {
           id?: string
           resource_id?: string | null
           resource_type: string
-          user_id?: string | null
+          restaurant_name?: string | null
         }
         Update: {
           action?: string
@@ -59,7 +59,7 @@ export type Database = {
           id?: string
           resource_id?: string | null
           resource_type?: string
-          user_id?: string | null
+          restaurant_name?: string | null
         }
         Relationships: [
           {

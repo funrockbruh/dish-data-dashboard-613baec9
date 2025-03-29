@@ -19,15 +19,22 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 // Create a server-side function to handle user deletion
 export const handleUserExpiry = async (userId: string) => {
   try {
+    console.log(`Initiating complete deletion process for user: ${userId}`);
+    
     // First create an edge function to delete the user
     const { data, error } = await supabase.functions.invoke('delete-expired-user', {
       body: { userId },
     });
     
-    if (error) throw error;
+    if (error) {
+      console.error('Error invoking delete-expired-user function:', error);
+      throw error;
+    }
+    
+    console.log('User deletion completed successfully:', data);
     return data;
   } catch (error) {
-    console.error('Error invoking delete-expired-user function:', error);
+    console.error('Error during user expiry handling:', error);
     throw error;
   }
 };
