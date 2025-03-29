@@ -30,36 +30,52 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Check if the user exists in auth.users
-    const { data, error } = await supabase.auth.admin.getUserById(userId);
+    try {
+      // Check if the user exists in auth.users
+      const { data, error } = await supabase.auth.admin.getUserById(userId);
 
-    if (error) {
-      // If we get a specific error about user not found, return that the user doesn't exist
-      if (error.message.includes("user not found")) {
-        console.log(`User ${userId} does not exist in auth.users`);
+      if (error) {
+        // Handle specific error about user not found
+        if (error.message && error.message.toLowerCase().includes("user not found")) {
+          console.log(`User ${userId} does not exist in auth.users`);
+          return new Response(
+            JSON.stringify({ exists: false }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+          );
+        }
+        
+        // Log any other errors but don't throw them
+        console.error('Error getting user:', error);
         return new Response(
-          JSON.stringify({ exists: false }),
+          JSON.stringify({ exists: false, message: 'Error checking user, assuming they don\'t exist' }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
         );
       }
-      throw error;
+
+      // If we get here, the user exists
+      const userExists = !!data.user;
+      console.log(`User ${userId} exists in auth.users: ${userExists}`);
+
+      return new Response(
+        JSON.stringify({ exists: userExists }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      );
+    } catch (authError) {
+      // Catch any unexpected errors when checking the user
+      console.error('Unexpected error checking user:', authError);
+      
+      // In case of any errors, assume the user doesn't exist
+      return new Response(
+        JSON.stringify({ exists: false, message: 'Error checking user, assuming they don\'t exist' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      );
     }
-
-    // If we get here, the user exists
-    const userExists = !!data.user;
-    console.log(`User ${userId} exists in auth.users: ${userExists}`);
-
-    return new Response(
-      JSON.stringify({ exists: userExists }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
-    );
-
   } catch (error) {
     console.error('Error verifying user existence:', error);
     
     return new Response(
-      JSON.stringify({ error: error.message }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      JSON.stringify({ error: 'Internal server error', message: error.message }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );
   }
 });

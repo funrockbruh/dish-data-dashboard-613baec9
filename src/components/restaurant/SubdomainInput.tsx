@@ -43,20 +43,30 @@ export const SubdomainInput = ({
       
       // If subdomain exists, check if the user still exists in auth
       if (existingSubdomain) {
-        // Use the edge function to verify if the owner of this subdomain still exists
-        const { data: verificationData, error: verificationError } = await supabase.functions.invoke('verify-user-exists', {
-          body: { userId: existingSubdomain.id },
-        });
-        
-        if (verificationError) throw verificationError;
-        
-        // If user doesn't exist, the subdomain is actually available
-        if (verificationData && !verificationData.exists) {
-          onErrorChange(null);
-          return;
+        try {
+          // Use the edge function to verify if the owner of this subdomain still exists
+          const { data: verificationData, error: verificationError } = await supabase.functions.invoke('verify-user-exists', {
+            body: { userId: existingSubdomain.id },
+          });
+          
+          if (verificationError) {
+            console.error('Error checking subdomain:', verificationError);
+            // If there's an error verifying, assume the user might still exist
+            onErrorChange("This subdomain is already taken. Please choose another one.");
+            return;
+          }
+          
+          // If user doesn't exist, the subdomain is actually available
+          if (verificationData && !verificationData.exists) {
+            onErrorChange(null);
+            return;
+          }
+          
+          onErrorChange("This subdomain is already taken. Please choose another one.");
+        } catch (verifyError) {
+          console.error('Error in verification process:', verifyError);
+          onErrorChange("Error checking subdomain availability");
         }
-        
-        onErrorChange("This subdomain is already taken. Please choose another one.");
       } else {
         onErrorChange(null);
       }
