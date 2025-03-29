@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Check, Circle, Clock } from "lucide-react";
@@ -59,6 +60,17 @@ const Payment = () => {
     setCurrentPrice(hasQRCode ? 149 : 100);
   }, [hasQRCode]);
 
+  const getWhatsAppLink = (method: string) => {
+    const baseUrl = "https://api.whatsapp.com/send/?phone=96176776037";
+    const qrCodeText = hasQRCode ? "with  a QR code" : "without a QR code";
+    const paymentText = method === 'cash' ? "Cash" : "Whish Pay";
+    
+    const message = `Hi Websitely, Would like to subscribe in your Menu Plan ${qrCodeText}. For payment, I'd like to use ${paymentText}.`;
+    
+    const encodedMessage = encodeURIComponent(message);
+    return `${baseUrl}&text=${encodedMessage}&type=phone_number&app_absent=0`;
+  };
+
   const handlePaymentSelect = async (method: string) => {
     try {
       setIsLoading(true);
@@ -107,10 +119,17 @@ const Payment = () => {
       setPaymentSubmitted(true);
       toast.success("Payment request submitted!");
       
-      // Navigate to the pending verification page
+      // Get the WhatsApp link and redirect after a short delay
+      const whatsappLink = getWhatsAppLink(method);
+      
+      // Navigate to the pending verification page and open WhatsApp in a new tab
       setTimeout(() => {
+        // Open WhatsApp link in a new tab
+        window.open(whatsappLink, '_blank');
+        
+        // Navigate to pending page in the current tab
         navigate("/payment/pending");
-      }, 2000);
+      }, 1000);
     } catch (error: any) {
       console.error("Payment processing error:", error);
       toast.error(`Failed to submit payment: ${error.message || "Please try again"}`);
