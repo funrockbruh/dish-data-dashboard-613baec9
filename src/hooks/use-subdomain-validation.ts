@@ -19,17 +19,35 @@ export const useSubdomainValidation = () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) throw new Error("Not authenticated");
       
-      const { data: existingSubdomain } = await supabase
+      // First check if subdomain exists in restaurant_profiles
+      const { data: existingSubdomain, error: subdError } = await supabase
         .from('restaurant_profiles')
         .select('id')
         .eq('subdomain', subdomain)
         .neq('id', session.user.id)
         .maybeSingle();
         
+      if (subdError) throw subdError;
+      
+      // If subdomain exists, check if the user still exists in auth
       if (existingSubdomain) {
+        // Use the edge function to verify if the owner of this subdomain still exists
+        const { data: verificationData, error: verificationError } = await supabase.functions.invoke('verify-user-exists', {
+          body: { userId: existingSubdomain.id },
+        });
+        
+        if (verificationError) throw verificationError;
+        
+        // If user doesn't exist, the subdomain is actually available
+        if (verificationData && !verificationData.exists) {
+          setSubdomainError(null);
+          return true;
+        }
+        
         setSubdomainError("This subdomain is already taken. Please choose another one.");
         return false;
       }
+      
       setSubdomainError(null);
       return true;
     } catch (error) {
