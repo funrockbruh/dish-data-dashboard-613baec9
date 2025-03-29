@@ -2,14 +2,16 @@ import { useEffect, useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/lib/supabase";
+import { supabase, handleUserExpiry } from "@/lib/supabase";
 import { format, addMinutes } from "date-fns";
 import { toast } from "sonner";
+
 interface RenewalPopupProps {
   restaurantName: string;
   expiryDate: Date;
   userId: string;
 }
+
 export const RenewalPopup = ({
   restaurantName,
   expiryDate,
@@ -22,6 +24,7 @@ export const RenewalPopup = ({
   // Calculate grace period (5 minutes after expiry)
   const gracePeriod = addMinutes(expiryDate, 5);
   const formattedGracePeriod = format(gracePeriod, "HH:mm");
+  
   useEffect(() => {
     const checkExpiry = () => {
       const now = new Date();
@@ -30,14 +33,34 @@ export const RenewalPopup = ({
       if (now > expiryDate && now < gracePeriod) {
         setIsVisible(true);
       } else if (now >= gracePeriod) {
-        // If past grace period, redirect to payment page
-        navigate("/payment");
+        // If past grace period, delete user and redirect to payment page
+        handleUserDeletion();
       }
     };
+    
     checkExpiry();
     const interval = setInterval(checkExpiry, 5000);
     return () => clearInterval(interval);
   }, [expiryDate, gracePeriod, navigate]);
+
+  // Function to handle user deletion
+  const handleUserDeletion = async () => {
+    try {
+      // Sign out the user first
+      await supabase.auth.signOut();
+      
+      // Call the edge function to delete the user
+      await handleUserExpiry(userId);
+      
+      // Redirect to payment page after successful deletion
+      navigate("/payment");
+    } catch (error) {
+      console.error("Error processing account expiry:", error);
+      // Still redirect to payment page even if there's an error
+      navigate("/payment");
+    }
+  };
+
   const handleRenewalRequest = async () => {
     try {
       setIsLoading(true);
@@ -67,7 +90,9 @@ export const RenewalPopup = ({
       setIsLoading(false);
     }
   };
+  
   if (!isVisible) return null;
+  
   return <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md">
       <div className="bg-black/100 backdrop-blur-[15px] text-white rounded-xl p-8 max-w-sm w-full text-center shadow-2xl border border-white/10 mt-[500px] py-[180px]">
         <h2 className="text-2xl font-bold mb-6">Renewal request</h2>
