@@ -42,8 +42,10 @@ export const RenewalPopup = ({
             throw new Error("No authenticated session");
           }
 
+          // Using the correct Supabase Edge Function URL format
+          const supabaseUrl = process.env.SUPABASE_URL || "https://uuvpagsucqabvkhqlbwi.supabase.co";
           const response = await fetch(
-            `${window.location.origin}/functions/v1/delete-expired-user`,
+            `${supabaseUrl}/functions/v1/delete-expired-user`,
             {
               method: 'POST',
               headers: {
