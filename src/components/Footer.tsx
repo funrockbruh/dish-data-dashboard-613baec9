@@ -54,7 +54,7 @@ export const Footer = () => {
           </div>
         </div>
         <div className="mt-12 pt-8 border-t text-center text-muted-foreground">
-          <p>© 2024 Websitely. All rights reserved.</p>
+          <p>© 2025 Websitely. All rights reserved.</p>
         </div>
       </div>
     </footer>;
