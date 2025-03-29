@@ -131,7 +131,7 @@ export const Navigation = () => {
                   <Button variant="outline" className="text-red-500 hover:text-red-600 border-red-500 hover:border-red-600 hover:bg-red-50" onClick={() => supabase.auth.signOut()}>
                     Sign Out
                   </Button>
-                </div> : <Button className="bg-teal-500 hover:bg-teal-600 text-white">
+                </div> : <Button className="bg-blue-500 hover:bg-blue-600 text-white">
                   Get started
                 </Button>}
             </div>
