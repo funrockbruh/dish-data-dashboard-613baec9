@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { CountdownTimer } from "@/components/payment/CountdownTimer";
 import { RenewalPopup } from "@/components/payment/RenewalPopup";
+import { ImageWithSkeleton } from "./ui/image-with-skeleton";
 
 export const Navigation = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -109,9 +110,11 @@ export const Navigation = () => {
             {/* Logo and brand */}
             <div className="flex items-center">
               <Link to="/" className="flex items-center gap-2">
-                <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text">
-                  DishData
-                </span>
+                <img 
+                  src="/lovable-uploads/a3769547-5e65-4658-a5f7-7e2784808bd8.png" 
+                  alt="Logo" 
+                  className="h-8 w-auto" 
+                />
               </Link>
             </div>
 
